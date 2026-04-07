@@ -1,0 +1,112 @@
+<body>
+<div id="game-container">
+	<!-- Main hood scene (left/center area) -->
+	<div id="hood-scene"></div>
+
+	<!-- Right sidebar: Protocol panel -->
+	<div id="protocol-panel">
+		<div id="score-display">
+			<div class="score-label">Score</div>
+			<div class="score-value">0</div>
+		</div>
+		<div class="protocol-content">
+			<h2>Protocol</h2>
+			<ul id="protocol-checklist" class="protocol-checklist">
+				<li class="protocol-step">
+					<input type="checkbox" id="step-spray" disabled>
+					<label for="step-spray">Spray ethanol</label>
+				</li>
+				<li class="protocol-step">
+					<input type="checkbox" id="step-aspirate" disabled>
+					<label for="step-aspirate">Aspirate old media</label>
+				</li>
+				<li class="protocol-step">
+					<input type="checkbox" id="step-add-media" disabled>
+					<label for="step-add-media">Add fresh media</label>
+				</li>
+				<li class="protocol-step">
+					<input type="checkbox" id="step-add-drug" disabled>
+					<label for="step-add-drug">Add drug</label>
+				</li>
+				<li class="protocol-step">
+					<input type="checkbox" id="step-incubate" disabled>
+					<label for="step-incubate">Incubate</label>
+				</li>
+				<li class="protocol-step">
+					<input type="checkbox" id="step-microscope" disabled>
+					<label for="step-microscope">Check microscope</label>
+				</li>
+			</ul>
+		</div>
+	</div>
+
+	<!-- Microscope overlay modal (hidden by default) -->
+	<div id="microscope-overlay" class="modal-overlay">
+		<div class="modal-content microscope-modal">
+			<button class="modal-close" aria-label="Close microscope view">&times;</button>
+			<h2>Microscope View</h2>
+			<div class="microscope-view">
+				<!-- SVG microscope view will be injected here -->
+				<svg id="microscope-svg" viewBox="0 0 400 300" width="400" height="300"></svg>
+			</div>
+			<div class="cell-count-section">
+				<label for="cell-count-input">Estimated cell count:</label>
+				<input id="cell-count-input" type="number" placeholder="Enter count" min="0">
+				<button id="submit-cell-count">Submit</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- Incubator transition screen (hidden by default) -->
+	<div id="incubator-screen" class="modal-overlay">
+		<div class="modal-content incubator-modal">
+			<h2>Incubator</h2>
+			<div class="incubator-view">
+				<!-- SVG incubator will be injected here -->
+				<svg id="incubator-svg" viewBox="0 0 400 300" width="400" height="300"></svg>
+			</div>
+			<div class="incubation-timer">
+				<p>Incubating cells...</p>
+				<div class="progress-bar">
+					<div class="progress-fill"></div>
+				</div>
+				<p id="timer-text">Time remaining: --</p>
+			</div>
+		</div>
+	</div>
+
+	<!-- Results screen (hidden by default) -->
+	<div id="results-screen" class="modal-overlay">
+		<div class="modal-content results-modal">
+			<h2>Game Results</h2>
+			<div class="results-content">
+				<div class="result-item">
+					<span class="result-label">Final Score:</span>
+					<span class="result-value" id="final-score">0</span>
+				</div>
+				<div class="result-item">
+					<span class="result-label">Cell Health:</span>
+					<span class="result-value" id="cell-health">0%</span>
+				</div>
+				<div class="result-item">
+					<span class="result-label">Contamination:</span>
+					<span class="result-value" id="contamination-level">0%</span>
+				</div>
+				<div id="results-message" class="results-message"></div>
+				<button id="play-again-btn" class="btn-primary">Play Again</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- Notifications area (toast notifications) -->
+	<div id="notification-area"></div>
+
+	<!-- Volume indicator (pipette volume) -->
+	<div id="volume-indicator" class="volume-indicator" style="display: none;">
+		<div class="volume-label">Volume</div>
+		<div class="volume-bar">
+			<div class="volume-fill"></div>
+		</div>
+		<div class="volume-text">0 µL</div>
+	</div>
+</div>

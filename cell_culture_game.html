@@ -1,0 +1,3360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cell Culture Simulation</title>
+<style>
+/* ===== Color Palette ===== */
+:root {
+	--color-white: #ffffff;
+	--color-bg: #f0f2f5;
+	--color-light-blue: #e3f2fd;
+	--color-steel-gray: #78909c;
+	--color-accent-green: #4caf50;
+	--color-warning-orange: #ff9800;
+	--color-text-dark: #212121;
+	--color-text-light: #757575;
+	--color-border: #eceff1;
+	--color-shadow: rgba(0, 0, 0, 0.1);
+	--color-shadow-dark: rgba(0, 0, 0, 0.25);
+	--color-success: #66bb6a;
+	--color-error: #ef5350;
+}
+
+/* ===== Global Styles ===== */
+* {
+	box-sizing: border-box;
+}
+
+html, body {
+	margin: 0;
+	padding: 0;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+}
+
+body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+	background-color: var(--color-bg);
+	color: var(--color-text-dark);
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== Game Container ===== */
+#game-container {
+	display: flex;
+	width: 100%;
+	height: 100%;
+	background-color: var(--color-bg);
+}
+
+/* ===== Hood Scene ===== */
+#hood-scene {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: linear-gradient(135deg, var(--color-white) 0%, var(--color-light-blue) 100%);
+	overflow: hidden;
+	position: relative;
+	box-shadow: inset 0 1px 3px var(--color-shadow);
+}
+
+#hood-scene svg {
+	max-width: 100%;
+	max-height: 100%;
+	filter: drop-shadow(0 2px 4px var(--color-shadow));
+}
+
+/* ===== Protocol Panel ===== */
+#protocol-panel {
+	width: 25%;
+	min-width: 280px;
+	background-color: var(--color-white);
+	border-left: 1px solid var(--color-border);
+	display: flex;
+	flex-direction: column;
+	box-shadow: -2px 0 8px var(--color-shadow);
+	overflow-y: auto;
+}
+
+#score-display {
+	padding: 20px;
+	background: linear-gradient(135deg, var(--color-accent-green), var(--color-success));
+	color: var(--color-white);
+	text-align: center;
+	border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.score-label {
+	font-size: 12px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	opacity: 0.9;
+	margin-bottom: 8px;
+}
+
+.score-value {
+	font-size: 36px;
+	font-weight: 700;
+	line-height: 1;
+}
+
+/* Protocol Content */
+.protocol-content {
+	padding: 20px;
+	flex: 1;
+	overflow-y: auto;
+}
+
+.protocol-content h2 {
+	margin: 0 0 16px 0;
+	font-size: 18px;
+	font-weight: 600;
+	color: var(--color-text-dark);
+}
+
+/* Protocol Checklist */
+.protocol-checklist {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.protocol-step {
+	display: flex;
+	align-items: center;
+	padding: 12px;
+	margin-bottom: 8px;
+	background-color: var(--color-bg);
+	border-radius: 6px;
+	transition: all 0.3s ease;
+	cursor: pointer;
+}
+
+.protocol-step:hover {
+	background-color: #e8eaed;
+	transform: translateX(2px);
+}
+
+.protocol-step.current {
+	background-color: var(--color-light-blue);
+	border-left: 3px solid var(--color-accent-green);
+	padding-left: 9px;
+}
+
+.protocol-step input[type="checkbox"] {
+	width: 20px;
+	height: 20px;
+	margin-right: 12px;
+	cursor: pointer;
+	accent-color: var(--color-accent-green);
+}
+
+.protocol-step input[type="checkbox"]:checked {
+	background-color: var(--color-accent-green);
+}
+
+.protocol-step label {
+	cursor: pointer;
+	flex: 1;
+	font-size: 14px;
+	color: var(--color-text-dark);
+	user-select: none;
+}
+
+.protocol-step input[type="checkbox"]:checked + label {
+	color: var(--color-text-light);
+	text-decoration: line-through;
+}
+
+/* ===== Modal Overlays ===== */
+.modal-overlay {
+	display: none;
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(0, 0, 0, 0.5);
+	backdrop-filter: blur(2px);
+	z-index: 1000;
+	align-items: center;
+	justify-content: center;
+	animation: fadeIn 0.3s ease-out;
+}
+
+.modal-overlay.active {
+	display: flex;
+}
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+.modal-content {
+	background-color: var(--color-white);
+	border-radius: 12px;
+	box-shadow: 0 10px 40px var(--color-shadow-dark);
+	max-width: 90%;
+	max-height: 90vh;
+	overflow-y: auto;
+	animation: slideUp 0.3s ease-out;
+	position: relative;
+}
+
+@keyframes slideUp {
+	from {
+		transform: translateY(20px);
+		opacity: 0;
+	}
+	to {
+		transform: translateY(0);
+		opacity: 1;
+	}
+}
+
+.modal-close {
+	position: absolute;
+	top: 12px;
+	right: 12px;
+	width: 36px;
+	height: 36px;
+	border: none;
+	background-color: transparent;
+	font-size: 28px;
+	color: var(--color-text-dark);
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 50%;
+	transition: all 0.2s ease;
+	z-index: 1001;
+}
+
+.modal-close:hover {
+	background-color: var(--color-bg);
+	color: var(--color-accent-green);
+}
+
+/* Microscope Modal */
+.microscope-modal {
+	padding: 40px 30px 30px;
+	width: auto;
+}
+
+.microscope-modal h2 {
+	margin: 0 0 20px 0;
+	font-size: 24px;
+	font-weight: 600;
+	color: var(--color-text-dark);
+}
+
+.microscope-view {
+	background-color: var(--color-bg);
+	border-radius: 8px;
+	padding: 20px;
+	margin-bottom: 20px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 320px;
+}
+
+#microscope-svg {
+	max-width: 100%;
+	height: auto;
+}
+
+.cell-count-section {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.cell-count-section label {
+	font-size: 14px;
+	font-weight: 500;
+	color: var(--color-text-dark);
+}
+
+#cell-count-input {
+	padding: 10px 12px;
+	border: 1px solid var(--color-border);
+	border-radius: 6px;
+	font-size: 14px;
+	transition: all 0.2s ease;
+}
+
+#cell-count-input:focus {
+	outline: none;
+	border-color: var(--color-accent-green);
+	box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+#submit-cell-count {
+	padding: 10px 16px;
+	background-color: var(--color-accent-green);
+	color: var(--color-white);
+	border: none;
+	border-radius: 6px;
+	font-size: 14px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+#submit-cell-count:hover {
+	background-color: var(--color-success);
+	box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+#submit-cell-count:active {
+	transform: scale(0.98);
+}
+
+/* Incubator Modal */
+.incubator-modal {
+	padding: 40px 30px 30px;
+	width: auto;
+	text-align: center;
+}
+
+.incubator-modal h2 {
+	margin: 0 0 20px 0;
+	font-size: 24px;
+	font-weight: 600;
+	color: var(--color-text-dark);
+}
+
+.incubator-view {
+	background-color: var(--color-bg);
+	border-radius: 8px;
+	padding: 20px;
+	margin-bottom: 20px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 320px;
+}
+
+#incubator-svg {
+	max-width: 100%;
+	height: auto;
+}
+
+.incubation-timer {
+	padding: 20px;
+	background-color: var(--color-light-blue);
+	border-radius: 8px;
+}
+
+.incubation-timer p {
+	margin: 0 0 12px 0;
+	font-size: 16px;
+	color: var(--color-text-dark);
+	font-weight: 500;
+}
+
+.progress-bar {
+	width: 100%;
+	height: 8px;
+	background-color: var(--color-bg);
+	border-radius: 4px;
+	overflow: hidden;
+	margin: 12px 0;
+}
+
+.progress-fill {
+	height: 100%;
+	background: linear-gradient(90deg, var(--color-accent-green), var(--color-success));
+	width: 0%;
+	transition: width 0.5s ease;
+	border-radius: 4px;
+}
+
+#timer-text {
+	margin-top: 12px;
+	font-size: 14px;
+	color: var(--color-text-light);
+}
+
+/* Results Modal */
+.results-modal {
+	padding: 40px 30px 30px;
+	width: auto;
+	text-align: center;
+	min-width: 400px;
+}
+
+.results-modal h2 {
+	margin: 0 0 30px 0;
+	font-size: 28px;
+	font-weight: 600;
+	color: var(--color-text-dark);
+}
+
+.results-content {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+.result-item {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 16px;
+	background-color: var(--color-bg);
+	border-radius: 8px;
+}
+
+.result-label {
+	font-size: 14px;
+	font-weight: 500;
+	color: var(--color-text-light);
+}
+
+.result-value {
+	font-size: 24px;
+	font-weight: 700;
+	color: var(--color-accent-green);
+}
+
+.results-message {
+	padding: 16px;
+	background-color: var(--color-light-blue);
+	border-radius: 8px;
+	font-size: 14px;
+	color: var(--color-text-dark);
+	line-height: 1.6;
+	min-height: 60px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* ===== Buttons ===== */
+.btn-primary {
+	padding: 12px 24px;
+	background-color: var(--color-accent-green);
+	color: var(--color-white);
+	border: none;
+	border-radius: 6px;
+	font-size: 16px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	margin-top: 12px;
+}
+
+.btn-primary:hover {
+	background-color: var(--color-success);
+	box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+	transform: translateY(-2px);
+}
+
+.btn-primary:active {
+	transform: translateY(0);
+	box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);
+}
+
+/* ===== Notifications ===== */
+#notification-area {
+	position: fixed;
+	bottom: 20px;
+	left: 50%;
+	transform: translateX(-50%);
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	z-index: 2000;
+	pointer-events: none;
+}
+
+.notification {
+	background-color: var(--color-white);
+	color: var(--color-text-dark);
+	padding: 14px 20px;
+	border-radius: 8px;
+	box-shadow: 0 4px 12px var(--color-shadow-dark);
+	font-size: 14px;
+	font-weight: 500;
+	animation: slideInUp 0.3s ease-out;
+	pointer-events: auto;
+	max-width: 400px;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+@keyframes slideInUp {
+	from {
+		transform: translateY(20px);
+		opacity: 0;
+	}
+	to {
+		transform: translateY(0);
+		opacity: 1;
+	}
+}
+
+@keyframes slideOutDown {
+	from {
+		transform: translateY(0);
+		opacity: 1;
+	}
+	to {
+		transform: translateY(20px);
+		opacity: 0;
+	}
+}
+
+.notification.fade-out {
+	animation: slideOutDown 0.3s ease-out forwards;
+}
+
+.notification.success {
+	border-left: 4px solid var(--color-accent-green);
+	background-color: #f1f8e9;
+	color: var(--color-success);
+}
+
+.notification.warning {
+	border-left: 4px solid var(--color-warning-orange);
+	background-color: #fff3e0;
+	color: var(--color-warning-orange);
+}
+
+.notification.error {
+	border-left: 4px solid var(--color-error);
+	background-color: #ffebee;
+	color: var(--color-error);
+}
+
+.notification.info {
+	border-left: 4px solid var(--color-steel-gray);
+	background-color: #eceff1;
+	color: var(--color-steel-gray);
+}
+
+/* ===== Volume Indicator ===== */
+.volume-indicator {
+	position: absolute;
+	bottom: 20px;
+	right: 20px;
+	background-color: var(--color-white);
+	border: 2px solid var(--color-steel-gray);
+	border-radius: 8px;
+	padding: 12px 16px;
+	min-width: 120px;
+	box-shadow: 0 2px 8px var(--color-shadow);
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--color-text-dark);
+	z-index: 500;
+}
+
+.volume-label {
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	margin-bottom: 8px;
+	color: var(--color-steel-gray);
+}
+
+.volume-bar {
+	width: 100%;
+	height: 24px;
+	background-color: var(--color-bg);
+	border-radius: 4px;
+	overflow: hidden;
+	margin-bottom: 8px;
+	border: 1px solid var(--color-border);
+}
+
+.volume-fill {
+	height: 100%;
+	background: linear-gradient(90deg, var(--color-accent-green), var(--color-success));
+	width: 0%;
+	transition: width 0.2s ease;
+	border-radius: 4px;
+}
+
+.volume-text {
+	text-align: center;
+	font-size: 13px;
+	color: var(--color-text-dark);
+}
+
+/* ===== Responsive Design ===== */
+@media (max-width: 1024px) {
+	#protocol-panel {
+		width: 30%;
+		min-width: 240px;
+	}
+
+	.protocol-content {
+		padding: 16px;
+	}
+
+	.protocol-step {
+		padding: 10px;
+		margin-bottom: 6px;
+	}
+}
+
+@media (max-width: 768px) {
+	#game-container {
+		flex-direction: column;
+	}
+
+	#hood-scene {
+		flex: 1;
+		width: 100%;
+		height: 60%;
+	}
+
+	#protocol-panel {
+		width: 100%;
+		height: 40%;
+		min-width: unset;
+		border-left: none;
+		border-top: 1px solid var(--color-border);
+		box-shadow: 0 -2px 8px var(--color-shadow);
+	}
+
+	.microscope-modal,
+	.incubator-modal,
+	.results-modal {
+		width: 95vw;
+		max-width: 90vw;
+		padding: 30px 20px 20px;
+	}
+
+	.results-modal {
+		min-width: auto;
+	}
+
+	.volume-indicator {
+		bottom: 10px;
+		right: 10px;
+		min-width: 100px;
+		padding: 10px 12px;
+	}
+}
+
+@media (max-width: 480px) {
+	#score-display {
+		padding: 16px;
+	}
+
+	.score-value {
+		font-size: 28px;
+	}
+
+	.protocol-content {
+		padding: 12px;
+	}
+
+	.protocol-content h2 {
+		font-size: 16px;
+		margin-bottom: 12px;
+	}
+
+	.protocol-step {
+		padding: 8px;
+		margin-bottom: 4px;
+	}
+
+	.protocol-step label {
+		font-size: 13px;
+	}
+
+	.microscope-modal,
+	.incubator-modal {
+		padding: 24px 16px 16px;
+	}
+
+	.microscope-modal h2,
+	.incubator-modal h2 {
+		font-size: 20px;
+		margin-bottom: 16px;
+	}
+
+	.microscope-view,
+	.incubator-view {
+		min-height: 240px;
+		padding: 12px;
+	}
+
+	.results-modal {
+		padding: 24px 16px 16px;
+	}
+
+	.results-modal h2 {
+		font-size: 22px;
+		margin-bottom: 20px;
+	}
+
+	.result-item {
+		padding: 12px;
+		flex-direction: column;
+		gap: 8px;
+		align-items: flex-start;
+	}
+
+	.result-value {
+		font-size: 20px;
+	}
+
+	.notification {
+		max-width: calc(100vw - 20px);
+		font-size: 13px;
+	}
+
+	.btn-primary {
+		padding: 10px 20px;
+		font-size: 14px;
+	}
+}
+</style>
+<body>
+<div id="game-container">
+	<!-- Main hood scene (left/center area) -->
+	<div id="hood-scene"></div>
+
+	<!-- Right sidebar: Protocol panel -->
+	<div id="protocol-panel">
+		<div id="score-display">
+			<div class="score-label">Score</div>
+			<div class="score-value">0</div>
+		</div>
+		<div class="protocol-content">
+			<h2>Protocol</h2>
+			<ul id="protocol-checklist" class="protocol-checklist">
+				<li class="protocol-step">
+					<input type="checkbox" id="step-spray" disabled>
+					<label for="step-spray">Spray ethanol</label>
+				</li>
+				<li class="protocol-step">
+					<input type="checkbox" id="step-aspirate" disabled>
+					<label for="step-aspirate">Aspirate old media</label>
+				</li>
+				<li class="protocol-step">
+					<input type="checkbox" id="step-add-media" disabled>
+					<label for="step-add-media">Add fresh media</label>
+				</li>
+				<li class="protocol-step">
+					<input type="checkbox" id="step-add-drug" disabled>
+					<label for="step-add-drug">Add drug</label>
+				</li>
+				<li class="protocol-step">
+					<input type="checkbox" id="step-incubate" disabled>
+					<label for="step-incubate">Incubate</label>
+				</li>
+				<li class="protocol-step">
+					<input type="checkbox" id="step-microscope" disabled>
+					<label for="step-microscope">Check microscope</label>
+				</li>
+			</ul>
+		</div>
+	</div>
+
+	<!-- Microscope overlay modal (hidden by default) -->
+	<div id="microscope-overlay" class="modal-overlay">
+		<div class="modal-content microscope-modal">
+			<button class="modal-close" aria-label="Close microscope view">&times;</button>
+			<h2>Microscope View</h2>
+			<div class="microscope-view">
+				<!-- SVG microscope view will be injected here -->
+				<svg id="microscope-svg" viewBox="0 0 400 300" width="400" height="300"></svg>
+			</div>
+			<div class="cell-count-section">
+				<label for="cell-count-input">Estimated cell count:</label>
+				<input id="cell-count-input" type="number" placeholder="Enter count" min="0">
+				<button id="submit-cell-count">Submit</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- Incubator transition screen (hidden by default) -->
+	<div id="incubator-screen" class="modal-overlay">
+		<div class="modal-content incubator-modal">
+			<h2>Incubator</h2>
+			<div class="incubator-view">
+				<!-- SVG incubator will be injected here -->
+				<svg id="incubator-svg" viewBox="0 0 400 300" width="400" height="300"></svg>
+			</div>
+			<div class="incubation-timer">
+				<p>Incubating cells...</p>
+				<div class="progress-bar">
+					<div class="progress-fill"></div>
+				</div>
+				<p id="timer-text">Time remaining: --</p>
+			</div>
+		</div>
+	</div>
+
+	<!-- Results screen (hidden by default) -->
+	<div id="results-screen" class="modal-overlay">
+		<div class="modal-content results-modal">
+			<h2>Game Results</h2>
+			<div class="results-content">
+				<div class="result-item">
+					<span class="result-label">Final Score:</span>
+					<span class="result-value" id="final-score">0</span>
+				</div>
+				<div class="result-item">
+					<span class="result-label">Cell Health:</span>
+					<span class="result-value" id="cell-health">0%</span>
+				</div>
+				<div class="result-item">
+					<span class="result-label">Contamination:</span>
+					<span class="result-value" id="contamination-level">0%</span>
+				</div>
+				<div id="results-message" class="results-message"></div>
+				<button id="play-again-btn" class="btn-primary">Play Again</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- Notifications area (toast notifications) -->
+	<div id="notification-area"></div>
+
+	<!-- Volume indicator (pipette volume) -->
+	<div id="volume-indicator" class="volume-indicator" style="display: none;">
+		<div class="volume-label">Volume</div>
+		<div class="volume-bar">
+			<div class="volume-fill"></div>
+		</div>
+		<div class="volume-text">0 µL</div>
+	</div>
+</div>
+<script>
+const CELL_CULTURE_PLATE_SVG = `<svg
+    xmlns="http://www.w3.org/2000/svg"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    viewBox="0 0 211.05 96.69"
+    version="1.1"
+  ><g
+      transform="translate(-215.53 -372.44)"
+    ><g
+      ><g
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 363.66 435.84)"
+        ><path
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+            inkscape:connector-curvature="0"
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+        /><path
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+            inkscape:connector-curvature="0"
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+        /><path
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+            inkscape:connector-curvature="0"
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+        /></g
+      ><g
+          transform="translate(85.512 448.46)"
+        ><path
+            d="m274.42-7.536c-2.4734 0.50328-4.6389 2.0438-6.5783 3.5758-1.3313 1.3006-1.5781 3.2896-1.1223 5.0139 0.25236 1.5163-0.21236 3.0139-0.92796 4.3289-0.50158 1.2091-0.16781 2.8783 1.1903 3.2503 1.7055 0.59268 3.758 0.10192 5.2748 1.2875 2.0898 1.2202 3.9813 3.3515 6.5895 3.226 2.2348-1.1206 4.4176-3.5023 3.809-6.1751-0.55025-1.2689-1.4628-2.5534-1.0251-4.0131 0.30078-1.6269 0.65682-3.5372-0.62188-4.8682-1.475-1.5345-3.2464-2.7813-4.7904-4.2657-0.58475-0.45765-1.1426-1.077-1.7976-1.3604z"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.15547;fill:#aa1212"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m273.86-6.5725c-1.9968 0.17659-4.0729 1.8683-5.8221 3.4771-1.0578 1.3253-0.84995 3.1261-0.53443 4.6641 0.14488 1.5881-0.56869 3.0447-1.1563 4.46-0.22568 0.85736 0.3248 2.0217 1.3231 2.0948 1.7898 0.36811 3.6619 0.094676 5.1581 1.3061 1.8793 1.0996 3.5206 2.9793 5.8447 2.9879 1.8763-0.98981 3.7974-2.9827 3.2795-5.2811-0.74342-1.4276-1.5172-3.0424-0.92311-4.6738 0.19916-1.3242 0.48402-3.1656-0.79192-4.1491-1.8472-1.6361-2.6456-2.5536-3.6429-3.42-1.46-0.98365-1.1648-1.5954-2.7346-1.466z"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.15547;fill:#ececec"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m273.59-3.1227c-0.88425 0.33719-0.95754 1.0997-2.1631 1.6904-1.24 0.60757-0.92077 2.5044-0.0737 3.863 0.57609 2.036 2.5575 3.6684 4.7156 2.6819 1.542-0.63655 1.32-1.6093 2.7396-3.2732 0.96656-1.1328-0.24835-2.5704-1.5308-3.401-0.70739-0.47916-2.8074-1.6109-3.6878-1.5611z"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.16530;fill:#cccccc"
+            inkscape:connector-curvature="0"
+        /></g
+      ><g
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 328.59 415.28)"
+        ><path
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+            inkscape:connector-curvature="0"
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+        /><path
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+            inkscape:connector-curvature="0"
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+        /><path
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+            inkscape:connector-curvature="0"
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+        /></g
+      ><g
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 353.2 416.7)"
+        ><path
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+            inkscape:connector-curvature="0"
+        /></g
+      ><g
+          transform="matrix(.92892 0 0 .92892 -311.05 192.51)"
+        ><path
+            style="stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.16737;fill:#aa1212"
+            inkscape:connector-curvature="0"
+            d="m746.66 250.77c-2.6626 0.54179-4.9938 2.2002-7.0817 3.8494-1.4332 1.4002-1.6989 3.5414-1.2082 5.3976 0.27167 1.6323-0.22861 3.2446-0.99897 4.6601-0.53996 1.3016-0.18065 3.0985 1.2814 3.499 1.836 0.63803 4.0455 0.10972 5.6784 1.386 2.2497 1.3135 4.286 3.608 7.0937 3.4728 2.4058-1.2064 4.7556-3.7702 4.1005-6.6476-0.59235-1.366-1.5747-2.7488-1.1036-4.3202 0.32379-1.7514 0.70708-3.8079-0.66946-5.2406-1.5878-1.6519-3.4949-2.9941-5.157-4.5921-0.62949-0.49267-1.23-1.1594-1.9352-1.4644z"
+        /><path
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.16737;fill:#ececec"
+            inkscape:connector-curvature="0"
+            d="m746.05 251.8c-2.1496 0.1901-4.3846 2.0113-6.2676 3.7431-1.1387 1.4267-0.91498 3.3653-0.57532 5.021 0.15596 1.7097-0.61221 3.2776-1.2448 4.8013-0.24295 0.92296 0.34965 2.1764 1.4243 2.2551 1.9267 0.39628 3.9421 0.10192 5.5528 1.4061 2.0231 1.1838 3.79 3.2073 6.2919 3.2166 2.0198-1.0656 4.088-3.211 3.5304-5.6852-0.8003-1.5368-1.6332-3.2752-0.99374-5.0314 0.2144-1.4256 0.52106-3.4078-0.85252-4.4666-1.9885-1.7613-2.848-2.749-3.9216-3.6817-1.5717-1.0589-1.254-1.7175-2.9438-1.5782z"
+        /><path
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.17795;fill:#cccccc"
+            inkscape:connector-curvature="0"
+            d="m745.76 255.52c-0.95191 0.36299-1.0308 1.1838-2.3286 1.8197-1.3348 0.65406-0.99123 2.696-0.0793 4.1586 0.62017 2.1918 2.7532 3.9491 5.0765 2.8871 1.66-0.68526 1.421-1.7325 2.9492-3.5236 1.0405-1.2195-0.26735-2.767-1.6479-3.6613-0.76152-0.51582-3.0222-1.7342-3.97-1.6806z"
+        /></g
+      ><g
+          transform="matrix(.92892 0 0 .92892 -334.49 197.7)"
+        ><path
+            d="m746.66 250.77c-2.6626 0.54179-4.9938 2.2002-7.0817 3.8494-1.4332 1.4002-1.6989 3.5414-1.2082 5.3976 0.27167 1.6323-0.22861 3.2446-0.99897 4.6601-0.53996 1.3016-0.18065 3.0985 1.2814 3.499 1.836 0.63803 4.0455 0.10972 5.6784 1.386 2.2497 1.3135 4.286 3.608 7.0937 3.4728 2.4058-1.2064 4.7556-3.7702 4.1005-6.6476-0.59235-1.366-1.5747-2.7488-1.1036-4.3202 0.32379-1.7514 0.70708-3.8079-0.66946-5.2406-1.5878-1.6519-3.4949-2.9941-5.157-4.5921-0.62949-0.49267-1.23-1.1594-1.9352-1.4644z"
+            style="stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.16737;fill:#aa1212"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m746.05 251.8c-2.1496 0.1901-4.3846 2.0113-6.2676 3.7431-1.1387 1.4267-0.91498 3.3653-0.57532 5.021 0.15596 1.7097-0.61221 3.2776-1.2448 4.8013-0.24295 0.92296 0.34965 2.1764 1.4243 2.2551 1.9267 0.39628 3.9421 0.10192 5.5528 1.4061 2.0231 1.1838 3.79 3.2073 6.2919 3.2166 2.0198-1.0656 4.088-3.211 3.5304-5.6852-0.8003-1.5368-1.6332-3.2752-0.99374-5.0314 0.2144-1.4256 0.52106-3.4078-0.85252-4.4666-1.9885-1.7613-2.848-2.749-3.9216-3.6817-1.5717-1.0589-1.254-1.7175-2.9438-1.5782z"
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.16737;fill:#ececec"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m745.76 255.52c-0.95191 0.36299-1.0308 1.1838-2.3286 1.8197-1.3348 0.65406-0.99123 2.696-0.0793 4.1586 0.62017 2.1918 2.7532 3.9491 5.0765 2.8871 1.66-0.68526 1.421-1.7325 2.9492-3.5236 1.0405-1.2195-0.26735-2.767-1.6479-3.6613-0.76152-0.51582-3.0222-1.7342-3.97-1.6806z"
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.17795;fill:#cccccc"
+            inkscape:connector-curvature="0"
+        /></g
+      ><g
+          transform="matrix(.92892 0 0 .92892 -291.04 201.4)"
+        ><path
+            d="m746.66 250.77c-2.6626 0.54179-4.9938 2.2002-7.0817 3.8494-1.4332 1.4002-1.6989 3.5414-1.2082 5.3976 0.27167 1.6323-0.22861 3.2446-0.99897 4.6601-0.53996 1.3016-0.18065 3.0985 1.2814 3.499 1.836 0.63803 4.0455 0.10972 5.6784 1.386 2.2497 1.3135 4.286 3.608 7.0937 3.4728 2.4058-1.2064 4.7556-3.7702 4.1005-6.6476-0.59235-1.366-1.5747-2.7488-1.1036-4.3202 0.32379-1.7514 0.70708-3.8079-0.66946-5.2406-1.5878-1.6519-3.4949-2.9941-5.157-4.5921-0.62949-0.49267-1.23-1.1594-1.9352-1.4644z"
+            style="stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.16737;fill:#aa1212"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m746.05 251.8c-2.1496 0.1901-4.3846 2.0113-6.2676 3.7431-1.1387 1.4267-0.91498 3.3653-0.57532 5.021 0.15596 1.7097-0.61221 3.2776-1.2448 4.8013-0.24295 0.92296 0.34965 2.1764 1.4243 2.2551 1.9267 0.39628 3.9421 0.10192 5.5528 1.4061 2.0231 1.1838 3.79 3.2073 6.2919 3.2166 2.0198-1.0656 4.088-3.211 3.5304-5.6852-0.8003-1.5368-1.6332-3.2752-0.99374-5.0314 0.2144-1.4256 0.52106-3.4078-0.85252-4.4666-1.9885-1.7613-2.848-2.749-3.9216-3.6817-1.5717-1.0589-1.254-1.7175-2.9438-1.5782z"
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.16737;fill:#ececec"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m745.76 255.52c-0.95191 0.36299-1.0308 1.1838-2.3286 1.8197-1.3348 0.65406-0.99123 2.696-0.0793 4.1586 0.62017 2.1918 2.7532 3.9491 5.0765 2.8871 1.66-0.68526 1.421-1.7325 2.9492-3.5236 1.0405-1.2195-0.26735-2.767-1.6479-3.6613-0.76152-0.51582-3.0222-1.7342-3.97-1.6806z"
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.17795;fill:#cccccc"
+            inkscape:connector-curvature="0"
+        /></g
+      ><g
+          transform="matrix(.92892 0 0 .92892 -312.38 168.14)"
+        ><path
+            d="m746.66 250.77c-2.6626 0.54179-4.9938 2.2002-7.0817 3.8494-1.4332 1.4002-1.6989 3.5414-1.2082 5.3976 0.27167 1.6323-0.22861 3.2446-0.99897 4.6601-0.53996 1.3016-0.18065 3.0985 1.2814 3.499 1.836 0.63803 4.0455 0.10972 5.6784 1.386 2.2497 1.3135 4.286 3.608 7.0937 3.4728 2.4058-1.2064 4.7556-3.7702 4.1005-6.6476-0.59235-1.366-1.5747-2.7488-1.1036-4.3202 0.32379-1.7514 0.70708-3.8079-0.66946-5.2406-1.5878-1.6519-3.4949-2.9941-5.157-4.5921-0.62949-0.49267-1.23-1.1594-1.9352-1.4644z"
+            style="stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.16737;fill:#aa1212"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m746.05 251.8c-2.1496 0.1901-4.3846 2.0113-6.2676 3.7431-1.1387 1.4267-0.91498 3.3653-0.57532 5.021 0.15596 1.7097-0.61221 3.2776-1.2448 4.8013-0.24295 0.92296 0.34965 2.1764 1.4243 2.2551 1.9267 0.39628 3.9421 0.10192 5.5528 1.4061 2.0231 1.1838 3.79 3.2073 6.2919 3.2166 2.0198-1.0656 4.088-3.211 3.5304-5.6852-0.8003-1.5368-1.6332-3.2752-0.99374-5.0314 0.2144-1.4256 0.52106-3.4078-0.85252-4.4666-1.9885-1.7613-2.848-2.749-3.9216-3.6817-1.5717-1.0589-1.254-1.7175-2.9438-1.5782z"
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.16737;fill:#ececec"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m745.76 255.52c-0.95191 0.36299-1.0308 1.1838-2.3286 1.8197-1.3348 0.65406-0.99123 2.696-0.0793 4.1586 0.62017 2.1918 2.7532 3.9491 5.0765 2.8871 1.66-0.68526 1.421-1.7325 2.9492-3.5236 1.0405-1.2195-0.26735-2.767-1.6479-3.6613-0.76152-0.51582-3.0222-1.7342-3.97-1.6806z"
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.17795;fill:#cccccc"
+            inkscape:connector-curvature="0"
+        /></g
+      ><g
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 276.4 407.03)"
+        ><path
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+            inkscape:connector-curvature="0"
+        /></g
+      ><g
+          transform="matrix(.92892 0 0 .92892 -366.85 176.88)"
+        ><path
+            d="m746.66 250.77c-2.6626 0.54179-4.9938 2.2002-7.0817 3.8494-1.4332 1.4002-1.6989 3.5414-1.2082 5.3976 0.27167 1.6323-0.22861 3.2446-0.99897 4.6601-0.53996 1.3016-0.18065 3.0985 1.2814 3.499 1.836 0.63803 4.0455 0.10972 5.6784 1.386 2.2497 1.3135 4.286 3.608 7.0937 3.4728 2.4058-1.2064 4.7556-3.7702 4.1005-6.6476-0.59235-1.366-1.5747-2.7488-1.1036-4.3202 0.32379-1.7514 0.70708-3.8079-0.66946-5.2406-1.5878-1.6519-3.4949-2.9941-5.157-4.5921-0.62949-0.49267-1.23-1.1594-1.9352-1.4644z"
+            style="stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.16737;fill:#aa1212"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m746.05 251.8c-2.1496 0.1901-4.3846 2.0113-6.2676 3.7431-1.1387 1.4267-0.91498 3.3653-0.57532 5.021 0.15596 1.7097-0.61221 3.2776-1.2448 4.8013-0.24295 0.92296 0.34965 2.1764 1.4243 2.2551 1.9267 0.39628 3.9421 0.10192 5.5528 1.4061 2.0231 1.1838 3.79 3.2073 6.2919 3.2166 2.0198-1.0656 4.088-3.211 3.5304-5.6852-0.8003-1.5368-1.6332-3.2752-0.99374-5.0314 0.2144-1.4256 0.52106-3.4078-0.85252-4.4666-1.9885-1.7613-2.848-2.749-3.9216-3.6817-1.5717-1.0589-1.254-1.7175-2.9438-1.5782z"
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.16737;fill:#ececec"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m745.76 255.52c-0.95191 0.36299-1.0308 1.1838-2.3286 1.8197-1.3348 0.65406-0.99123 2.696-0.0793 4.1586 0.62017 2.1918 2.7532 3.9491 5.0765 2.8871 1.66-0.68526 1.421-1.7325 2.9492-3.5236 1.0405-1.2195-0.26735-2.767-1.6479-3.6613-0.76152-0.51582-3.0222-1.7342-3.97-1.6806z"
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.17795;fill:#cccccc"
+            inkscape:connector-curvature="0"
+        /></g
+      ><g
+          transform="matrix(.92892 0 0 .92892 -372.83 191.93)"
+        ><path
+            style="stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.16737;fill:#aa1212"
+            inkscape:connector-curvature="0"
+            d="m746.66 250.77c-2.6626 0.54179-4.9938 2.2002-7.0817 3.8494-1.4332 1.4002-1.6989 3.5414-1.2082 5.3976 0.27167 1.6323-0.22861 3.2446-0.99897 4.6601-0.53996 1.3016-0.18065 3.0985 1.2814 3.499 1.836 0.63803 4.0455 0.10972 5.6784 1.386 2.2497 1.3135 4.286 3.608 7.0937 3.4728 2.4058-1.2064 4.7556-3.7702 4.1005-6.6476-0.59235-1.366-1.5747-2.7488-1.1036-4.3202 0.32379-1.7514 0.70708-3.8079-0.66946-5.2406-1.5878-1.6519-3.4949-2.9941-5.157-4.5921-0.62949-0.49267-1.23-1.1594-1.9352-1.4644z"
+        /><path
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.16737;fill:#ececec"
+            inkscape:connector-curvature="0"
+            d="m746.05 251.8c-2.1496 0.1901-4.3846 2.0113-6.2676 3.7431-1.1387 1.4267-0.91498 3.3653-0.57532 5.021 0.15596 1.7097-0.61221 3.2776-1.2448 4.8013-0.24295 0.92296 0.34965 2.1764 1.4243 2.2551 1.9267 0.39628 3.9421 0.10192 5.5528 1.4061 2.0231 1.1838 3.79 3.2073 6.2919 3.2166 2.0198-1.0656 4.088-3.211 3.5304-5.6852-0.8003-1.5368-1.6332-3.2752-0.99374-5.0314 0.2144-1.4256 0.52106-3.4078-0.85252-4.4666-1.9885-1.7613-2.848-2.749-3.9216-3.6817-1.5717-1.0589-1.254-1.7175-2.9438-1.5782z"
+        /><path
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.17795;fill:#cccccc"
+            inkscape:connector-curvature="0"
+            d="m745.76 255.52c-0.95191 0.36299-1.0308 1.1838-2.3286 1.8197-1.3348 0.65406-0.99123 2.696-0.0793 4.1586 0.62017 2.1918 2.7532 3.9491 5.0765 2.8871 1.66-0.68526 1.421-1.7325 2.9492-3.5236 1.0405-1.2195-0.26735-2.767-1.6479-3.6613-0.76152-0.51582-3.0222-1.7342-3.97-1.6806z"
+        /></g
+      ><g
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 323.85 433.8)"
+        ><path
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+            inkscape:connector-curvature="0"
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+        /><path
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+            inkscape:connector-curvature="0"
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+        /><path
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+            inkscape:connector-curvature="0"
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+        /></g
+      ><g
+          transform="matrix(.92892 0 0 .92892 -388.62 206.44)"
+        ><path
+            style="stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.16737;fill:#aa1212"
+            inkscape:connector-curvature="0"
+            d="m746.66 250.77c-2.6626 0.54179-4.9938 2.2002-7.0817 3.8494-1.4332 1.4002-1.6989 3.5414-1.2082 5.3976 0.27167 1.6323-0.22861 3.2446-0.99897 4.6601-0.53996 1.3016-0.18065 3.0985 1.2814 3.499 1.836 0.63803 4.0455 0.10972 5.6784 1.386 2.2497 1.3135 4.286 3.608 7.0937 3.4728 2.4058-1.2064 4.7556-3.7702 4.1005-6.6476-0.59235-1.366-1.5747-2.7488-1.1036-4.3202 0.32379-1.7514 0.70708-3.8079-0.66946-5.2406-1.5878-1.6519-3.4949-2.9941-5.157-4.5921-0.62949-0.49267-1.23-1.1594-1.9352-1.4644z"
+        /><path
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.16737;fill:#ececec"
+            inkscape:connector-curvature="0"
+            d="m746.05 251.8c-2.1496 0.1901-4.3846 2.0113-6.2676 3.7431-1.1387 1.4267-0.91498 3.3653-0.57532 5.021 0.15596 1.7097-0.61221 3.2776-1.2448 4.8013-0.24295 0.92296 0.34965 2.1764 1.4243 2.2551 1.9267 0.39628 3.9421 0.10192 5.5528 1.4061 2.0231 1.1838 3.79 3.2073 6.2919 3.2166 2.0198-1.0656 4.088-3.211 3.5304-5.6852-0.8003-1.5368-1.6332-3.2752-0.99374-5.0314 0.2144-1.4256 0.52106-3.4078-0.85252-4.4666-1.9885-1.7613-2.848-2.749-3.9216-3.6817-1.5717-1.0589-1.254-1.7175-2.9438-1.5782z"
+        /><path
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.17795;fill:#cccccc"
+            inkscape:connector-curvature="0"
+            d="m745.76 255.52c-0.95191 0.36299-1.0308 1.1838-2.3286 1.8197-1.3348 0.65406-0.99123 2.696-0.0793 4.1586 0.62017 2.1918 2.7532 3.9491 5.0765 2.8871 1.66-0.68526 1.421-1.7325 2.9492-3.5236 1.0405-1.2195-0.26735-2.767-1.6479-3.6613-0.76152-0.51582-3.0222-1.7342-3.97-1.6806z"
+        /></g
+      ><g
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 306.65 434.56)"
+        ><path
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+            inkscape:connector-curvature="0"
+        /></g
+      ><g
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 273.24 433.83)"
+        ><path
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+            inkscape:connector-curvature="0"
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+        /><path
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+            inkscape:connector-curvature="0"
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+        /><path
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+            inkscape:connector-curvature="0"
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+        /></g
+      ><g
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 243.38 427.49)"
+        ><path
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+            inkscape:connector-curvature="0"
+        /></g
+      ><g
+          transform="matrix(.92892 0 0 .92892 -393.12 171.62)"
+        ><path
+            style="stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.16737;fill:#aa1212"
+            inkscape:connector-curvature="0"
+            d="m746.66 250.77c-2.6626 0.54179-4.9938 2.2002-7.0817 3.8494-1.4332 1.4002-1.6989 3.5414-1.2082 5.3976 0.27167 1.6323-0.22861 3.2446-0.99897 4.6601-0.53996 1.3016-0.18065 3.0985 1.2814 3.499 1.836 0.63803 4.0455 0.10972 5.6784 1.386 2.2497 1.3135 4.286 3.608 7.0937 3.4728 2.4058-1.2064 4.7556-3.7702 4.1005-6.6476-0.59235-1.366-1.5747-2.7488-1.1036-4.3202 0.32379-1.7514 0.70708-3.8079-0.66946-5.2406-1.5878-1.6519-3.4949-2.9941-5.157-4.5921-0.62949-0.49267-1.23-1.1594-1.9352-1.4644z"
+        /><path
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.16737;fill:#ececec"
+            inkscape:connector-curvature="0"
+            d="m746.05 251.8c-2.1496 0.1901-4.3846 2.0113-6.2676 3.7431-1.1387 1.4267-0.91498 3.3653-0.57532 5.021 0.15596 1.7097-0.61221 3.2776-1.2448 4.8013-0.24295 0.92296 0.34965 2.1764 1.4243 2.2551 1.9267 0.39628 3.9421 0.10192 5.5528 1.4061 2.0231 1.1838 3.79 3.2073 6.2919 3.2166 2.0198-1.0656 4.088-3.211 3.5304-5.6852-0.8003-1.5368-1.6332-3.2752-0.99374-5.0314 0.2144-1.4256 0.52106-3.4078-0.85252-4.4666-1.9885-1.7613-2.848-2.749-3.9216-3.6817-1.5717-1.0589-1.254-1.7175-2.9438-1.5782z"
+        /><path
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.17795;fill:#cccccc"
+            inkscape:connector-curvature="0"
+            d="m745.76 255.52c-0.95191 0.36299-1.0308 1.1838-2.3286 1.8197-1.3348 0.65406-0.99123 2.696-0.0793 4.1586 0.62017 2.1918 2.7532 3.9491 5.0765 2.8871 1.66-0.68526 1.421-1.7325 2.9492-3.5236 1.0405-1.2195-0.26735-2.767-1.6479-3.6613-0.76152-0.51582-3.0222-1.7342-3.97-1.6806z"
+        /></g
+      ><g
+          transform="translate(.97523 223.33)"
+        ><path
+            style="stroke-dashoffset:42;stroke:#1d1d1d;stroke-width:.16091;fill:#d71212"
+            inkscape:connector-curvature="0"
+            d="m278.1 177.01c-2.5598 0.52088-4.801 2.1152-6.8083 3.7008-1.3779 1.3461-1.6333 3.4046-1.1615 5.1892 0.26119 1.5693-0.21978 3.1193-0.96041 4.4802-0.51911 1.2513-0.17367 2.9789 1.2319 3.3639 1.7651 0.61339 3.8894 0.10548 5.4592 1.3325 2.1629 1.2628 4.1205 3.4687 6.8198 3.3387 2.3129-1.1598 4.572-3.6247 3.9422-6.391-0.56949-1.3133-1.5139-2.6426-1.061-4.1534 0.31129-1.6838 0.67978-3.6609-0.64362-5.0383-1.5266-1.5881-3.3599-2.8785-4.9579-4.4148-0.60519-0.47365-1.1826-1.1146-1.8605-1.4079z"
+        /><path
+            style="stroke-dashoffset:42;stroke:#7b7b7b;stroke-width:.16091;fill:#f15757"
+            inkscape:connector-curvature="0"
+            d="m277.51 178.01c-2.0666 0.18277-4.2153 1.9336-6.0257 3.5986-1.0948 1.3717-0.87966 3.2354-0.55311 4.8272 0.14994 1.6437-0.58858 3.1511-1.1967 4.616-0.23357 0.88733 0.33616 2.0923 1.3693 2.168 1.8524 0.38098 3.7899 0.098 5.3384 1.3518 1.945 1.1381 3.6437 3.0835 6.049 3.0924 1.9419-1.0244 3.9302-3.087 3.3941-5.4657-0.7694-1.4775-1.5702-3.1488-0.95537-4.8372 0.20613-1.3705 0.50094-3.2763-0.81961-4.2942-1.9118-1.6933-2.738-2.6428-3.7702-3.5396-1.511-1.018-1.2056-1.6512-2.8302-1.5173z"
+        /><path
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:.17108;fill:#ee3030"
+            inkscape:connector-curvature="0"
+            d="m277.23 181.58c-0.91516 0.34898-0.991 1.1381-2.2387 1.7495-1.2833 0.6288-0.95297 2.5919-0.0762 3.9981 0.59623 2.1072 2.6469 3.7966 4.8805 2.7757 1.5959-0.6588 1.3662-1.6656 2.8354-3.3876 1.0004-1.1724-0.25703-2.6602-1.5843-3.5199-0.73212-0.49591-2.9055-1.6673-3.8167-1.6157z"
+        /></g
+      ><g
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 301.8 395.69)"
+        ><path
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+            inkscape:connector-curvature="0"
+        /></g
+      ><g
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 244.36 410.9)"
+        ><path
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+            inkscape:connector-curvature="0"
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+        /><path
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+            inkscape:connector-curvature="0"
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+        /><path
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+            inkscape:connector-curvature="0"
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+        /></g
+      ><g
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 265.22 414.99)"
+        ><path
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+            inkscape:connector-curvature="0"
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+        /><path
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+            inkscape:connector-curvature="0"
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+        /><path
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+            inkscape:connector-curvature="0"
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+        /></g
+      ><g
+          transform="matrix(.92892 0 0 .92892 -365.27 176)"
+        ><path
+            style="stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.16737;fill:#aa1212"
+            inkscape:connector-curvature="0"
+            d="m746.66 250.77c-2.6626 0.54179-4.9938 2.2002-7.0817 3.8494-1.4332 1.4002-1.6989 3.5414-1.2082 5.3976 0.27167 1.6323-0.22861 3.2446-0.99897 4.6601-0.53996 1.3016-0.18065 3.0985 1.2814 3.499 1.836 0.63803 4.0455 0.10972 5.6784 1.386 2.2497 1.3135 4.286 3.608 7.0937 3.4728 2.4058-1.2064 4.7556-3.7702 4.1005-6.6476-0.59235-1.366-1.5747-2.7488-1.1036-4.3202 0.32379-1.7514 0.70708-3.8079-0.66946-5.2406-1.5878-1.6519-3.4949-2.9941-5.157-4.5921-0.62949-0.49267-1.23-1.1594-1.9352-1.4644z"
+        /><path
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.16737;fill:#ececec"
+            inkscape:connector-curvature="0"
+            d="m746.05 251.8c-2.1496 0.1901-4.3846 2.0113-6.2676 3.7431-1.1387 1.4267-0.91498 3.3653-0.57532 5.021 0.15596 1.7097-0.61221 3.2776-1.2448 4.8013-0.24295 0.92296 0.34965 2.1764 1.4243 2.2551 1.9267 0.39628 3.9421 0.10192 5.5528 1.4061 2.0231 1.1838 3.79 3.2073 6.2919 3.2166 2.0198-1.0656 4.088-3.211 3.5304-5.6852-0.8003-1.5368-1.6332-3.2752-0.99374-5.0314 0.2144-1.4256 0.52106-3.4078-0.85252-4.4666-1.9885-1.7613-2.848-2.749-3.9216-3.6817-1.5717-1.0589-1.254-1.7175-2.9438-1.5782z"
+        /><path
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.17795;fill:#cccccc"
+            inkscape:connector-curvature="0"
+            d="m745.76 255.52c-0.95191 0.36299-1.0308 1.1838-2.3286 1.8197-1.3348 0.65406-0.99123 2.696-0.0793 4.1586 0.62017 2.1918 2.7532 3.9491 5.0765 2.8871 1.66-0.68526 1.421-1.7325 2.9492-3.5236 1.0405-1.2195-0.26735-2.767-1.6479-3.6613-0.76152-0.51582-3.0222-1.7342-3.97-1.6806z"
+        /></g
+      ><g
+          transform="matrix(.92892 0 0 .92892 -455.1 190.99)"
+        ><path
+            d="m746.66 250.77c-2.6626 0.54179-4.9938 2.2002-7.0817 3.8494-1.4332 1.4002-1.6989 3.5414-1.2082 5.3976 0.27167 1.6323-0.22861 3.2446-0.99897 4.6601-0.53996 1.3016-0.18065 3.0985 1.2814 3.499 1.836 0.63803 4.0455 0.10972 5.6784 1.386 2.2497 1.3135 4.286 3.608 7.0937 3.4728 2.4058-1.2064 4.7556-3.7702 4.1005-6.6476-0.59235-1.366-1.5747-2.7488-1.1036-4.3202 0.32379-1.7514 0.70708-3.8079-0.66946-5.2406-1.5878-1.6519-3.4949-2.9941-5.157-4.5921-0.62949-0.49267-1.23-1.1594-1.9352-1.4644z"
+            style="stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.16737;fill:#aa1212"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m746.05 251.8c-2.1496 0.1901-4.3846 2.0113-6.2676 3.7431-1.1387 1.4267-0.91498 3.3653-0.57532 5.021 0.15596 1.7097-0.61221 3.2776-1.2448 4.8013-0.24295 0.92296 0.34965 2.1764 1.4243 2.2551 1.9267 0.39628 3.9421 0.10192 5.5528 1.4061 2.0231 1.1838 3.79 3.2073 6.2919 3.2166 2.0198-1.0656 4.088-3.211 3.5304-5.6852-0.8003-1.5368-1.6332-3.2752-0.99374-5.0314 0.2144-1.4256 0.52106-3.4078-0.85252-4.4666-1.9885-1.7613-2.848-2.749-3.9216-3.6817-1.5717-1.0589-1.254-1.7175-2.9438-1.5782z"
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.16737;fill:#ececec"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m745.76 255.52c-0.95191 0.36299-1.0308 1.1838-2.3286 1.8197-1.3348 0.65406-0.99123 2.696-0.0793 4.1586 0.62017 2.1918 2.7532 3.9491 5.0765 2.8871 1.66-0.68526 1.421-1.7325 2.9492-3.5236 1.0405-1.2195-0.26735-2.767-1.6479-3.6613-0.76152-0.51582-3.0222-1.7342-3.97-1.6806z"
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.17795;fill:#cccccc"
+            inkscape:connector-curvature="0"
+        /></g
+      ><g
+          transform="matrix(.92892 0 0 .92892 -384.99 183.94)"
+        ><path
+            style="stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.16737;fill:#aa1212"
+            inkscape:connector-curvature="0"
+            d="m746.66 250.77c-2.6626 0.54179-4.9938 2.2002-7.0817 3.8494-1.4332 1.4002-1.6989 3.5414-1.2082 5.3976 0.27167 1.6323-0.22861 3.2446-0.99897 4.6601-0.53996 1.3016-0.18065 3.0985 1.2814 3.499 1.836 0.63803 4.0455 0.10972 5.6784 1.386 2.2497 1.3135 4.286 3.608 7.0937 3.4728 2.4058-1.2064 4.7556-3.7702 4.1005-6.6476-0.59235-1.366-1.5747-2.7488-1.1036-4.3202 0.32379-1.7514 0.70708-3.8079-0.66946-5.2406-1.5878-1.6519-3.4949-2.9941-5.157-4.5921-0.62949-0.49267-1.23-1.1594-1.9352-1.4644z"
+        /><path
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.16737;fill:#ececec"
+            inkscape:connector-curvature="0"
+            d="m746.05 251.8c-2.1496 0.1901-4.3846 2.0113-6.2676 3.7431-1.1387 1.4267-0.91498 3.3653-0.57532 5.021 0.15596 1.7097-0.61221 3.2776-1.2448 4.8013-0.24295 0.92296 0.34965 2.1764 1.4243 2.2551 1.9267 0.39628 3.9421 0.10192 5.5528 1.4061 2.0231 1.1838 3.79 3.2073 6.2919 3.2166 2.0198-1.0656 4.088-3.211 3.5304-5.6852-0.8003-1.5368-1.6332-3.2752-0.99374-5.0314 0.2144-1.4256 0.52106-3.4078-0.85252-4.4666-1.9885-1.7613-2.848-2.749-3.9216-3.6817-1.5717-1.0589-1.254-1.7175-2.9438-1.5782z"
+        /><path
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.17795;fill:#cccccc"
+            inkscape:connector-curvature="0"
+            d="m745.76 255.52c-0.95191 0.36299-1.0308 1.1838-2.3286 1.8197-1.3348 0.65406-0.99123 2.696-0.0793 4.1586 0.62017 2.1918 2.7532 3.9491 5.0765 2.8871 1.66-0.68526 1.421-1.7325 2.9492-3.5236 1.0405-1.2195-0.26735-2.767-1.6479-3.6613-0.76152-0.51582-3.0222-1.7342-3.97-1.6806z"
+        /></g
+      ><g
+          transform="matrix(.92892 0 0 .92892 -422.27 196.8)"
+        ><path
+            style="stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.16737;fill:#aa1212"
+            inkscape:connector-curvature="0"
+            d="m746.66 250.77c-2.6626 0.54179-4.9938 2.2002-7.0817 3.8494-1.4332 1.4002-1.6989 3.5414-1.2082 5.3976 0.27167 1.6323-0.22861 3.2446-0.99897 4.6601-0.53996 1.3016-0.18065 3.0985 1.2814 3.499 1.836 0.63803 4.0455 0.10972 5.6784 1.386 2.2497 1.3135 4.286 3.608 7.0937 3.4728 2.4058-1.2064 4.7556-3.7702 4.1005-6.6476-0.59235-1.366-1.5747-2.7488-1.1036-4.3202 0.32379-1.7514 0.70708-3.8079-0.66946-5.2406-1.5878-1.6519-3.4949-2.9941-5.157-4.5921-0.62949-0.49267-1.23-1.1594-1.9352-1.4644z"
+        /><path
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.16737;fill:#ececec"
+            inkscape:connector-curvature="0"
+            d="m746.05 251.8c-2.1496 0.1901-4.3846 2.0113-6.2676 3.7431-1.1387 1.4267-0.91498 3.3653-0.57532 5.021 0.15596 1.7097-0.61221 3.2776-1.2448 4.8013-0.24295 0.92296 0.34965 2.1764 1.4243 2.2551 1.9267 0.39628 3.9421 0.10192 5.5528 1.4061 2.0231 1.1838 3.79 3.2073 6.2919 3.2166 2.0198-1.0656 4.088-3.211 3.5304-5.6852-0.8003-1.5368-1.6332-3.2752-0.99374-5.0314 0.2144-1.4256 0.52106-3.4078-0.85252-4.4666-1.9885-1.7613-2.848-2.749-3.9216-3.6817-1.5717-1.0589-1.254-1.7175-2.9438-1.5782z"
+        /><path
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.17795;fill:#cccccc"
+            inkscape:connector-curvature="0"
+            d="m745.76 255.52c-0.95191 0.36299-1.0308 1.1838-2.3286 1.8197-1.3348 0.65406-0.99123 2.696-0.0793 4.1586 0.62017 2.1918 2.7532 3.9491 5.0765 2.8871 1.66-0.68526 1.421-1.7325 2.9492-3.5236 1.0405-1.2195-0.26735-2.767-1.6479-3.6613-0.76152-0.51582-3.0222-1.7342-3.97-1.6806z"
+        /></g
+      ><g
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 308.19 414.95)"
+        ><path
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+            inkscape:connector-curvature="0"
+        /></g
+      ><g
+          transform="translate(21.256 432.29)"
+        ><path
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.15547;fill:#aa1212"
+            inkscape:connector-curvature="0"
+            d="m274.42-7.536c-2.4734 0.50328-4.6389 2.0438-6.5783 3.5758-1.3313 1.3006-1.5781 3.2896-1.1223 5.0139 0.25236 1.5163-0.21236 3.0139-0.92796 4.3289-0.50158 1.2091-0.16781 2.8783 1.1903 3.2503 1.7055 0.59268 3.758 0.10192 5.2748 1.2875 2.0898 1.2202 3.9813 3.3515 6.5895 3.226 2.2348-1.1206 4.4176-3.5023 3.809-6.1751-0.55025-1.2689-1.4628-2.5534-1.0251-4.0131 0.30078-1.6269 0.65682-3.5372-0.62188-4.8682-1.475-1.5345-3.2464-2.7813-4.7904-4.2657-0.58475-0.45765-1.1426-1.077-1.7976-1.3604z"
+        /><path
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.15547;fill:#ececec"
+            inkscape:connector-curvature="0"
+            d="m273.86-6.5725c-1.9968 0.17659-4.0729 1.8683-5.8221 3.4771-1.0578 1.3253-0.84995 3.1261-0.53443 4.6641 0.14488 1.5881-0.56869 3.0447-1.1563 4.46-0.22568 0.85736 0.3248 2.0217 1.3231 2.0948 1.7898 0.36811 3.6619 0.094676 5.1581 1.3061 1.8793 1.0996 3.5206 2.9793 5.8447 2.9879 1.8763-0.98981 3.7974-2.9827 3.2795-5.2811-0.74342-1.4276-1.5172-3.0424-0.92311-4.6738 0.19916-1.3242 0.48402-3.1656-0.79192-4.1491-1.8472-1.6361-2.6456-2.5536-3.6429-3.42-1.46-0.98365-1.1648-1.5954-2.7346-1.466z"
+        /><path
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.16530;fill:#cccccc"
+            inkscape:connector-curvature="0"
+            d="m273.59-3.1227c-0.88425 0.33719-0.95754 1.0997-2.1631 1.6904-1.24 0.60757-0.92077 2.5044-0.0737 3.863 0.57609 2.036 2.5575 3.6684 4.7156 2.6819 1.542-0.63655 1.32-1.6093 2.7396-3.2732 0.96656-1.1328-0.24835-2.5704-1.5308-3.401-0.70739-0.47916-2.8074-1.6109-3.6878-1.5611z"
+        /></g
+      ><g
+          transform="translate(127.21 423.78)"
+        ><path
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.15547;fill:#aa1212"
+            inkscape:connector-curvature="0"
+            d="m274.42-7.536c-2.4734 0.50328-4.6389 2.0438-6.5783 3.5758-1.3313 1.3006-1.5781 3.2896-1.1223 5.0139 0.25236 1.5163-0.21236 3.0139-0.92796 4.3289-0.50158 1.2091-0.16781 2.8783 1.1903 3.2503 1.7055 0.59268 3.758 0.10192 5.2748 1.2875 2.0898 1.2202 3.9813 3.3515 6.5895 3.226 2.2348-1.1206 4.4176-3.5023 3.809-6.1751-0.55025-1.2689-1.4628-2.5534-1.0251-4.0131 0.30078-1.6269 0.65682-3.5372-0.62188-4.8682-1.475-1.5345-3.2464-2.7813-4.7904-4.2657-0.58475-0.45765-1.1426-1.077-1.7976-1.3604z"
+        /><path
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.15547;fill:#ececec"
+            inkscape:connector-curvature="0"
+            d="m273.86-6.5725c-1.9968 0.17659-4.0729 1.8683-5.8221 3.4771-1.0578 1.3253-0.84995 3.1261-0.53443 4.6641 0.14488 1.5881-0.56869 3.0447-1.1563 4.46-0.22568 0.85736 0.3248 2.0217 1.3231 2.0948 1.7898 0.36811 3.6619 0.094676 5.1581 1.3061 1.8793 1.0996 3.5206 2.9793 5.8447 2.9879 1.8763-0.98981 3.7974-2.9827 3.2795-5.2811-0.74342-1.4276-1.5172-3.0424-0.92311-4.6738 0.19916-1.3242 0.48402-3.1656-0.79192-4.1491-1.8472-1.6361-2.6456-2.5536-3.6429-3.42-1.46-0.98365-1.1648-1.5954-2.7346-1.466z"
+        /><path
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.16530;fill:#cccccc"
+            inkscape:connector-curvature="0"
+            d="m273.59-3.1227c-0.88425 0.33719-0.95754 1.0997-2.1631 1.6904-1.24 0.60757-0.92077 2.5044-0.0737 3.863 0.57609 2.036 2.5575 3.6684 4.7156 2.6819 1.542-0.63655 1.32-1.6093 2.7396-3.2732 0.96656-1.1328-0.24835-2.5704-1.5308-3.401-0.70739-0.47916-2.8074-1.6109-3.6878-1.5611z"
+        /></g
+      ><g
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 341.24 409.51)"
+        ><path
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+            inkscape:connector-curvature="0"
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+        /><path
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+            inkscape:connector-curvature="0"
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+        /><path
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+            inkscape:connector-curvature="0"
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+        /></g
+      ><g
+          transform="translate(124.24 300.38)"
+        ><path
+            style="stroke-dashoffset:42;stroke:#000000;stroke-width:1.784;fill:none"
+            d="m441.38 383.33c0 45.389-52.233 82.184-116.67 82.184-64.433 0-116.67-36.795-116.67-82.184s52.233-82.184 116.67-82.184c64.433 0 116.67 36.795 116.67 82.184z"
+            transform="matrix(.89760 0 0 .35004 -94.648 5.3032)"
+        /><path
+            d="m196.34 91.503c-55.688 0-101.23 11.93-104.53 27-0.11927 0.34785-0.21875 0.70445-0.21875 1.0938v20.406 2.2188c0 1.2672 0.69688 2.3826 1.7188 2.9688 8.8889 13.413 51.642 23.562 103.03 23.562 51.39 0 94.111-10.15 103-23.562 1.0219-0.58619 1.7188-1.7016 1.7188-2.9688v-2.2188-20.406c0-0.3893-0.0995-0.7459-0.21875-1.0938-3.3043-15.07-48.812-27-104.5-27z"
+            style="fill-opacity:.54902;fill:#f27373"
+            inkscape:connector-curvature="0"
+        /><path
+            style="fill-opacity:.54902;stroke:#ff8080;stroke-width:1.784;fill:#ffe2e2"
+            d="m441.38 383.33c0 45.389-52.233 82.184-116.67 82.184-64.433 0-116.67-36.795-116.67-82.184s52.233-82.184 116.67-82.184c64.433 0 116.67 36.795 116.67 82.184z"
+            transform="matrix(.89760 0 0 .35004 -94.648 -13.411)"
+        /><g
+          ><path
+              style="stroke:#000000;fill:none"
+              inkscape:connector-curvature="0"
+              d="m196.82 72.559c-57.835 0-104.72 12.883-104.72 28.771 0 0.24824 0.009 0.49685 0.0313 0.74359v36.666c-0.0228 0.24674-0.0313 0.49534-0.0313 0.74359 0 15.888 46.889 28.771 104.72 28.771 57.835 0 104.72-12.883 104.72-28.771 0-0.24825-0.009-0.49685-0.0313-0.74359v-36.666c0.0228-0.24674 0.0313-0.49535 0.0313-0.74359 0-15.888-46.889-28.771-104.72-28.771z"
+          /><path
+              style="stroke:#000000;stroke-width:1.784;fill:none"
+              d="m441.38 383.33c0 45.389-52.233 82.184-116.67 82.184-64.433 0-116.67-36.795-116.67-82.184s52.233-82.184 116.67-82.184c64.433 0 116.67 36.795 116.67 82.184z"
+              transform="matrix(.89760 0 0 .35004 -94.648 -32.855)"
+          /></g
+        ></g
+      ><g
+          transform="translate(-8.9564 412.85)"
+        ><path
+            d="m274.42-7.536c-2.4734 0.50328-4.6389 2.0438-6.5783 3.5758-1.3313 1.3006-1.5781 3.2896-1.1223 5.0139 0.25236 1.5163-0.21236 3.0139-0.92796 4.3289-0.50158 1.2091-0.16781 2.8783 1.1903 3.2503 1.7055 0.59268 3.758 0.10192 5.2748 1.2875 2.0898 1.2202 3.9813 3.3515 6.5895 3.226 2.2348-1.1206 4.4176-3.5023 3.809-6.1751-0.55025-1.2689-1.4628-2.5534-1.0251-4.0131 0.30078-1.6269 0.65682-3.5372-0.62188-4.8682-1.475-1.5345-3.2464-2.7813-4.7904-4.2657-0.58475-0.45765-1.1426-1.077-1.7976-1.3604z"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.15547;fill:#aa1212"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m273.86-6.5725c-1.9968 0.17659-4.0729 1.8683-5.8221 3.4771-1.0578 1.3253-0.84995 3.1261-0.53443 4.6641 0.14488 1.5881-0.56869 3.0447-1.1563 4.46-0.22568 0.85736 0.3248 2.0217 1.3231 2.0948 1.7898 0.36811 3.6619 0.094676 5.1581 1.3061 1.8793 1.0996 3.5206 2.9793 5.8447 2.9879 1.8763-0.98981 3.7974-2.9827 3.2795-5.2811-0.74342-1.4276-1.5172-3.0424-0.92311-4.6738 0.19916-1.3242 0.48402-3.1656-0.79192-4.1491-1.8472-1.6361-2.6456-2.5536-3.6429-3.42-1.46-0.98365-1.1648-1.5954-2.7346-1.466z"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.15547;fill:#ececec"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m273.59-3.1227c-0.88425 0.33719-0.95754 1.0997-2.1631 1.6904-1.24 0.60757-0.92077 2.5044-0.0737 3.863 0.57609 2.036 2.5575 3.6684 4.7156 2.6819 1.542-0.63655 1.32-1.6093 2.7396-3.2732 0.96656-1.1328-0.24835-2.5704-1.5308-3.401-0.70739-0.47916-2.8074-1.6109-3.6878-1.5611z"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.16530;fill:#cccccc"
+            inkscape:connector-curvature="0"
+        /></g
+      ><g
+          transform="translate(20.405 412.29)"
+        ><path
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.15547;fill:#aa1212"
+            inkscape:connector-curvature="0"
+            d="m274.42-7.536c-2.4734 0.50328-4.6389 2.0438-6.5783 3.5758-1.3313 1.3006-1.5781 3.2896-1.1223 5.0139 0.25236 1.5163-0.21236 3.0139-0.92796 4.3289-0.50158 1.2091-0.16781 2.8783 1.1903 3.2503 1.7055 0.59268 3.758 0.10192 5.2748 1.2875 2.0898 1.2202 3.9813 3.3515 6.5895 3.226 2.2348-1.1206 4.4176-3.5023 3.809-6.1751-0.55025-1.2689-1.4628-2.5534-1.0251-4.0131 0.30078-1.6269 0.65682-3.5372-0.62188-4.8682-1.475-1.5345-3.2464-2.7813-4.7904-4.2657-0.58475-0.45765-1.1426-1.077-1.7976-1.3604z"
+        /><path
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.15547;fill:#ececec"
+            inkscape:connector-curvature="0"
+            d="m273.86-6.5725c-1.9968 0.17659-4.0729 1.8683-5.8221 3.4771-1.0578 1.3253-0.84995 3.1261-0.53443 4.6641 0.14488 1.5881-0.56869 3.0447-1.1563 4.46-0.22568 0.85736 0.3248 2.0217 1.3231 2.0948 1.7898 0.36811 3.6619 0.094676 5.1581 1.3061 1.8793 1.0996 3.5206 2.9793 5.8447 2.9879 1.8763-0.98981 3.7974-2.9827 3.2795-5.2811-0.74342-1.4276-1.5172-3.0424-0.92311-4.6738 0.19916-1.3242 0.48402-3.1656-0.79192-4.1491-1.8472-1.6361-2.6456-2.5536-3.6429-3.42-1.46-0.98365-1.1648-1.5954-2.7346-1.466z"
+        /><path
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.16530;fill:#cccccc"
+            inkscape:connector-curvature="0"
+            d="m273.59-3.1227c-0.88425 0.33719-0.95754 1.0997-2.1631 1.6904-1.24 0.60757-0.92077 2.5044-0.0737 3.863 0.57609 2.036 2.5575 3.6684 4.7156 2.6819 1.542-0.63655 1.32-1.6093 2.7396-3.2732 0.96656-1.1328-0.24835-2.5704-1.5308-3.401-0.70739-0.47916-2.8074-1.6109-3.6878-1.5611z"
+        /></g
+      ><g
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 328.75 397.52)"
+        ><path
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+            inkscape:connector-curvature="0"
+        /></g
+      ><g
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 293.7 389.38)"
+        ><path
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+            inkscape:connector-curvature="0"
+        /></g
+      ><g
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 234.68 396.87)"
+        ><path
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+            inkscape:connector-curvature="0"
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+        /><path
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+            inkscape:connector-curvature="0"
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+        /><path
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+            inkscape:connector-curvature="0"
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+        /></g
+      ><g
+          transform="translate(108.06 405.06)"
+        ><path
+            d="m274.42-7.536c-2.4734 0.50328-4.6389 2.0438-6.5783 3.5758-1.3313 1.3006-1.5781 3.2896-1.1223 5.0139 0.25236 1.5163-0.21236 3.0139-0.92796 4.3289-0.50158 1.2091-0.16781 2.8783 1.1903 3.2503 1.7055 0.59268 3.758 0.10192 5.2748 1.2875 2.0898 1.2202 3.9813 3.3515 6.5895 3.226 2.2348-1.1206 4.4176-3.5023 3.809-6.1751-0.55025-1.2689-1.4628-2.5534-1.0251-4.0131 0.30078-1.6269 0.65682-3.5372-0.62188-4.8682-1.475-1.5345-3.2464-2.7813-4.7904-4.2657-0.58475-0.45765-1.1426-1.077-1.7976-1.3604z"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.15547;fill:#aa1212"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m273.86-6.5725c-1.9968 0.17659-4.0729 1.8683-5.8221 3.4771-1.0578 1.3253-0.84995 3.1261-0.53443 4.6641 0.14488 1.5881-0.56869 3.0447-1.1563 4.46-0.22568 0.85736 0.3248 2.0217 1.3231 2.0948 1.7898 0.36811 3.6619 0.094676 5.1581 1.3061 1.8793 1.0996 3.5206 2.9793 5.8447 2.9879 1.8763-0.98981 3.7974-2.9827 3.2795-5.2811-0.74342-1.4276-1.5172-3.0424-0.92311-4.6738 0.19916-1.3242 0.48402-3.1656-0.79192-4.1491-1.8472-1.6361-2.6456-2.5536-3.6429-3.42-1.46-0.98365-1.1648-1.5954-2.7346-1.466z"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.15547;fill:#ececec"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m273.59-3.1227c-0.88425 0.33719-0.95754 1.0997-2.1631 1.6904-1.24 0.60757-0.92077 2.5044-0.0737 3.863 0.57609 2.036 2.5575 3.6684 4.7156 2.6819 1.542-0.63655 1.32-1.6093 2.7396-3.2732 0.96656-1.1328-0.24835-2.5704-1.5308-3.401-0.70739-0.47916-2.8074-1.6109-3.6878-1.5611z"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.16530;fill:#cccccc"
+            inkscape:connector-curvature="0"
+        /></g
+      ><g
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 373.24 395.45)"
+        ><path
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+            inkscape:connector-curvature="0"
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+        /><path
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+            inkscape:connector-curvature="0"
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+        /><path
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+            inkscape:connector-curvature="0"
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+        /></g
+      ><g
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 264.12 396.46)"
+        ><path
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+            inkscape:connector-curvature="0"
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+        /><path
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+            inkscape:connector-curvature="0"
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+        /><path
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+            inkscape:connector-curvature="0"
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+        /></g
+      ><g
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 300.36 404.4)"
+        ><path
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+            inkscape:connector-curvature="0"
+        /></g
+      ><g
+          transform="translate(87.649 414.21)"
+        ><path
+            d="m274.42-7.536c-2.4734 0.50328-4.6389 2.0438-6.5783 3.5758-1.3313 1.3006-1.5781 3.2896-1.1223 5.0139 0.25236 1.5163-0.21236 3.0139-0.92796 4.3289-0.50158 1.2091-0.16781 2.8783 1.1903 3.2503 1.7055 0.59268 3.758 0.10192 5.2748 1.2875 2.0898 1.2202 3.9813 3.3515 6.5895 3.226 2.2348-1.1206 4.4176-3.5023 3.809-6.1751-0.55025-1.2689-1.4628-2.5534-1.0251-4.0131 0.30078-1.6269 0.65682-3.5372-0.62188-4.8682-1.475-1.5345-3.2464-2.7813-4.7904-4.2657-0.58475-0.45765-1.1426-1.077-1.7976-1.3604z"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.15547;fill:#aa1212"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m273.86-6.5725c-1.9968 0.17659-4.0729 1.8683-5.8221 3.4771-1.0578 1.3253-0.84995 3.1261-0.53443 4.6641 0.14488 1.5881-0.56869 3.0447-1.1563 4.46-0.22568 0.85736 0.3248 2.0217 1.3231 2.0948 1.7898 0.36811 3.6619 0.094676 5.1581 1.3061 1.8793 1.0996 3.5206 2.9793 5.8447 2.9879 1.8763-0.98981 3.7974-2.9827 3.2795-5.2811-0.74342-1.4276-1.5172-3.0424-0.92311-4.6738 0.19916-1.3242 0.48402-3.1656-0.79192-4.1491-1.8472-1.6361-2.6456-2.5536-3.6429-3.42-1.46-0.98365-1.1648-1.5954-2.7346-1.466z"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.15547;fill:#ececec"
+            inkscape:connector-curvature="0"
+        /><path
+            d="m273.59-3.1227c-0.88425 0.33719-0.95754 1.0997-2.1631 1.6904-1.24 0.60757-0.92077 2.5044-0.0737 3.863 0.57609 2.036 2.5575 3.6684 4.7156 2.6819 1.542-0.63655 1.32-1.6093 2.7396-3.2732 0.96656-1.1328-0.24835-2.5704-1.5308-3.401-0.70739-0.47916-2.8074-1.6109-3.6878-1.5611z"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.16530;fill:#cccccc"
+            inkscape:connector-curvature="0"
+        /></g
+      ><g
+          transform="translate(52.32 403.78)"
+        ><path
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.15547;fill:#aa1212"
+            inkscape:connector-curvature="0"
+            d="m274.42-7.536c-2.4734 0.50328-4.6389 2.0438-6.5783 3.5758-1.3313 1.3006-1.5781 3.2896-1.1223 5.0139 0.25236 1.5163-0.21236 3.0139-0.92796 4.3289-0.50158 1.2091-0.16781 2.8783 1.1903 3.2503 1.7055 0.59268 3.758 0.10192 5.2748 1.2875 2.0898 1.2202 3.9813 3.3515 6.5895 3.226 2.2348-1.1206 4.4176-3.5023 3.809-6.1751-0.55025-1.2689-1.4628-2.5534-1.0251-4.0131 0.30078-1.6269 0.65682-3.5372-0.62188-4.8682-1.475-1.5345-3.2464-2.7813-4.7904-4.2657-0.58475-0.45765-1.1426-1.077-1.7976-1.3604z"
+        /><path
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.15547;fill:#ececec"
+            inkscape:connector-curvature="0"
+            d="m273.86-6.5725c-1.9968 0.17659-4.0729 1.8683-5.8221 3.4771-1.0578 1.3253-0.84995 3.1261-0.53443 4.6641 0.14488 1.5881-0.56869 3.0447-1.1563 4.46-0.22568 0.85736 0.3248 2.0217 1.3231 2.0948 1.7898 0.36811 3.6619 0.094676 5.1581 1.3061 1.8793 1.0996 3.5206 2.9793 5.8447 2.9879 1.8763-0.98981 3.7974-2.9827 3.2795-5.2811-0.74342-1.4276-1.5172-3.0424-0.92311-4.6738 0.19916-1.3242 0.48402-3.1656-0.79192-4.1491-1.8472-1.6361-2.6456-2.5536-3.6429-3.42-1.46-0.98365-1.1648-1.5954-2.7346-1.466z"
+        /><path
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.16530;fill:#cccccc"
+            inkscape:connector-curvature="0"
+            d="m273.59-3.1227c-0.88425 0.33719-0.95754 1.0997-2.1631 1.6904-1.24 0.60757-0.92077 2.5044-0.0737 3.863 0.57609 2.036 2.5575 3.6684 4.7156 2.6819 1.542-0.63655 1.32-1.6093 2.7396-3.2732 0.96656-1.1328-0.24835-2.5704-1.5308-3.401-0.70739-0.47916-2.8074-1.6109-3.6878-1.5611z"
+        /></g
+      ></g
+    ></g
+  ><metadata
+    ><rdf:RDF
+      ><cc:Work
+        ><dc:format
+          >image/svg+xml</dc:format
+        ><dc:type
+            rdf:resource="http://purl.org/dc/dcmitype/StillImage"
+        /><cc:license
+            rdf:resource="http://creativecommons.org/licenses/publicdomain/"
+        /><dc:publisher
+          ><cc:Agent
+              rdf:about="http://openclipart.org/"
+            ><dc:title
+              >Openclipart</dc:title
+            ></cc:Agent
+          ></dc:publisher
+        ><dc:title
+          >Cell culture</dc:title
+        ><dc:date
+          >2011-09-25T02:43:54</dc:date
+        ><dc:description
+          >A culture dish with eukaryotic cells</dc:description
+        ><dc:source
+          >https://openclipart.org/detail/161839/cell-culture-by-matrs</dc:source
+        ><dc:creator
+          ><cc:Agent
+            ><dc:title
+              >matrs</dc:title
+            ></cc:Agent
+          ></dc:creator
+        ><dc:subject
+          ><rdf:Bag
+            ><rdf:li
+              >biology</rdf:li
+            ><rdf:li
+              >cell</rdf:li
+            ><rdf:li
+              >cell culture</rdf:li
+            ><rdf:li
+              >eukaryotic</rdf:li
+            ></rdf:Bag
+          ></dc:subject
+        ></cc:Work
+      ><cc:License
+          rdf:about="http://creativecommons.org/licenses/publicdomain/"
+        ><cc:permits
+            rdf:resource="http://creativecommons.org/ns#Reproduction"
+        /><cc:permits
+            rdf:resource="http://creativecommons.org/ns#Distribution"
+        /><cc:permits
+            rdf:resource="http://creativecommons.org/ns#DerivativeWorks"
+        /></cc:License
+      ></rdf:RDF
+    ></metadata
+  ></svg
+>`;
+const PLATE_ROWS = 4;
+const PLATE_COLS = 6;
+const DRUG_CONCENTRATIONS_UM = [0, 0.1, 0.5, 1, 5, 10];
+const DRUG_CONCENTRATION_LABELS = ["0 (ctrl)", "0.1", "0.5", "1", "5", "10"];
+const PROTOCOL_STEPS = [
+  {
+    id: "spray_hood",
+    label: "Spray hood with 70% ethanol",
+    scene: "hood",
+    requiredAction: "spray_ethanol"
+  },
+  {
+    id: "aspirate_old_media",
+    label: "Aspirate old media from flask",
+    scene: "hood",
+    requiredAction: "aspirate",
+    correctVolumeMl: 12,
+    toleranceMl: 2
+  },
+  {
+    id: "add_fresh_media",
+    label: "Add fresh media to flask",
+    scene: "hood",
+    requiredAction: "pipette_media",
+    correctVolumeMl: 15,
+    toleranceMl: 1
+  },
+  {
+    id: "microscope_check",
+    label: "Check cell viability under microscope",
+    scene: "microscope",
+    requiredAction: "check_viability"
+  },
+  {
+    id: "count_cells",
+    label: "Count cells on hemocytometer",
+    scene: "microscope",
+    requiredAction: "count_cells"
+  },
+  {
+    id: "transfer_to_plate",
+    label: "Transfer cells to 24-well plate",
+    scene: "hood",
+    requiredAction: "pipette_to_plate"
+  },
+  {
+    id: "add_drugs",
+    label: "Add drug dilutions to plate",
+    scene: "hood",
+    requiredAction: "pipette_drug"
+  },
+  {
+    id: "incubate",
+    label: "Place plate in incubator",
+    scene: "incubator",
+    requiredAction: "place_in_incubator"
+  },
+  {
+    id: "plate_read",
+    label: "Read plate on plate reader",
+    scene: "plate_reader",
+    requiredAction: "read_plate"
+  }
+];
+const FLASK_MAX_VOLUME_ML = 20;
+const FLASK_STARTING_MEDIA_ML = 12;
+const FRESH_MEDIA_TARGET_ML = 15;
+const WELL_VOLUME_UL = 500;
+const DRUG_STOCK_CONCENTRATION_UM = 100;
+const INITIAL_CELL_COUNT = 5e5;
+const INITIAL_VIABILITY = 0.95;
+const INITIAL_CONFLUENCY = 0.6;
+const SCORE_WEIGHTS = {
+  order: 30,
+  cleanliness: 25,
+  wastedMedia: 20,
+  timing: 25
+};
+const STAR_THRESHOLDS = {
+  threeStar: 80,
+  twoStar: 50
+};
+const HOOD_ITEMS = {
+  flask: { x: 30, y: 25, width: 16, height: 28, label: "T-75 Flask" },
+  well_plate: { x: 25, y: 58, width: 40, height: 22, label: "24-Well Plate" },
+  media_bottle: { x: 8, y: 18, width: 12, height: 26, label: "DMEM Media" },
+  aspirating_pipette: { x: 72, y: 12, width: 5, height: 32, label: "Aspirating Pipette" },
+  serological_pipette: { x: 64, y: 12, width: 4, height: 32, label: "Serological Pipette" },
+  waste_container: { x: 82, y: 50, width: 12, height: 18, label: "Waste" },
+  drug_vials: { x: 8, y: 55, width: 14, height: 18, label: "Drug Dilutions" },
+  multichannel_pipette: { x: 78, y: 35, width: 10, height: 22, label: "Multichannel Pipette" },
+  ethanol_bottle: { x: 88, y: 12, width: 8, height: 18, label: "70% Ethanol" },
+  microscope: { x: 75, y: 58, width: 12, height: 22, label: "Microscope" }
+};
+function createWellPlate() {
+  const wells = [];
+  for (let row = 0; row < PLATE_ROWS; row++) {
+    for (let col = 0; col < PLATE_COLS; col++) {
+      wells.push({
+        row,
+        col,
+        hasCells: false,
+        drugConcentrationUm: 0,
+        absorbance: 0
+      });
+    }
+  }
+  return wells;
+}
+function createInitialGameState() {
+  return {
+    currentStep: 0,
+    flaskMediaMl: FLASK_STARTING_MEDIA_ML,
+    flaskMediaAge: "old",
+    wellPlate: createWellPlate(),
+    cellsTransferred: false,
+    drugsAdded: false,
+    incubated: false,
+    cellCount: null,
+    actualCellCount: INITIAL_CELL_COUNT,
+    cellViability: INITIAL_VIABILITY,
+    plateReadComplete: false,
+    score: 0,
+    completedSteps: [],
+    hoodSprayed: false,
+    activeScene: "hood",
+    stepsInCorrectOrder: 0,
+    stepsOutOfOrder: 0,
+    mediaWastedMl: 0,
+    cleanlinessErrors: 0,
+    startTime: Date.now(),
+    endTime: null,
+    selectedTool: null,
+    pipetteVolumeMl: 0,
+    isDragging: false,
+    dragItem: null
+  };
+}
+let gameState = createInitialGameState();
+function resetGame() {
+  gameState = createInitialGameState();
+  renderGame();
+}
+function getCurrentStep() {
+  if (gameState.currentStep >= PROTOCOL_STEPS.length) {
+    return null;
+  }
+  return PROTOCOL_STEPS[gameState.currentStep];
+}
+function completeStep(stepId) {
+  if (gameState.completedSteps.includes(stepId)) {
+    return;
+  }
+  const expectedStep = getCurrentStep();
+  if (expectedStep && expectedStep.id === stepId) {
+    gameState.stepsInCorrectOrder++;
+  } else {
+    gameState.stepsOutOfOrder++;
+  }
+  gameState.completedSteps.push(stepId);
+  while (gameState.currentStep < PROTOCOL_STEPS.length && gameState.completedSteps.includes(PROTOCOL_STEPS[gameState.currentStep].id)) {
+    gameState.currentStep++;
+  }
+  if (gameState.currentStep >= PROTOCOL_STEPS.length) {
+    gameState.endTime = Date.now();
+    gameState.activeScene = "results";
+  }
+  showNotification("Completed: " + getStepLabel(stepId));
+  renderGame();
+}
+function getStepLabel(stepId) {
+  const step = PROTOCOL_STEPS.find((s) => s.id === stepId);
+  return step ? step.label : stepId;
+}
+function switchScene(scene) {
+  gameState.activeScene = scene;
+  renderGame();
+}
+function selectTool(toolId) {
+  gameState.selectedTool = toolId;
+  renderGame();
+}
+function recordCleanlinessError() {
+  gameState.cleanlinessErrors++;
+  showNotification("Contamination risk! Remember sterile technique.", "warning");
+}
+function getWell(row, col) {
+  return gameState.wellPlate[row * PLATE_COLS + col];
+}
+function renderGame() {
+}
+function showNotification(message, type = "info") {
+}
+function getCellState() {
+  const positions = generateCellPositions(
+    gameState.actualCellCount,
+    gameState.cellViability
+  );
+  return {
+    totalCells: gameState.actualCellCount,
+    liveCells: Math.round(gameState.actualCellCount * gameState.cellViability),
+    deadCells: Math.round(gameState.actualCellCount * (1 - gameState.cellViability)),
+    viability: gameState.cellViability,
+    confluency: INITIAL_CONFLUENCY,
+    positions
+  };
+}
+function generateCellPositions(totalCells, viability) {
+  const visibleCellCount = 40 + Math.floor(Math.random() * 20);
+  const positions = [];
+  for (let i = 0; i < visibleCellCount; i++) {
+    const x = 0.05 + Math.random() * 0.9;
+    const y = 0.05 + Math.random() * 0.9;
+    const isClumped = Math.random() < 0.2;
+    const clumpOffset = isClumped ? (Math.random() - 0.5) * 0.03 : 0;
+    const baseRadius = 0.012 + Math.random() * 6e-3;
+    const alive = Math.random() < viability;
+    positions.push({
+      x: Math.max(0.02, Math.min(0.98, x + clumpOffset)),
+      y: Math.max(0.02, Math.min(0.98, y + clumpOffset)),
+      alive,
+      radius: baseRadius
+    });
+  }
+  return positions;
+}
+function applyDrugEffect(concentrationUm) {
+  if (concentrationUm > 0) {
+    const ic50 = 5;
+    const maxKill = 0.4;
+    const killFraction = maxKill * (concentrationUm / (concentrationUm + ic50));
+    gameState.cellViability = Math.max(0.1, gameState.cellViability - killFraction);
+  }
+}
+function applyIncubation() {
+  const growthRate = 1.3;
+  gameState.actualCellCount = Math.round(gameState.actualCellCount * growthRate);
+  if (gameState.drugAdded) {
+    applyDrugEffect(gameState.drugConcentrationUm);
+  }
+}
+function getExpectedCellCount() {
+  const cellState = getCellState();
+  const cellsPerSquare = cellState.totalCells / CELLS_PER_SQUARE_FACTOR;
+  return Math.round(cellsPerSquare * CELLS_PER_SQUARE_FACTOR);
+}
+function getHoodBackgroundSvg() {
+  return `<svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+		<!-- Define gradients -->
+		<defs>
+			<linearGradient id="stainlessSteelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+				<stop offset="0%" style="stop-color:#e8e8e8;stop-opacity:1" />
+				<stop offset="50%" style="stop-color:#c0c0c0;stop-opacity:1" />
+				<stop offset="100%" style="stop-color:#a0a0a0;stop-opacity:1" />
+			</linearGradient>
+			<linearGradient id="glassGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+				<stop offset="0%" style="stop-color:#b0d4ff;stop-opacity:0.4" />
+				<stop offset="100%" style="stop-color:#7cb3ff;stop-opacity:0.3" />
+			</linearGradient>
+			<linearGradient id="padGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+				<stop offset="0%" style="stop-color:#4a90e2;stop-opacity:1" />
+				<stop offset="100%" style="stop-color:#2563d4;stop-opacity:1" />
+			</linearGradient>
+		</defs>
+
+		<!-- Side walls (dark gray) -->
+		<polygon points="0,100 50,50 750,50 800,100 800,550 750,600 50,600 0,550" fill="#888888" />
+
+		<!-- Back wall (stainless steel) -->
+		<polygon points="50,50 750,50 750,350 50,350" fill="url(#stainlessSteelGrad)" />
+
+		<!-- Glass sash at top (semi-transparent) -->
+		<polygon points="60,60 740,60 740,200 60,200" fill="url(#glassGrad)" stroke="#999" stroke-width="2" />
+
+		<!-- Subtle horizontal line on glass (reflection effect) -->
+		<line x1="60" y1="90" x2="740" y2="90" stroke="#ffffff" stroke-width="1" opacity="0.6" />
+
+		<!-- Lower back wall continues -->
+		<polygon points="50,350 750,350 750,550 50,550" fill="#999999" />
+
+		<!-- Work surface (white/light gray trapezoid for perspective) -->
+		<polygon points="40,550 60,580 740,580 760,550" fill="#f5f5f5" stroke="#ddd" stroke-width="1" />
+
+		<!-- Blue absorbent pad on work surface -->
+		<rect x="70" y="560" width="660" height="18" fill="url(#padGrad)" rx="2" />
+
+		<!-- Subtle shadow on pad for depth -->
+		<ellipse cx="400" cy="569" rx="320" ry="6" fill="#000000" opacity="0.1" />
+
+		<!-- Side walls (3D effect) -->
+		<polygon points="0,100 50,50 50,550 0,550" fill="#666666" />
+		<polygon points="750,50 800,100 800,550 750,550" fill="#777777" />
+
+		<!-- Subtle shadow at bottom for depth -->
+		<rect x="40" y="545" width="720" height="8" fill="#000000" opacity="0.08" />
+	</svg>`;
+}
+function getFlaskSvg(mediaLevel, mediaColor) {
+  return CELL_CULTURE_PLATE_SVG;
+}
+function getMediaBottleSvg() {
+  return `<svg viewBox="0 0 80 120" xmlns="http://www.w3.org/2000/svg">
+		<defs>
+			<linearGradient id="bottleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+				<stop offset="0%" style="stop-color:#fff0f0;stop-opacity:1" />
+				<stop offset="50%" style="stop-color:#ffffff;stop-opacity:1" />
+				<stop offset="100%" style="stop-color:#fff0f0;stop-opacity:1" />
+			</linearGradient>
+			<linearGradient id="mediaLiquidGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+				<stop offset="0%" style="stop-color:#ffb366;stop-opacity:0.9" />
+				<stop offset="50%" style="stop-color:#ff9a66;stop-opacity:1" />
+				<stop offset="100%" style="stop-color:#ffb366;stop-opacity:0.9" />
+			</linearGradient>
+			<linearGradient id="capBottleGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+				<stop offset="0%" style="stop-color:#4a4a4a;stop-opacity:1" />
+				<stop offset="100%" style="stop-color:#2a2a2a;stop-opacity:1" />
+			</linearGradient>
+		</defs>
+
+		<!-- Screw cap -->
+		<rect x="28" y="8" width="24" height="10" fill="url(#capBottleGrad)" stroke="#1a1a1a" stroke-width="0.5" rx="1" />
+		<line x1="32" y1="13" x2="48" y2="13" stroke="#666" stroke-width="0.3" />
+		<line x1="32" y1="16" x2="48" y2="16" stroke="#666" stroke-width="0.3" />
+
+		<!-- Neck -->
+		<path d="M 32 18 L 30 28 L 50 28 L 48 18 Z" fill="url(#bottleGrad)" stroke="#ddd" stroke-width="0.5" />
+
+		<!-- Main bottle body (cylindrical) -->
+		<rect x="20" y="28" width="40" height="60" fill="url(#bottleGrad)" stroke="#ddd" stroke-width="0.5" rx="3" />
+
+		<!-- Liquid inside -->
+		<path d="M 22 55 L 22 85 Q 22 88 24 89 L 56 89 Q 58 88 58 85 L 58 55 Z"
+			fill="url(#mediaLiquidGrad)" opacity="0.85" />
+
+		<!-- Liquid surface -->
+		<ellipse cx="40" cy="55" rx="18" ry="2.5" fill="#ff9a66" opacity="0.6" />
+
+		<!-- Label area -->
+		<rect x="24" y="45" width="32" height="20" fill="#ffffff" opacity="0.8" stroke="#ccc" stroke-width="0.5" rx="1" />
+		<text x="40" y="53" font-family="Arial, sans-serif" font-size="7" fill="#333333" text-anchor="middle" font-weight="bold">DMEM</text>
+		<text x="40" y="61" font-family="Arial, sans-serif" font-size="5" fill="#666666" text-anchor="middle">Media</text>
+
+		<!-- Shine on bottle -->
+		<ellipse cx="26" cy="50" rx="3" ry="15" fill="#ffffff" opacity="0.5" />
+
+		<!-- Bottom label bar (orange) -->
+		<rect x="20" y="88" width="40" height="4" fill="#ff9a66" />
+	</svg>`;
+}
+function getSeroPipetteSvg() {
+  return `<svg viewBox="0 0 20 150" xmlns="http://www.w3.org/2000/svg">
+		<defs>
+			<linearGradient id="pipetteGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+				<stop offset="0%" style="stop-color:#fff5f5;stop-opacity:1" />
+				<stop offset="50%" style="stop-color:#ffffff;stop-opacity:1" />
+				<stop offset="100%" style="stop-color:#fff5f5;stop-opacity:1" />
+			</linearGradient>
+			<linearGradient id="cottonGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+				<stop offset="0%" style="stop-color:#f0e0d0;stop-opacity:1" />
+				<stop offset="100%" style="stop-color:#f5ead8;stop-opacity:1" />
+			</linearGradient>
+		</defs>
+
+		<!-- Graduated tube (main body) -->
+		<rect x="6" y="15" width="8" height="100" fill="url(#pipetteGrad)" stroke="#999" stroke-width="0.5" rx="1" />
+
+		<!-- Cotton plug at top -->
+		<rect x="4" y="8" width="12" height="8" fill="url(#cottonGrad)" stroke="#ddd" stroke-width="0.3" rx="1" />
+		<circle cx="10" cy="8" r="3" fill="#e8d4c0" opacity="0.6" />
+
+		<!-- Graduation marks (every 2mm = 10% of tube) -->
+		<line x1="4" y1="25" x2="16" y2="25" stroke="#999" stroke-width="0.3" opacity="0.6" />
+		<line x1="4" y1="40" x2="16" y2="40" stroke="#999" stroke-width="0.3" opacity="0.6" />
+		<line x1="4" y1="55" x2="16" y2="55" stroke="#999" stroke-width="0.3" opacity="0.6" />
+		<line x1="4" y1="70" x2="16" y2="70" stroke="#999" stroke-width="0.3" opacity="0.6" />
+		<line x1="4" y1="85" x2="16" y2="85" stroke="#999" stroke-width="0.3" opacity="0.6" />
+
+		<!-- Finer graduation marks -->
+		<line x1="6" y1="32" x2="14" y2="32" stroke="#ccc" stroke-width="0.2" opacity="0.4" />
+		<line x1="6" y1="47" x2="14" y2="47" stroke="#ccc" stroke-width="0.2" opacity="0.4" />
+		<line x1="6" y1="62" x2="14" y2="62" stroke="#ccc" stroke-width="0.2" opacity="0.4" />
+		<line x1="6" y1="77" x2="14" y2="77" stroke="#ccc" stroke-width="0.2" opacity="0.4" />
+
+		<!-- Pointed tip at bottom -->
+		<path d="M 6 115 L 10 135 L 14 115 Z" fill="#cccccc" stroke="#999" stroke-width="0.3" />
+
+		<!-- Slight shine on tube -->
+		<rect x="7" y="20" width="2" height="90" fill="#ffffff" opacity="0.4" />
+	</svg>`;
+}
+function getPipetteAidSvg() {
+  return `<svg viewBox="0 0 40 90" xmlns="http://www.w3.org/2000/svg">
+		<defs>
+			<linearGradient id="pipeAidGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+				<stop offset="0%" style="stop-color:#4a90e2;stop-opacity:1" />
+				<stop offset="50%" style="stop-color:#357abd;stop-opacity:1" />
+				<stop offset="100%" style="stop-color:#2563a3;stop-opacity:1" />
+			</linearGradient>
+			<linearGradient id="triggerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+				<stop offset="0%" style="stop-color:#6ba3e5;stop-opacity:1" />
+				<stop offset="100%" style="stop-color:#4a90e2;stop-opacity:1" />
+			</linearGradient>
+		</defs>
+
+		<!-- Main body (blue plastic) -->
+		<rect x="8" y="5" width="24" height="50" fill="url(#pipeAidGrad)" stroke="#2563a3" stroke-width="0.5" rx="3" />
+
+		<!-- Trigger/grip -->
+		<path d="M 8 30 L 5 40 L 5 50 Q 5 55 8 55 L 8 30 Z" fill="url(#triggerGrad)" stroke="#2563a3" stroke-width="0.5" rx="2" />
+
+		<!-- Top push buttons (light gray) -->
+		<circle cx="16" cy="12" r="2.5" fill="#cccccc" stroke="#999" stroke-width="0.3" />
+		<circle cx="24" cy="12" r="2.5" fill="#cccccc" stroke="#999" stroke-width="0.3" />
+
+		<!-- Window/display area -->
+		<rect x="10" y="25" width="20" height="8" fill="#1a3a6a" stroke="#999" stroke-width="0.4" rx="1" />
+		<text x="20" y="30" font-family="Arial, sans-serif" font-size="4" fill="#4a90e2" text-anchor="middle">P200</text>
+
+		<!-- Ejector button at bottom -->
+		<circle cx="20" cy="68" r="3" fill="#cccccc" stroke="#999" stroke-width="0.3" />
+
+		<!-- Connection point for pipette (bottom opening) -->
+		<rect x="16" y="75" width="8" height="8" fill="#555555" stroke="#333" stroke-width="0.3" rx="1" />
+
+		<!-- Shade/highlight -->
+		<ellipse cx="15" cy="20" rx="4" ry="8" fill="#ffffff" opacity="0.2" />
+	</svg>`;
+}
+function getAspiratingPipetteSvg() {
+  return `<svg viewBox="0 0 25 140" xmlns="http://www.w3.org/2000/svg">
+		<defs>
+			<linearGradient id="pasteurGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+				<stop offset="0%" style="stop-color:#fff8f8;stop-opacity:1" />
+				<stop offset="50%" style="stop-color:#ffffff;stop-opacity:1" />
+				<stop offset="100%" style="stop-color:#fff8f8;stop-opacity:1" />
+			</linearGradient>
+		</defs>
+
+		<!-- Rubber bulb at top -->
+		<ellipse cx="12.5" cy="12" rx="6" ry="8" fill="#ffcccc" stroke="#ff9999" stroke-width="0.4" />
+
+		<!-- Thin glass tube -->
+		<line x1="10" y1="20" x2="10" y2="120" stroke="#999" stroke-width="0.8" />
+		<line x1="15" y1="20" x2="15" y2="120" stroke="#999" stroke-width="0.8" />
+		<rect x="10" y="20" width="5" height="100" fill="url(#pasteurGrad)" opacity="0.3" />
+
+		<!-- Tubing connection at top -->
+		<rect x="9" y="18" width="7" height="4" fill="#dd6666" stroke="#bb3333" stroke-width="0.3" rx="1" />
+
+		<!-- Narrow tip at bottom -->
+		<path d="M 10 120 L 12.5 135 L 15 120 Z" fill="#cccccc" stroke="#999" stroke-width="0.3" />
+
+		<!-- Highlight on glass -->
+		<line x1="11" y1="25" x2="11" y2="115" stroke="#ffffff" stroke-width="0.3" opacity="0.6" />
+	</svg>`;
+}
+function getWasteContainerSvg() {
+  return `<svg viewBox="0 0 70 90" xmlns="http://www.w3.org/2000/svg">
+		<defs>
+			<linearGradient id="wasteBottleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+				<stop offset="0%" style="stop-color:#f0f0f0;stop-opacity:1" />
+				<stop offset="50%" style="stop-color:#ffffff;stop-opacity:1" />
+				<stop offset="100%" style="stop-color:#f0f0f0;stop-opacity:1" />
+			</linearGradient>
+			<linearGradient id="wasteGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+				<stop offset="0%" style="stop-color:#d4d4a5;stop-opacity:0.8" />
+				<stop offset="50%" style="stop-color:#e8e8c0;stop-opacity:0.9" />
+				<stop offset="100%" style="stop-color:#d4d4a5;stop-opacity:0.8" />
+			</linearGradient>
+		</defs>
+
+		<!-- Erlenmeyer-style bottle -->
+		<path d="M 20 15 L 18 30 L 15 55 Q 15 65 20 68 L 50 68 Q 55 65 55 55 L 52 30 L 50 15 Z"
+			fill="url(#wasteBottleGrad)" stroke="#ccc" stroke-width="0.5" />
+
+		<!-- Waste liquid inside -->
+		<path d="M 17 45 L 17 55 Q 17 63 22 66 L 48 66 Q 53 63 53 55 L 53 45 Z"
+			fill="url(#wasteGrad)" opacity="0.7" />
+
+		<!-- Side arm connection port (small tube outlet) -->
+		<circle cx="58" cy="30" r="2" fill="#999" stroke="#666" stroke-width="0.3" />
+		<path d="M 55 30 Q 57 28 62 26" stroke="#888" stroke-width="1" fill="none" stroke-linecap="round" />
+
+		<!-- Label area -->
+		<rect x="22" y="50" width="26" height="10" fill="#ffffff" opacity="0.7" stroke="#ddd" stroke-width="0.3" rx="1" />
+		<text x="35" y="57" font-family="Arial, sans-serif" font-size="6" fill="#333" text-anchor="middle">Waste</text>
+
+		<!-- Shine -->
+		<ellipse cx="25" cy="35" rx="3" ry="12" fill="#ffffff" opacity="0.5" />
+	</svg>`;
+}
+function getDrugVialSvg() {
+  return `<svg viewBox="0 0 30 50" xmlns="http://www.w3.org/2000/svg">
+		<defs>
+			<linearGradient id="vialGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+				<stop offset="0%" style="stop-color:#f8f8f8;stop-opacity:1" />
+				<stop offset="50%" style="stop-color:#ffffff;stop-opacity:1" />
+				<stop offset="100%" style="stop-color:#f8f8f8;stop-opacity:1" />
+			</linearGradient>
+			<linearGradient id="drugLiquidGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+				<stop offset="0%" style="stop-color:#e6d4ff;stop-opacity:1" />
+				<stop offset="50%" style="stop-color:#f0e8ff;stop-opacity:1" />
+				<stop offset="100%" style="stop-color:#e6d4ff;stop-opacity:1" />
+			</linearGradient>
+			<linearGradient id="capVialGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+				<stop offset="0%" style="stop-color:#666666;stop-opacity:1" />
+				<stop offset="100%" style="stop-color:#444444;stop-opacity:1" />
+			</linearGradient>
+		</defs>
+
+		<!-- Black cap -->
+		<rect x="9" y="3" width="12" height="5" fill="url(#capVialGrad)" stroke="#222" stroke-width="0.3" rx="1" />
+
+		<!-- Vial neck -->
+		<rect x="11" y="8" width="8" height="4" fill="url(#vialGrad)" stroke="#ddd" stroke-width="0.3" />
+
+		<!-- Main vial body (rounded cylinder) -->
+		<path d="M 10 12 L 10 35 Q 10 40 15 42 L 15 42 Q 20 40 20 35 L 20 12 Z"
+			fill="url(#vialGrad)" stroke="#ddd" stroke-width="0.4" />
+
+		<!-- Colorless liquid (slight purple tint to show it's drug) -->
+		<path d="M 11 25 L 11 35 Q 11 39 15 41 L 15 41 Q 19 39 19 35 L 19 25 Z"
+			fill="url(#drugLiquidGrad)" opacity="0.6" />
+
+		<!-- Liquid surface -->
+		<ellipse cx="15" cy="25" rx="4" ry="1.5" fill="#e6d4ff" opacity="0.4" />
+
+		<!-- Label area -->
+		<rect x="8" y="25" width="14" height="8" fill="#ffffff" opacity="0.8" stroke="#ddd" stroke-width="0.3" rx="0.5" />
+		<text x="15" y="30" font-family="Arial, sans-serif" font-size="4" fill="#333" text-anchor="middle" font-weight="bold">Drug</text>
+		<text x="15" y="34" font-family="Arial, sans-serif" font-size="3" fill="#666" text-anchor="middle">10 uM</text>
+
+		<!-- Shine -->
+		<ellipse cx="12" cy="20" rx="1.5" ry="6" fill="#ffffff" opacity="0.5" />
+	</svg>`;
+}
+function getMicropipetteSvg() {
+  return `<svg viewBox="0 0 35 100" xmlns="http://www.w3.org/2000/svg">
+		<defs>
+			<linearGradient id="micropipGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+				<stop offset="0%" style="stop-color:#6b8fc4;stop-opacity:1" />
+				<stop offset="50%" style="stop-color:#5a7cb5;stop-opacity:1" />
+				<stop offset="100%" style="stop-color:#4a6ba3;stop-opacity:1" />
+			</linearGradient>
+			<linearGradient id="plungerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+				<stop offset="0%" style="stop-color:#d4b896;stop-opacity:1" />
+				<stop offset="100%" style="stop-color:#c0a080;stop-opacity:1" />
+			</linearGradient>
+		</defs>
+
+		<!-- Plunger button at top -->
+		<circle cx="17.5" cy="8" r="4" fill="url(#plungerGrad)" stroke="#8b7355" stroke-width="0.3" />
+		<path d="M 15 10 L 17.5 12 L 20 10" stroke="#8b7355" stroke-width="0.5" fill="none" stroke-linecap="round" />
+
+		<!-- Main shaft (blue body) -->
+		<path d="M 14 12 L 13 60 Q 13 70 17.5 72 Q 22 70 22 60 L 21 12 Z" fill="url(#micropipGrad)" stroke="#3a5a93" stroke-width="0.4" />
+
+		<!-- Display window -->
+		<rect x="14.5" y="25" width="6" height="8" fill="#1a3a6a" stroke="#2a4a7a" stroke-width="0.3" rx="0.5" />
+		<text x="17.5" y="31" font-family="Arial, sans-serif" font-size="3" fill="#6b8fc4" text-anchor="middle">10</text>
+
+		<!-- Tip ejector button (lower front) -->
+		<circle cx="17.5" cy="65" r="2" fill="#cccccc" stroke="#999" stroke-width="0.3" />
+
+		<!-- Attachment point for tip -->
+		<rect x="15.5" y="72" width="4" height="8" fill="#888888" stroke="#666" stroke-width="0.3" rx="0.5" />
+
+		<!-- Highlight on shaft -->
+		<ellipse cx="15" cy="40" rx="1.5" ry="12" fill="#ffffff" opacity="0.2" />
+
+		<!-- Text label -->
+		<text x="17.5" y="88" font-family="Arial, sans-serif" font-size="3" fill="#333" text-anchor="middle">P200</text>
+	</svg>`;
+}
+function getEthanolBottleSvg() {
+  return `<svg viewBox="0 0 40 80" xmlns="http://www.w3.org/2000/svg">
+		<defs>
+			<linearGradient id="ethanolGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+				<stop offset="0%" style="stop-color:#f5f5f5;stop-opacity:1" />
+				<stop offset="50%" style="stop-color:#ffffff;stop-opacity:1" />
+				<stop offset="100%" style="stop-color:#f5f5f5;stop-opacity:1" />
+			</linearGradient>
+			<linearGradient id="triggerGrad2" x1="0%" y1="0%" x2="100%" y2="0%">
+				<stop offset="0%" style="stop-color:#ff6b6b;stop-opacity:1" />
+				<stop offset="100%" style="stop-color:#dd5555;stop-opacity:1" />
+			</linearGradient>
+			<linearGradient id="ethanolLiquidGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+				<stop offset="0%" style="stop-color:#e0e0ff;stop-opacity:0.7" />
+				<stop offset="50%" style="stop-color:#f0f0ff;stop-opacity:0.8" />
+				<stop offset="100%" style="stop-color:#e0e0ff;stop-opacity:0.7" />
+			</linearGradient>
+		</defs>
+
+		<!-- Spray nozzle at top -->
+		<rect x="16" y="5" width="8" height="4" fill="#666666" stroke="#333" stroke-width="0.3" rx="0.5" />
+		<circle cx="20" cy="5" r="1.5" fill="#444444" />
+
+		<!-- Pump tube going down inside -->
+		<line x1="20" y1="9" x2="20" y2="50" stroke="#888" stroke-width="0.8" opacity="0.5" />
+
+		<!-- Trigger -->
+		<path d="M 14 20 L 8 35 Q 7 40 12 42 L 14 35 Z" fill="url(#triggerGrad2)" stroke="#bb3333" stroke-width="0.3" rx="1" />
+
+		<!-- Main bottle body -->
+		<path d="M 12 15 L 12 60 Q 12 68 18 70 L 22 70 Q 28 68 28 60 L 28 15 Z"
+			fill="url(#ethanolGrad)" stroke="#ddd" stroke-width="0.4" />
+
+		<!-- Ethanol liquid inside (clear with slight tint) -->
+		<path d="M 14 45 L 14 60 Q 14 67 19 69 L 21 69 Q 26 67 26 60 L 26 45 Z"
+			fill="url(#ethanolLiquidGrad)" opacity="0.6" />
+
+		<!-- Liquid surface -->
+		<ellipse cx="20" cy="45" rx="6" ry="1.5" fill="#e0e0ff" opacity="0.4" />
+
+		<!-- Label -->
+		<rect x="13" y="50" width="14" height="10" fill="#ffffff" opacity="0.8" stroke="#ccc" stroke-width="0.3" rx="0.5" />
+		<text x="20" y="54" font-family="Arial, sans-serif" font-size="5" fill="#333" text-anchor="middle" font-weight="bold">70%</text>
+		<text x="20" y="58" font-family="Arial, sans-serif" font-size="4" fill="#666" text-anchor="middle">EtOH</text>
+
+		<!-- Shine -->
+		<ellipse cx="15" cy="35" rx="2" ry="10" fill="#ffffff" opacity="0.5" />
+	</svg>`;
+}
+function getHandSvg(action) {
+  if (action === "idle") {
+    return `<svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg">
+			<defs>
+				<linearGradient id="skinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+					<stop offset="0%" style="stop-color:#f4c4a0;stop-opacity:1" />
+					<stop offset="100%" style="stop-color:#e0b090;stop-opacity:1" />
+				</linearGradient>
+			</defs>
+
+			<!-- Palm -->
+			<ellipse cx="30" cy="45" rx="18" ry="22" fill="url(#skinGrad)" stroke="#d4a080" stroke-width="0.5" />
+
+			<!-- Thumb -->
+			<ellipse cx="15" cy="35" rx="6" ry="10" fill="url(#skinGrad)" stroke="#d4a080" stroke-width="0.4" transform="rotate(-30 15 35)" />
+
+			<!-- Fingers (4) -->
+			<ellipse cx="20" cy="15" rx="5" ry="12" fill="url(#skinGrad)" stroke="#d4a080" stroke-width="0.4" />
+			<ellipse cx="30" cy="10" rx="5" ry="13" fill="url(#skinGrad)" stroke="#d4a080" stroke-width="0.4" />
+			<ellipse cx="40" cy="10" rx="5" ry="13" fill="url(#skinGrad)" stroke="#d4a080" stroke-width="0.4" />
+			<ellipse cx="50" cy="15" rx="5" ry="12" fill="url(#skinGrad)" stroke="#d4a080" stroke-width="0.4" />
+
+			<!-- Palm details (shadow) -->
+			<path d="M 25 50 Q 30 55 35 50" stroke="#d4a080" stroke-width="0.3" fill="none" opacity="0.5" />
+		</svg>`;
+  } else if (action === "grabbing") {
+    return `<svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg">
+			<defs>
+				<linearGradient id="skinGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+					<stop offset="0%" style="stop-color:#f4c4a0;stop-opacity:1" />
+					<stop offset="100%" style="stop-color:#e0b090;stop-opacity:1" />
+				</linearGradient>
+			</defs>
+
+			<!-- Palm -->
+			<ellipse cx="30" cy="45" rx="16" ry="20" fill="url(#skinGrad2)" stroke="#d4a080" stroke-width="0.5" />
+
+			<!-- Thumb (curled) -->
+			<path d="M 18 40 Q 15 30 18 25" stroke="#d4a080" stroke-width="5" fill="none" stroke-linecap="round" />
+			<circle cx="18" cy="25" r="4" fill="url(#skinGrad2)" stroke="#d4a080" stroke-width="0.3" />
+
+			<!-- Fingers (curled toward center) -->
+			<path d="M 22 18 Q 25 28 28 35" stroke="#d4a080" stroke-width="4" fill="none" stroke-linecap="round" />
+			<circle cx="22" cy="18" r="3.5" fill="url(#skinGrad2)" stroke="#d4a080" stroke-width="0.3" />
+
+			<path d="M 32 15 Q 32 28 32 38" stroke="#d4a080" stroke-width="4" fill="none" stroke-linecap="round" />
+			<circle cx="32" cy="15" r="3.5" fill="url(#skinGrad2)" stroke="#d4a080" stroke-width="0.3" />
+
+			<path d="M 42 15 Q 42 28 38 38" stroke="#d4a080" stroke-width="4" fill="none" stroke-linecap="round" />
+			<circle cx="42" cy="15" r="3.5" fill="url(#skinGrad2)" stroke="#d4a080" stroke-width="0.3" />
+
+			<path d="M 50 22 Q 45 32 40 40" stroke="#d4a080" stroke-width="4" fill="none" stroke-linecap="round" />
+			<circle cx="50" cy="22" r="3.5" fill="url(#skinGrad2)" stroke="#d4a080" stroke-width="0.3" />
+
+			<!-- Palm details -->
+			<path d="M 25 48 Q 30 52 35 48" stroke="#d4a080" stroke-width="0.3" fill="none" opacity="0.5" />
+		</svg>`;
+  } else if (action === "pipetting") {
+    return `<svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg">
+			<defs>
+				<linearGradient id="skinGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
+					<stop offset="0%" style="stop-color:#f4c4a0;stop-opacity:1" />
+					<stop offset="100%" style="stop-color:#e0b090;stop-opacity:1" />
+				</linearGradient>
+			</defs>
+
+			<!-- Palm (slightly rotated) -->
+			<ellipse cx="32" cy="45" rx="16" ry="20" fill="url(#skinGrad3)" stroke="#d4a080" stroke-width="0.5" transform="rotate(15 32 45)" />
+
+			<!-- Thumb pointing up -->
+			<ellipse cx="45" cy="25" rx="5" ry="12" fill="url(#skinGrad3)" stroke="#d4a080" stroke-width="0.4" transform="rotate(20 45 25)" />
+
+			<!-- Fingers extended upward (holding pipette) -->
+			<ellipse cx="28" cy="15" rx="4" ry="14" fill="url(#skinGrad3)" stroke="#d4a080" stroke-width="0.4" />
+			<ellipse cx="36" cy="10" rx="4" ry="15" fill="url(#skinGrad3)" stroke="#d4a080" stroke-width="0.4" />
+			<ellipse cx="44" cy="12" rx="4" ry="14" fill="url(#skinGrad3)" stroke="#d4a080" stroke-width="0.4" />
+
+			<!-- Index finger on trigger (bent) -->
+			<path d="M 20 35 Q 18 25 22 18" stroke="#d4a080" stroke-width="5" fill="none" stroke-linecap="round" />
+			<circle cx="22" cy="18" r="3" fill="url(#skinGrad3)" stroke="#d4a080" stroke-width="0.3" />
+
+			<!-- Pinky -->
+			<ellipse cx="50" cy="22" rx="4" ry="12" fill="url(#skinGrad3)" stroke="#d4a080" stroke-width="0.4" />
+		</svg>`;
+  } else if (action === "spraying") {
+    return `<svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg">
+			<defs>
+				<linearGradient id="skinGrad4" x1="0%" y1="0%" x2="100%" y2="100%">
+					<stop offset="0%" style="stop-color:#f4c4a0;stop-opacity:1" />
+					<stop offset="100%" style="stop-color:#e0b090;stop-opacity:1" />
+				</linearGradient>
+			</defs>
+
+			<!-- Palm (extended forward) -->
+			<ellipse cx="25" cy="45" rx="15" ry="18" fill="url(#skinGrad4)" stroke="#d4a080" stroke-width="0.5" />
+
+			<!-- Thumb out to side -->
+			<ellipse cx="10" cy="38" rx="5" ry="10" fill="url(#skinGrad4)" stroke="#d4a080" stroke-width="0.4" transform="rotate(-40 10 38)" />
+
+			<!-- Fingers extended forward (around spray bottle trigger) -->
+			<ellipse cx="18" cy="20" rx="4" ry="13" fill="url(#skinGrad4)" stroke="#d4a080" stroke-width="0.4" />
+			<ellipse cx="25" cy="15" rx="4" ry="14" fill="url(#skinGrad4)" stroke="#d4a080" stroke-width="0.4" />
+			<ellipse cx="32" cy="16" rx="4" ry="13" fill="url(#skinGrad4)" stroke="#d4a080" stroke-width="0.4" />
+			<ellipse cx="38" cy="22" rx="4" ry="12" fill="url(#skinGrad4)" stroke="#d4a080" stroke-width="0.4" />
+
+			<!-- Index finger on trigger (pressing) -->
+			<path d="M 15 38 Q 12 30 16 22" stroke="#d4a080" stroke-width="5" fill="none" stroke-linecap="round" />
+			<circle cx="16" cy="22" r="3" fill="url(#skinGrad4)" stroke="#d4a080" stroke-width="0.3" />
+
+			<!-- Spray effect lines -->
+			<line x1="20" y1="10" x2="18" y2="5" stroke="#4a90e2" stroke-width="0.8" opacity="0.7" stroke-linecap="round" />
+			<line x1="25" y1="8" x2="25" y2="2" stroke="#4a90e2" stroke-width="0.8" opacity="0.7" stroke-linecap="round" />
+			<line x1="30" y1="10" x2="32" y2="4" stroke="#4a90e2" stroke-width="0.8" opacity="0.7" stroke-linecap="round" />
+		</svg>`;
+  }
+  return getHandSvg("idle");
+}
+function getHemocytometerGridSvg() {
+  return `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+		<defs>
+			<linearGradient id="glassGridGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+				<stop offset="0%" style="stop-color:#f5f9ff;stop-opacity:1" />
+				<stop offset="100%" style="stop-color:#e8f0ff;stop-opacity:1" />
+			</linearGradient>
+		</defs>
+
+		<!-- Background (glass/slide) -->
+		<rect x="10" y="10" width="180" height="180" fill="url(#glassGridGrad)" stroke="#999" stroke-width="1" />
+
+		<!-- Main grid lines (double lines for main divisions) -->
+		<!-- Horizontal lines -->
+		<line x1="10" y1="60" x2="190" y2="60" stroke="#333" stroke-width="0.8" />
+		<line x1="10" y1="61" x2="190" y2="61" stroke="#333" stroke-width="0.8" />
+		<line x1="10" y1="110" x2="190" y2="110" stroke="#333" stroke-width="0.8" />
+		<line x1="10" y1="111" x2="190" y2="111" stroke="#333" stroke-width="0.8" />
+		<line x1="10" y1="160" x2="190" y2="160" stroke="#333" stroke-width="0.8" />
+		<line x1="10" y1="161" x2="190" y2="161" stroke="#333" stroke-width="0.8" />
+
+		<!-- Vertical lines -->
+		<line x1="60" y1="10" x2="60" y2="190" stroke="#333" stroke-width="0.8" />
+		<line x1="61" y1="10" x2="61" y2="190" stroke="#333" stroke-width="0.8" />
+		<line x1="110" y1="10" x2="110" y2="190" stroke="#333" stroke-width="0.8" />
+		<line x1="111" y1="10" x2="111" y2="190" stroke="#333" stroke-width="0.8" />
+		<line x1="160" y1="10" x2="160" y2="190" stroke="#333" stroke-width="0.8" />
+		<line x1="161" y1="10" x2="161" y2="190" stroke="#333" stroke-width="0.8" />
+
+		<!-- Fine grid lines (lighter) -->
+		<!-- Smaller divisions within each major square -->
+		<line x1="10" y1="35" x2="190" y2="35" stroke="#ccc" stroke-width="0.3" />
+		<line x1="10" y1="85" x2="190" y2="85" stroke="#ccc" stroke-width="0.3" />
+		<line x1="10" y1="135" x2="190" y2="135" stroke="#ccc" stroke-width="0.3" />
+
+		<line x1="35" y1="10" x2="35" y2="190" stroke="#ccc" stroke-width="0.3" />
+		<line x1="85" y1="10" x2="85" y2="190" stroke="#ccc" stroke-width="0.3" />
+		<line x1="135" y1="10" x2="135" y2="190" stroke="#ccc" stroke-width="0.3" />
+
+		<!-- Highlight corner counting squares -->
+		<!-- Top-left -->
+		<rect x="15" y="15" width="40" height="40" fill="none" stroke="#ff6b6b" stroke-width="1.5" stroke-dasharray="2,2" opacity="0.8" />
+		<!-- Top-right -->
+		<rect x="145" y="15" width="40" height="40" fill="none" stroke="#ff6b6b" stroke-width="1.5" stroke-dasharray="2,2" opacity="0.8" />
+		<!-- Bottom-left -->
+		<rect x="15" y="145" width="40" height="40" fill="none" stroke="#ff6b6b" stroke-width="1.5" stroke-dasharray="2,2" opacity="0.8" />
+		<!-- Bottom-right -->
+		<rect x="145" y="145" width="40" height="40" fill="none" stroke="#ff6b6b" stroke-width="1.5" stroke-dasharray="2,2" opacity="0.8" />
+
+		<!-- Label text for corner squares -->
+		<text x="30" y="190" font-family="Arial, sans-serif" font-size="8" fill="#666">Count 4 corners</text>
+	</svg>`;
+}
+function getWellPlateSvg(wells) {
+  const wellR = 10;
+  const spacingX = 28;
+  const spacingY = 26;
+  const offsetX = 22;
+  const offsetY = 18;
+  let svg = '<svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">';
+  svg += '<rect x="2" y="2" width="196" height="126" rx="6" fill="#e8e8e8" stroke="#bbb" stroke-width="1.5"/>';
+  for (let col = 0; col < PLATE_COLS; col++) {
+    const cx = offsetX + col * spacingX;
+    svg += '<text x="' + cx + '" y="12" font-family="Arial,sans-serif" font-size="7" fill="#999" text-anchor="middle">' + (col + 1) + "</text>";
+  }
+  const rowLabels = ["A", "B", "C", "D"];
+  for (let row = 0; row < PLATE_ROWS; row++) {
+    const cy = offsetY + row * spacingY;
+    svg += '<text x="6" y="' + (cy + 3) + '" font-family="Arial,sans-serif" font-size="7" fill="#999">' + rowLabels[row] + "</text>";
+  }
+  for (let row = 0; row < PLATE_ROWS; row++) {
+    for (let col = 0; col < PLATE_COLS; col++) {
+      const cx = offsetX + col * spacingX;
+      const cy = offsetY + row * spacingY;
+      const well = wells[row * PLATE_COLS + col];
+      let fill = "#f5f5f5";
+      if (well.hasCells && well.drugConcentrationUm > 0) {
+        const intensity = Math.min(1, well.drugConcentrationUm / 10);
+        const r = Math.round(200 - intensity * 60);
+        const g = Math.round(180 - intensity * 80);
+        const b = Math.round(220 - intensity * 20);
+        fill = "rgb(" + r + "," + g + "," + b + ")";
+      } else if (well.hasCells) {
+        fill = "#f0a0b0";
+      }
+      svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + wellR + '" fill="' + fill + '" stroke="#ccc" stroke-width="0.8"/>';
+    }
+  }
+  for (let col = 0; col < PLATE_COLS; col++) {
+    const cx = offsetX + col * spacingX;
+    svg += '<text x="' + cx + '" y="125" font-family="Arial,sans-serif" font-size="5" fill="#999" text-anchor="middle">' + DRUG_CONCENTRATION_LABELS[col] + "</text>";
+  }
+  svg += "</svg>";
+  return svg;
+}
+function getDrugVialsSvg() {
+  let svg = '<svg viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg">';
+  svg += '<rect x="2" y="15" width="116" height="43" rx="3" fill="#ddd" stroke="#bbb" stroke-width="1"/>';
+  for (let i = 0; i < 6; i++) {
+    const cx = 12 + i * 18;
+    const intensity = i / 5;
+    const r = Math.round(220 - intensity * 80);
+    const g = Math.round(220 - intensity * 100);
+    const b = Math.round(240 - intensity * 20);
+    svg += '<rect x="' + (cx - 5) + '" y="8" width="10" height="40" rx="2" fill="rgb(' + r + "," + g + "," + b + ')" stroke="#999" stroke-width="0.5"/>';
+    svg += '<rect x="' + (cx - 5) + '" y="5" width="10" height="5" rx="1" fill="#888"/>';
+    svg += '<text x="' + cx + '" y="55" font-family="Arial,sans-serif" font-size="5" fill="#666" text-anchor="middle">' + DRUG_CONCENTRATION_LABELS[i] + "</text>";
+  }
+  svg += '<text x="60" y="4" font-family="Arial,sans-serif" font-size="6" fill="#555" text-anchor="middle">Drug Stock (' + DRUG_STOCK_CONCENTRATION_UM + " uM)</text>";
+  svg += "</svg>";
+  return svg;
+}
+function getMultichannelPipetteSvg() {
+  return '<svg viewBox="0 0 60 120" xmlns="http://www.w3.org/2000/svg"><rect x="20" y="5" width="20" height="50" rx="4" fill="#5a8abf" stroke="#3d6a9f" stroke-width="1"/><rect x="24" y="2" width="12" height="8" rx="2" fill="#4a7aaf" stroke="#3d6a9f" stroke-width="0.5"/><rect x="22" y="55" width="16" height="30" rx="2" fill="#ccc" stroke="#999" stroke-width="0.5"/><line x1="24" y1="85" x2="24" y2="110" stroke="#ddd" stroke-width="2"/><line x1="28" y1="85" x2="28" y2="110" stroke="#ddd" stroke-width="2"/><line x1="32" y1="85" x2="32" y2="110" stroke="#ddd" stroke-width="2"/><line x1="36" y1="85" x2="36" y2="110" stroke="#ddd" stroke-width="2"/><circle cx="24" cy="112" r="1.5" fill="#eee" stroke="#ccc" stroke-width="0.5"/><circle cx="28" cy="112" r="1.5" fill="#eee" stroke="#ccc" stroke-width="0.5"/><circle cx="32" cy="112" r="1.5" fill="#eee" stroke="#ccc" stroke-width="0.5"/><circle cx="36" cy="112" r="1.5" fill="#eee" stroke="#ccc" stroke-width="0.5"/></svg>';
+}
+function getMicroscopeSvg() {
+  return '<svg viewBox="0 0 80 120" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="100" width="60" height="10" rx="3" fill="#333" stroke="#222" stroke-width="1"/><rect x="20" y="85" width="40" height="6" rx="1" fill="#555" stroke="#444" stroke-width="0.5"/><rect x="22" y="83" width="4" height="4" rx="0.5" fill="#888"/><rect x="54" y="83" width="4" height="4" rx="0.5" fill="#888"/><rect x="55" y="30" width="10" height="70" rx="2" fill="#444" stroke="#333" stroke-width="0.5"/><path d="M 55 35 Q 55 20 40 15" stroke="#444" stroke-width="10" fill="none" stroke-linecap="round"/><rect x="32" y="5" width="16" height="15" rx="2" fill="#555" stroke="#444" stroke-width="0.5"/><ellipse cx="40" cy="5" rx="10" ry="3" fill="#666" stroke="#555" stroke-width="0.5"/><circle cx="40" cy="78" r="6" fill="#666" stroke="#555" stroke-width="0.5"/><rect x="35" y="78" width="3" height="8" rx="1" fill="#777"/><rect x="39" y="80" width="3" height="6" rx="1" fill="#888"/><rect x="43" y="79" width="3" height="7" rx="1" fill="#777"/><circle cx="65" cy="65" r="5" fill="#777" stroke="#666" stroke-width="0.5"/><circle cx="65" cy="65" r="2" fill="#888"/><text x="40" y="118" font-family="Arial,sans-serif" font-size="7" fill="#999" text-anchor="middle">Microscope</text></svg>';
+}
+const renderProtocolPanel = () => {
+  const checklist = document.getElementById("protocol-checklist");
+  if (!checklist) return;
+  checklist.innerHTML = "";
+  PROTOCOL_STEPS.forEach((step, index) => {
+    const isCompleted = gameState.completedSteps.includes(step.id);
+    const isCurrent = gameState.currentStep === index;
+    const li = document.createElement("li");
+    li.className = "protocol-step";
+    if (isCurrent) {
+      li.classList.add("current");
+    }
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.id = `step-${step.id}`;
+    checkbox.checked = isCompleted;
+    checkbox.disabled = true;
+    const label = document.createElement("label");
+    label.htmlFor = `step-${step.id}`;
+    label.textContent = `${index + 1}. ${step.label}`;
+    li.appendChild(checkbox);
+    li.appendChild(label);
+    checklist.appendChild(li);
+  });
+};
+const renderScoreDisplay = () => {
+  const scoreDisplay = document.getElementById("score-display");
+  if (!scoreDisplay) return;
+  const completedCount = gameState.completedSteps.length;
+  const totalCount = PROTOCOL_STEPS.length;
+  const progressPercent = totalCount > 0 ? completedCount / totalCount * 100 : 0;
+  scoreDisplay.innerHTML = `
+		<div class="score-label">Protocol Progress</div>
+		<div class="score-value">${completedCount}/${totalCount}</div>
+		<div class="progress-bar" style="margin-top: 12px;">
+			<div class="progress-fill" style="width: ${progressPercent}%"></div>
+		</div>
+	`;
+};
+showNotification = function(message, type = "info") {
+  const notificationArea = document.getElementById("notification-area");
+  if (!notificationArea) return;
+  const notification = document.createElement("div");
+  notification.className = `notification ${type}`;
+  notification.textContent = message;
+  notificationArea.appendChild(notification);
+  setTimeout(() => {
+    notification.classList.add("fade-out");
+    setTimeout(() => {
+      notification.remove();
+    }, 300);
+  }, 3e3);
+};
+const renderResultsScreen = (scoreResult) => {
+  const resultsScreen = document.getElementById("results-screen");
+  if (!resultsScreen) return;
+  let starsHtml = "";
+  for (let i = 1; i <= 3; i++) {
+    if (i <= scoreResult.stars) {
+      starsHtml += '<span style="color: #ffc107; font-size: 36px; margin: 0 4px;">\u2605</span>';
+    } else {
+      starsHtml += '<span style="color: #ddd; font-size: 36px; margin: 0 4px;">\u2606</span>';
+    }
+  }
+  const categoryFeedback = `
+		<div style="margin-top: 20px; border-top: 1px solid #eceff1; padding-top: 16px;">
+			<div style="text-align: left; font-size: 13px;">
+				<div style="margin-bottom: 12px;">
+					<div style="font-weight: 600; color: #212121;">Order & Sequence</div>
+					<div style="color: #757575;">${scoreResult.categories.order.points}/${scoreResult.categories.order.maxPoints} points</div>
+					<div style="color: #78909c; font-size: 12px; margin-top: 4px;">${scoreResult.categories.order.feedback}</div>
+				</div>
+				<div style="margin-bottom: 12px;">
+					<div style="font-weight: 600; color: #212121;">Cleanliness</div>
+					<div style="color: #757575;">${scoreResult.categories.cleanliness.points}/${scoreResult.categories.cleanliness.maxPoints} points</div>
+					<div style="color: #78909c; font-size: 12px; margin-top: 4px;">${scoreResult.categories.cleanliness.feedback}</div>
+				</div>
+				<div style="margin-bottom: 12px;">
+					<div style="font-weight: 600; color: #212121;">Media Usage</div>
+					<div style="color: #757575;">${scoreResult.categories.wastedMedia.points}/${scoreResult.categories.wastedMedia.maxPoints} points</div>
+					<div style="color: #78909c; font-size: 12px; margin-top: 4px;">${scoreResult.categories.wastedMedia.feedback}</div>
+				</div>
+				<div>
+					<div style="font-weight: 600; color: #212121;">Timing</div>
+					<div style="color: #757575;">${scoreResult.categories.timing.points}/${scoreResult.categories.timing.maxPoints} points</div>
+					<div style="color: #78909c; font-size: 12px; margin-top: 4px;">${scoreResult.categories.timing.feedback}</div>
+				</div>
+			</div>
+		</div>
+	`;
+  let message = "Great job!";
+  if (scoreResult.stars >= 3) {
+    message = "Outstanding work! You executed the protocol with precision and care.";
+  } else if (scoreResult.stars >= 2) {
+    message = "Good effort! You followed the protocol well. Keep practicing for even better results.";
+  } else {
+    message = "Nice try! Review the protocol steps and try again to improve your technique.";
+  }
+  const resultsContent = resultsScreen.querySelector(".results-content");
+  if (!resultsContent) return;
+  resultsContent.innerHTML = `
+		<div style="text-align: center; margin-bottom: 20px;">
+			${starsHtml}
+		</div>
+		<div style="font-size: 48px; font-weight: 700; color: #4caf50; margin-bottom: 20px;">
+			${scoreResult.totalPoints}
+		</div>
+		<div style="padding: 16px; background-color: #f0f2f5; border-radius: 8px; font-size: 14px; color: #212121; line-height: 1.6;">
+			${message}
+		</div>
+		${categoryFeedback}
+		<button id="play-again-btn" class="btn-primary" style="margin-top: 20px;">Play Again</button>
+	`;
+  const playAgainBtn = document.getElementById("play-again-btn");
+  if (playAgainBtn) {
+    playAgainBtn.addEventListener("click", () => {
+      resetGame();
+    });
+  }
+  resultsScreen.classList.add("active");
+};
+const showVolumeIndicator = (volumeMl, targetMl) => {
+  const volumeIndicator = document.getElementById("volume-indicator");
+  if (!volumeIndicator) return;
+  volumeIndicator.style.display = "block";
+  const tolerance = targetMl * 0.1;
+  let fillColor = "#ef5350";
+  if (Math.abs(volumeMl - targetMl) <= tolerance * 0.5) {
+    fillColor = "#4caf50";
+  } else if (Math.abs(volumeMl - targetMl) <= tolerance) {
+    fillColor = "#ff9800";
+  }
+  const fillPercent = targetMl > 0 ? volumeMl / targetMl * 100 : 0;
+  const boundedPercent = Math.min(Math.max(fillPercent, 0), 100);
+  const volumeFill = volumeIndicator.querySelector(".volume-fill");
+  if (volumeFill) {
+    volumeFill.style.backgroundColor = fillColor;
+    volumeFill.style.width = `${boundedPercent}%`;
+  }
+  const volumeText = volumeIndicator.querySelector(".volume-text");
+  if (volumeText) {
+    volumeText.textContent = `${volumeMl.toFixed(1)} / ${targetMl.toFixed(1)} mL`;
+  }
+};
+const hideVolumeIndicator = () => {
+  const volumeIndicator = document.getElementById("volume-indicator");
+  if (volumeIndicator) {
+    volumeIndicator.style.display = "none";
+  }
+};
+const renderToolbar = () => {
+  const currentStep = getCurrentStep();
+  if (!currentStep) {
+    return "";
+  }
+  let tools = [];
+  if (gameState.activeScene === "hood") {
+    if (currentStep.requiredAction === "spray_ethanol") {
+      tools = [
+        { id: "ethanol_bottle", label: "Ethanol", icon: "[E]" }
+      ];
+    } else if (currentStep.requiredAction === "aspirate") {
+      tools = [
+        { id: "aspirating_pipette", label: "Aspirate", icon: "[A]" }
+      ];
+    } else if (currentStep.requiredAction === "pipette_media") {
+      tools = [
+        { id: "serological_pipette", label: "Pipette", icon: "[P]" },
+        { id: "pipette_aid", label: "Aid", icon: "[+]" }
+      ];
+    } else if (currentStep.requiredAction === "pipette_drug") {
+      tools = [
+        { id: "micropipette", label: "Micropipette", icon: "[M]" }
+      ];
+    }
+  } else if (gameState.activeScene === "incubator") {
+    tools = [
+      { id: "incubator", label: "Incubator", icon: "[*]" }
+    ];
+  } else if (gameState.activeScene === "microscope") {
+    tools = [
+      { id: "microscope", label: "Microscope", icon: "[O]" }
+    ];
+  }
+  let html = '<div style="display: flex; gap: 8px; margin-bottom: 16px;">';
+  tools.forEach((tool) => {
+    const isSelected = gameState.selectedTool === tool.id;
+    const bgColor = isSelected ? "#4caf50" : "#f0f2f5";
+    const textColor = isSelected ? "#ffffff" : "#212121";
+    html += `
+			<button
+				data-tool-id="${tool.id}"
+				style="
+					padding: 8px 12px;
+					background-color: ${bgColor};
+					color: ${textColor};
+					border: 1px solid #eceff1;
+					border-radius: 6px;
+					font-size: 12px;
+					font-weight: 600;
+					cursor: pointer;
+					transition: all 0.2s ease;
+					display: flex;
+					align-items: center;
+					gap: 4px;
+				"
+			>
+				${tool.icon} ${tool.label}
+			</button>
+		`;
+  });
+  html += "</div>";
+  return html;
+};
+function getItemSvgHtml(itemId) {
+  switch (itemId) {
+    case "flask":
+      const mediaLevel = gameState.flaskMediaMl / FLASK_MAX_VOLUME_ML;
+      const mediaColor = gameState.flaskMediaAge === "old" ? "#e6a840" : "#f0a0b0";
+      return getFlaskSvg(mediaLevel, mediaColor);
+    case "well_plate":
+      return getWellPlateSvg(gameState.wellPlate);
+    case "media_bottle":
+      return getMediaBottleSvg();
+    case "aspirating_pipette":
+      return getAspiratingPipetteSvg();
+    case "serological_pipette":
+      return getSeroPipetteSvg();
+    case "waste_container":
+      return getWasteContainerSvg();
+    case "drug_vials":
+      return getDrugVialsSvg();
+    case "multichannel_pipette":
+      return getMultichannelPipetteSvg();
+    case "ethanol_bottle":
+      return getEthanolBottleSvg();
+    case "microscope":
+      return getMicroscopeSvg();
+    default:
+      return "";
+  }
+}
+function renderHoodScene() {
+  const hoodScene = document.getElementById("hood-scene");
+  if (!hoodScene) return;
+  let html = "";
+  html += '<div id="hood-bg" style="position:absolute;top:0;left:0;width:100%;height:100%;">';
+  html += getHoodBackgroundSvg();
+  html += "</div>";
+  const entries = Object.entries(HOOD_ITEMS);
+  for (let i = 0; i < entries.length; i++) {
+    const itemId = entries[i][0];
+    const config = entries[i][1];
+    const isSelected = gameState.selectedTool === itemId;
+    const borderStyle = isSelected ? "3px solid #4caf50" : "2px solid transparent";
+    const opacity = isSelected ? "0.7" : "1";
+    html += '<div class="hood-item" data-item-id="' + itemId + '" ';
+    html += 'style="position:absolute;';
+    html += "left:" + config.x + "%;top:" + config.y + "%;";
+    html += "width:" + config.width + "%;height:" + config.height + "%;";
+    html += "cursor:pointer;border:" + borderStyle + ";border-radius:4px;";
+    html += "opacity:" + opacity + ';transition:all 0.2s ease;" ';
+    html += 'title="' + config.label + '">';
+    html += getItemSvgHtml(itemId);
+    html += "</div>";
+  }
+  const currentStep = getCurrentStep();
+  let hintText = "Protocol complete!";
+  if (currentStep) {
+    hintText = "Current step: " + currentStep.label;
+  }
+  if (gameState.selectedTool) {
+    const toolConfig = HOOD_ITEMS[gameState.selectedTool];
+    const toolLabel = toolConfig ? toolConfig.label : gameState.selectedTool;
+    hintText = "Holding: " + toolLabel + " -- Click a target to use";
+  }
+  html += '<div id="hood-toolbar" style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);';
+  html += "background:rgba(255,255,255,0.9);padding:8px 20px;border-radius:20px;";
+  html += "font-size:14px;color:#212121;box-shadow:0 2px 8px rgba(0,0,0,0.15);";
+  html += 'white-space:nowrap;">';
+  html += hintText;
+  html += "</div>";
+  hoodScene.style.position = "relative";
+  hoodScene.innerHTML = html;
+  setupHoodEventListeners();
+}
+function onItemClick(itemId) {
+  if (!gameState.selectedTool) {
+    if (itemId === "ethanol_bottle") {
+      gameState.hoodSprayed = true;
+      completeStep("spray_hood");
+      showNotification("Sprayed hood with 70% ethanol.", "success");
+      renderHoodScene();
+      renderProtocolPanel();
+      renderScoreDisplay();
+      return;
+    }
+    if (itemId === "microscope" && gameState.flaskMediaAge === "fresh" && !gameState.completedSteps.includes("count_cells")) {
+      switchScene("microscope");
+      return;
+    }
+    if (itemId === "microscope" && gameState.flaskMediaAge !== "fresh") {
+      showNotification("Add fresh media to the flask first.", "warning");
+      return;
+    }
+    if (itemId === "well_plate" && gameState.cellsTransferred && gameState.drugsAdded) {
+      switchScene("incubator");
+      return;
+    }
+    gameState.selectedTool = itemId;
+    showNotification("Picked up " + HOOD_ITEMS[itemId].label);
+    renderHoodScene();
+    return;
+  }
+  const tool = gameState.selectedTool;
+  if (tool === "aspirating_pipette" && itemId === "flask") {
+    gameState.selectedTool = null;
+    startAspiration();
+    renderHoodScene();
+    renderProtocolPanel();
+    renderScoreDisplay();
+    return;
+  }
+  if (tool === "serological_pipette" && itemId === "media_bottle") {
+    gameState.selectedTool = "serological_pipette_with_media";
+    showNotification("Loaded media into pipette. Click the flask.");
+    renderHoodScene();
+    return;
+  }
+  if (tool === "serological_pipette_with_media" && itemId === "flask") {
+    gameState.selectedTool = null;
+    startAddingMedia();
+    renderHoodScene();
+    renderProtocolPanel();
+    renderScoreDisplay();
+    return;
+  }
+  if (tool === "serological_pipette" && itemId === "flask" && gameState.flaskMediaAge === "fresh") {
+    gameState.selectedTool = "serological_pipette_with_cells";
+    showNotification("Loaded cell suspension. Click the 24-well plate to transfer.");
+    renderHoodScene();
+    return;
+  }
+  if (tool === "serological_pipette_with_cells" && itemId === "well_plate") {
+    gameState.selectedTool = null;
+    gameState.wellPlate.forEach((well) => {
+      well.hasCells = true;
+    });
+    gameState.cellsTransferred = true;
+    completeStep("transfer_to_plate");
+    showNotification("Cells transferred to all 24 wells.", "success");
+    renderHoodScene();
+    renderProtocolPanel();
+    renderScoreDisplay();
+    return;
+  }
+  if (tool === "multichannel_pipette" && itemId === "drug_vials") {
+    if (!gameState.cellsTransferred) {
+      showNotification("Transfer cells to the plate first.", "warning");
+      gameState.selectedTool = null;
+      renderHoodScene();
+      return;
+    }
+    gameState.selectedTool = "multichannel_pipette_with_drug";
+    showNotification("Loaded drug dilutions. Click the 24-well plate to add drugs.");
+    renderHoodScene();
+    return;
+  }
+  if (tool === "multichannel_pipette_with_drug" && itemId === "well_plate") {
+    gameState.selectedTool = null;
+    gameState.wellPlate.forEach((well) => {
+      well.drugConcentrationUm = DRUG_CONCENTRATIONS_UM[well.col];
+    });
+    gameState.drugsAdded = true;
+    completeStep("add_drugs");
+    showNotification("Drug dilutions added to plate. Column 1 = control.", "success");
+    renderHoodScene();
+    renderProtocolPanel();
+    renderScoreDisplay();
+    return;
+  }
+  showNotification("That combination does not work. Try something else.", "warning");
+  gameState.selectedTool = null;
+  renderHoodScene();
+}
+function setupHoodEventListeners() {
+  const items = document.querySelectorAll(".hood-item");
+  items.forEach((item) => {
+    const el = item;
+    const itemId = el.getAttribute("data-item-id");
+    if (!itemId) return;
+    el.addEventListener("click", () => {
+      onItemClick(itemId);
+    });
+    el.addEventListener("mouseenter", () => {
+      el.style.filter = "brightness(1.1)";
+      el.style.transform = "scale(1.05)";
+    });
+    el.addEventListener("mouseleave", () => {
+      el.style.filter = "";
+      el.style.transform = "";
+    });
+  });
+  const hoodScene = document.getElementById("hood-scene");
+  if (hoodScene) {
+    hoodScene.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      if (gameState.selectedTool) {
+        gameState.selectedTool = null;
+        showNotification("Tool deselected.");
+        renderHoodScene();
+      }
+    });
+  }
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && gameState.selectedTool) {
+      gameState.selectedTool = null;
+      showNotification("Tool deselected.");
+      renderHoodScene();
+    }
+  });
+}
+function getAvailableActions() {
+  const actions = [];
+  const step = getCurrentStep();
+  if (!step) return actions;
+  switch (step.id) {
+    case "spray_hood":
+      actions.push("Click the ethanol bottle to spray the hood");
+      break;
+    case "aspirate_old_media":
+      actions.push("Pick up the aspirating pipette, then click the flask");
+      break;
+    case "add_fresh_media":
+      actions.push("Pick up the serological pipette, click the media bottle, then click the flask");
+      break;
+    case "microscope_check":
+      actions.push("Click the flask to check cell viability under the microscope");
+      break;
+    case "count_cells":
+      actions.push("Click the flask to count cells on the hemocytometer");
+      break;
+    case "transfer_to_plate":
+      actions.push("Pick up the serological pipette, click the flask, then click the 24-well plate");
+      break;
+    case "add_drugs":
+      actions.push("Pick up the multichannel pipette, click the drug vials, then click the 24-well plate");
+      break;
+    case "incubate":
+      actions.push("Click the 24-well plate to move it to the incubator");
+      break;
+    case "plate_read":
+      actions.push("Read the plate on the plate reader");
+      break;
+  }
+  return actions;
+}
+let aspirationInterval = null;
+let mediaAdditionInterval = null;
+let stopMediaAddition = false;
+function startAspiration() {
+  if (gameState.flaskMediaAge !== "old") {
+    showNotification("Flask does not have old media to aspirate.", "warning");
+    return;
+  }
+  showNotification("Aspirating old media...");
+  showVolumeIndicator(gameState.flaskMediaMl, gameState.flaskMediaMl);
+  const startVolume = gameState.flaskMediaMl;
+  const aspirationDuration = 2e3;
+  const startTime = Date.now();
+  aspirationInterval = setInterval(() => {
+    const elapsed = Date.now() - startTime;
+    const progress = Math.min(elapsed / aspirationDuration, 1);
+    gameState.flaskMediaMl = startVolume * (1 - progress);
+    showVolumeIndicator(gameState.flaskMediaMl, startVolume);
+    if (progress >= 1) {
+      clearInterval(aspirationInterval);
+      aspirationInterval = null;
+      completeAspiration();
+    }
+  }, 50);
+}
+function completeAspiration() {
+  if (gameState.flaskMediaMl > 0) {
+    gameState.mediaWastedMl += gameState.flaskMediaMl;
+  }
+  gameState.flaskMediaMl = 0;
+  completeStep("aspirate_old_media");
+  hideVolumeIndicator();
+  renderGame();
+}
+function startAddingMedia() {
+  if (gameState.flaskMediaMl > 0.5) {
+    showNotification("Flask must be aspirated first.", "warning");
+    return;
+  }
+  stopMediaAddition = false;
+  showNotification("Adding fresh media. Click to stop when target is reached.");
+  showVolumeIndicator(0, FRESH_MEDIA_TARGET_ML);
+  const additionDuration = 2e3;
+  const startTime = Date.now();
+  const startVolume = gameState.flaskMediaMl;
+  mediaAdditionInterval = setInterval(() => {
+    if (stopMediaAddition) {
+      clearInterval(mediaAdditionInterval);
+      mediaAdditionInterval = null;
+      stopAddingMedia();
+      return;
+    }
+    const elapsed = Date.now() - startTime;
+    const progress = Math.min(elapsed / additionDuration, 1);
+    gameState.flaskMediaMl = startVolume + (FRESH_MEDIA_TARGET_ML - startVolume) * progress;
+    showVolumeIndicator(gameState.flaskMediaMl, FRESH_MEDIA_TARGET_ML);
+    if (progress >= 1) {
+      clearInterval(mediaAdditionInterval);
+      mediaAdditionInterval = null;
+      stopAddingMedia();
+    }
+  }, 50);
+}
+function stopAddingMedia() {
+  const finalVolume = gameState.flaskMediaMl;
+  const waste = Math.abs(finalVolume - FRESH_MEDIA_TARGET_ML);
+  gameState.mediaWastedMl += waste;
+  gameState.flaskMediaAge = "fresh";
+  completeStep("add_fresh_media");
+  hideVolumeIndicator();
+  const difference = (finalVolume - FRESH_MEDIA_TARGET_ML).toFixed(2);
+  const differenceAbs = Math.abs(parseFloat(difference));
+  let accuracyMessage = "";
+  if (differenceAbs <= 0.5) {
+    accuracyMessage = "Excellent! Very close to target.";
+  } else if (differenceAbs <= 1) {
+    accuracyMessage = "Good. Within acceptable range.";
+  } else if (differenceAbs <= 2) {
+    accuracyMessage = "Close, but could be more accurate.";
+  } else {
+    accuracyMessage = "Off target. Practice for better precision.";
+  }
+  showNotification(`Added ${finalVolume.toFixed(1)} mL. ${accuracyMessage}`);
+  renderGame();
+}
+function onStopMediaAddition() {
+  stopMediaAddition = true;
+}
+function startDrugAddition() {
+  gameState.wellPlate.forEach((well) => {
+    well.drugConcentrationUm = DRUG_CONCENTRATIONS_UM[well.col];
+  });
+  gameState.drugsAdded = true;
+  completeStep("add_drugs");
+  showNotification("Drug dilutions added to plate.", "success");
+  renderGame();
+}
+function renderIncubatorScene() {
+  const overlay = document.getElementById("incubator-screen");
+  if (!overlay) return;
+  overlay.classList.add("active");
+  startIncubationTimer();
+}
+function startIncubationTimer() {
+  const progressFill = document.querySelector("#incubator-screen .progress-fill");
+  const timerText = document.getElementById("timer-text");
+  if (!progressFill || !timerText) return;
+  const duration = 4e3;
+  const startTime = Date.now();
+  const interval = setInterval(() => {
+    const elapsed = Date.now() - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const hoursRemaining = Math.round(24 * (1 - progress));
+    progressFill.style.width = progress * 100 + "%";
+    timerText.textContent = "Time remaining: " + hoursRemaining + "h";
+    if (progress >= 1) {
+      clearInterval(interval);
+      completeIncubation();
+    }
+  }, 50);
+}
+function completeIncubation() {
+  applyIncubation();
+  gameState.incubated = true;
+  completeStep("incubate");
+  const timerText = document.getElementById("timer-text");
+  if (timerText) {
+    timerText.textContent = "Incubation complete! Checking cells...";
+  }
+  setTimeout(() => {
+    const overlay = document.getElementById("incubator-screen");
+    if (overlay) overlay.classList.remove("active");
+    switchScene("plate_reader");
+  }, 1500);
+}
+function renderMicroscopeScene() {
+  const overlay = document.getElementById("microscope-overlay");
+  if (!overlay) return;
+  overlay.classList.add("active");
+  const cellState = getCellState();
+  const modal = overlay.querySelector(".modal-content");
+  if (!modal) return;
+  const viabilityDone = gameState.completedSteps.includes("microscope_check");
+  let html = '<button class="modal-close" aria-label="Close">&times;</button>';
+  if (!viabilityDone) {
+    html += "<h2>Microscope - Viability Check</h2>";
+    html += '<div class="microscope-view">';
+    html += '<svg id="microscope-svg" viewBox="0 0 400 300" width="400" height="300"></svg>';
+    html += "</div>";
+    html += '<div style="padding:16px;background:#f0f2f5;border-radius:8px;margin-bottom:16px;">';
+    html += '<p style="margin:0 0 8px 0;font-size:14px;color:#212121;">Observe the cells stained with trypan blue.</p>';
+    html += '<p style="margin:0 0 8px 0;font-size:13px;color:#757575;">Live cells appear clear/gray. Dead cells stain blue.</p>';
+    html += '<p style="margin:0;font-size:13px;color:#757575;">Estimated viability: <strong>' + Math.round(cellState.viability * 100) + "%</strong></p>";
+    html += "</div>";
+    html += '<button id="confirm-viability" class="btn-primary" style="padding:10px 24px;">Confirm Viability and Proceed to Counting</button>';
+  } else {
+    html += "<h2>Hemocytometer - Cell Count</h2>";
+    html += '<div class="microscope-view">';
+    html += '<svg id="microscope-svg" viewBox="0 0 400 300" width="400" height="300"></svg>';
+    html += "</div>";
+    html += '<div class="cell-count-section">';
+    html += '<label for="cell-count-input">Enter your cell count (cells/mL):</label>';
+    html += '<p style="margin:4px 0;font-size:12px;color:#757575;">Count cells in the 4 highlighted corner squares, average, then multiply by 10,000</p>';
+    html += '<input id="cell-count-input" type="number" placeholder="e.g. 500000" min="0">';
+    html += '<button id="submit-cell-count">Submit Count</button>';
+    html += "</div>";
+  }
+  modal.innerHTML = html;
+  const svg = document.getElementById("microscope-svg");
+  if (svg) {
+    svg.innerHTML = "";
+    drawHemocytometerGrid(svg);
+    drawCellsOnGrid(cellState);
+  }
+  if (!viabilityDone) {
+    const confirmBtn = document.getElementById("confirm-viability");
+    if (confirmBtn) {
+      confirmBtn.addEventListener("click", () => {
+        completeStep("microscope_check");
+        renderMicroscopeScene();
+      });
+    }
+  } else {
+    const submitBtn = document.getElementById("submit-cell-count");
+    if (submitBtn) {
+      submitBtn.addEventListener("click", submitCellCount);
+    }
+    const input = document.getElementById("cell-count-input");
+    if (input) {
+      input.focus();
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") submitCellCount();
+      });
+    }
+  }
+  const closeBtn = modal.querySelector(".modal-close");
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => {
+      overlay.classList.remove("active");
+      switchScene("hood");
+    });
+  }
+}
+function drawHemocytometerGrid(svg) {
+  const ns = "http://www.w3.org/2000/svg";
+  const w = 400;
+  const h = 300;
+  const bg = document.createElementNS(ns, "rect");
+  bg.setAttribute("width", String(w));
+  bg.setAttribute("height", String(h));
+  bg.setAttribute("fill", "#fafafa");
+  svg.appendChild(bg);
+  const corners = [
+    { x: 0, y: 0 },
+    { x: 300, y: 0 },
+    { x: 0, y: 225 },
+    { x: 300, y: 225 }
+  ];
+  corners.forEach((c) => {
+    const rect = document.createElementNS(ns, "rect");
+    rect.setAttribute("x", String(c.x));
+    rect.setAttribute("y", String(c.y));
+    rect.setAttribute("width", "100");
+    rect.setAttribute("height", "75");
+    rect.setAttribute("fill", "#fff9e6");
+    rect.setAttribute("fill-opacity", "0.5");
+    rect.setAttribute("stroke", "#e6c200");
+    rect.setAttribute("stroke-width", "1.5");
+    rect.setAttribute("stroke-dasharray", "4,2");
+    svg.appendChild(rect);
+  });
+  for (let i = 0; i <= 4; i++) {
+    const vLine = document.createElementNS(ns, "line");
+    vLine.setAttribute("x1", String(i * 100));
+    vLine.setAttribute("y1", "0");
+    vLine.setAttribute("x2", String(i * 100));
+    vLine.setAttribute("y2", String(h));
+    vLine.setAttribute("stroke", "#999");
+    vLine.setAttribute("stroke-width", i === 0 || i === 4 ? "2" : "1");
+    svg.appendChild(vLine);
+    const hLine = document.createElementNS(ns, "line");
+    hLine.setAttribute("x1", "0");
+    hLine.setAttribute("y1", String(i * 75));
+    hLine.setAttribute("x2", String(w));
+    hLine.setAttribute("y2", String(i * 75));
+    hLine.setAttribute("stroke", "#999");
+    hLine.setAttribute("stroke-width", i === 0 || i === 4 ? "2" : "1");
+    svg.appendChild(hLine);
+  }
+  for (let i = 0; i < 16; i++) {
+    if (i % 4 === 0) continue;
+    const vLine = document.createElementNS(ns, "line");
+    vLine.setAttribute("x1", String(i * 25));
+    vLine.setAttribute("y1", "0");
+    vLine.setAttribute("x2", String(i * 25));
+    vLine.setAttribute("y2", String(h));
+    vLine.setAttribute("stroke", "#ddd");
+    vLine.setAttribute("stroke-width", "0.5");
+    svg.appendChild(vLine);
+  }
+  for (let i = 0; i < 16; i++) {
+    if (i % 4 === 0) continue;
+    const hLine = document.createElementNS(ns, "line");
+    hLine.setAttribute("x1", "0");
+    hLine.setAttribute("y1", String(i * 18.75));
+    hLine.setAttribute("x2", String(w));
+    hLine.setAttribute("y2", String(i * 18.75));
+    hLine.setAttribute("stroke", "#ddd");
+    hLine.setAttribute("stroke-width", "0.5");
+    svg.appendChild(hLine);
+  }
+  const label = document.createElementNS(ns, "text");
+  label.setAttribute("x", "200");
+  label.setAttribute("y", "295");
+  label.setAttribute("text-anchor", "middle");
+  label.setAttribute("font-size", "10");
+  label.setAttribute("fill", "#999");
+  label.textContent = "Count cells in highlighted corner squares";
+  svg.appendChild(label);
+}
+function drawCellsOnGrid(cellState) {
+  const ns = "http://www.w3.org/2000/svg";
+  const svg = document.getElementById("microscope-svg");
+  if (!svg) return;
+  cellState.positions.forEach((pos) => {
+    const circle = document.createElementNS(ns, "circle");
+    circle.setAttribute("cx", String(pos.x * 400));
+    circle.setAttribute("cy", String(pos.y * 300));
+    circle.setAttribute("r", String(pos.radius * 300));
+    if (pos.alive) {
+      circle.setAttribute("fill", "rgba(200,200,200,0.6)");
+    } else {
+      circle.setAttribute("fill", "rgba(50,100,200,0.7)");
+    }
+    circle.setAttribute("stroke", "#333");
+    circle.setAttribute("stroke-width", "0.5");
+    svg.appendChild(circle);
+  });
+}
+function submitCellCount() {
+  const input = document.getElementById("cell-count-input");
+  if (!input) return;
+  const count = parseInt(input.value);
+  if (isNaN(count) || count < 0) {
+    showNotification("Please enter a valid positive number.", "warning");
+    return;
+  }
+  gameState.cellCount = count;
+  const actual = gameState.actualCellCount;
+  const errorPercent = Math.abs(count - actual) / actual * 100;
+  let feedback = "";
+  if (errorPercent <= 10) {
+    feedback = "Excellent count! Very close to actual.";
+  } else if (errorPercent <= 25) {
+    feedback = "Good count. Within acceptable range.";
+  } else {
+    feedback = "Count is off. Actual was ~" + actual.toLocaleString() + " cells/mL.";
+  }
+  showNotification(feedback, errorPercent <= 25 ? "success" : "info");
+  completeStep("count_cells");
+  const overlay = document.getElementById("microscope-overlay");
+  if (overlay) overlay.classList.remove("active");
+  switchScene("hood");
+}
+function renderPlateReaderScene() {
+  const overlay = document.getElementById("microscope-overlay");
+  if (!overlay) return;
+  overlay.classList.add("active");
+  generatePlateReaderResults();
+  const modal = overlay.querySelector(".modal-content");
+  if (!modal) return;
+  let html = '<button class="modal-close" aria-label="Close">&times;</button>';
+  html += "<h2>Plate Reader Results (MTT Assay - 570 nm)</h2>";
+  html += '<div class="microscope-view" style="flex-direction:column;min-height:auto;padding:16px;">';
+  html += '<table style="border-collapse:collapse;width:100%;font-size:13px;">';
+  html += '<tr><th style="padding:6px;border:1px solid #ddd;background:#f5f5f5;"></th>';
+  for (let col = 0; col < PLATE_COLS; col++) {
+    html += '<th style="padding:6px;border:1px solid #ddd;background:#f5f5f5;">' + DRUG_CONCENTRATION_LABELS[col] + " uM</th>";
+  }
+  html += "</tr>";
+  const rowLabels = ["A", "B", "C", "D"];
+  for (let row = 0; row < PLATE_ROWS; row++) {
+    html += "<tr>";
+    html += '<td style="padding:6px;border:1px solid #ddd;background:#f5f5f5;font-weight:600;">' + rowLabels[row] + "</td>";
+    for (let col = 0; col < PLATE_COLS; col++) {
+      const well = getWell(row, col);
+      const intensity = well.absorbance;
+      const bgR = Math.round(255 - intensity * 100);
+      const bgG = Math.round(255 - intensity * 40);
+      const bgB = Math.round(255 - intensity * 120);
+      html += '<td style="padding:6px;border:1px solid #ddd;text-align:center;background:rgb(' + bgR + "," + bgG + "," + bgB + ');">';
+      html += well.absorbance.toFixed(3);
+      html += "</td>";
+    }
+    html += "</tr>";
+  }
+  html += "</table>";
+  html += '<div style="margin-top:16px;">';
+  html += '<h3 style="font-size:14px;margin:0 0 8px 0;">Column Averages</h3>';
+  html += '<div style="display:flex;gap:8px;flex-wrap:wrap;">';
+  for (let col = 0; col < PLATE_COLS; col++) {
+    let sum = 0;
+    for (let row = 0; row < PLATE_ROWS; row++) {
+      sum += getWell(row, col).absorbance;
+    }
+    const avg = sum / PLATE_ROWS;
+    html += '<div style="text-align:center;padding:8px 12px;background:#f0f2f5;border-radius:6px;min-width:60px;">';
+    html += '<div style="font-size:11px;color:#757575;">' + DRUG_CONCENTRATION_LABELS[col] + " uM</div>";
+    html += '<div style="font-size:16px;font-weight:600;">' + avg.toFixed(3) + "</div>";
+    html += "</div>";
+  }
+  html += "</div></div>";
+  html += "</div>";
+  html += '<div style="text-align:center;margin-top:16px;">';
+  html += '<button id="complete-plate-read" class="btn-primary" style="padding:10px 24px;">Complete Experiment</button>';
+  html += "</div>";
+  modal.innerHTML = html;
+  const completeBtn = document.getElementById("complete-plate-read");
+  if (completeBtn) {
+    completeBtn.addEventListener("click", () => {
+      gameState.plateReadComplete = true;
+      completeStep("plate_read");
+      overlay.classList.remove("active");
+    });
+  }
+  const closeBtn = modal.querySelector(".modal-close");
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => {
+      overlay.classList.remove("active");
+      switchScene("hood");
+    });
+  }
+}
+function generatePlateReaderResults() {
+  const controlAbsorbance = 1.2 + Math.random() * 0.3;
+  gameState.wellPlate.forEach((well) => {
+    if (!well.hasCells) {
+      well.absorbance = 0.05 + Math.random() * 0.02;
+      return;
+    }
+    const drugConc = well.drugConcentrationUm;
+    const ic50 = 2;
+    const hillSlope = 1.5;
+    const survivalFraction = 1 / (1 + Math.pow(drugConc / ic50, hillSlope));
+    const baseAbsorbance = controlAbsorbance * survivalFraction;
+    const noise = (Math.random() - 0.5) * 0.08;
+    well.absorbance = Math.max(0.05, baseAbsorbance + noise);
+  });
+}
+function calculateScore() {
+  const totalSteps = PROTOCOL_STEPS.length;
+  const orderRatio = totalSteps > 0 ? gameState.stepsInCorrectOrder / totalSteps : 0;
+  const orderPoints = Math.round(orderRatio * SCORE_WEIGHTS.order);
+  let orderFeedback = "Steps completed in perfect order.";
+  if (orderRatio < 1) {
+    orderFeedback = gameState.stepsOutOfOrder + " step(s) out of order. Follow the protocol sequence.";
+  }
+  const maxErrors = 5;
+  const cleanRatio = Math.max(0, 1 - gameState.cleanlinessErrors / maxErrors);
+  const cleanPoints = Math.round(cleanRatio * SCORE_WEIGHTS.cleanliness);
+  let cleanFeedback = "Excellent sterile technique!";
+  if (gameState.cleanlinessErrors > 0) {
+    cleanFeedback = gameState.cleanlinessErrors + " contamination risk(s) detected. Be more careful with sterile technique.";
+  }
+  const maxWaste = 5;
+  const wasteRatio = Math.max(0, 1 - gameState.mediaWastedMl / maxWaste);
+  const wastePoints = Math.round(wasteRatio * SCORE_WEIGHTS.wastedMedia);
+  let wasteFeedback = "Minimal media waste. Good pipetting accuracy!";
+  if (gameState.mediaWastedMl > 1) {
+    wasteFeedback = gameState.mediaWastedMl.toFixed(1) + " mL of media wasted. Practice precise pipetting.";
+  }
+  const elapsedMs = (gameState.endTime || Date.now()) - gameState.startTime;
+  const elapsedMin = elapsedMs / 6e4;
+  const idealMin = 3;
+  const maxMin = 10;
+  let timingRatio = 1;
+  if (elapsedMin > idealMin) {
+    timingRatio = Math.max(0, 1 - (elapsedMin - idealMin) / (maxMin - idealMin));
+  }
+  const timingPoints = Math.round(timingRatio * SCORE_WEIGHTS.timing);
+  let timingFeedback = "Great pacing! Efficient work.";
+  if (elapsedMin > idealMin) {
+    timingFeedback = "Completed in " + elapsedMin.toFixed(1) + " minutes. With practice you will get faster.";
+  }
+  const totalPoints = orderPoints + cleanPoints + wastePoints + timingPoints;
+  let stars = 1;
+  if (totalPoints >= STAR_THRESHOLDS.threeStar) {
+    stars = 3;
+  } else if (totalPoints >= STAR_THRESHOLDS.twoStar) {
+    stars = 2;
+  }
+  return {
+    stars,
+    totalPoints,
+    categories: {
+      order: { points: orderPoints, maxPoints: SCORE_WEIGHTS.order, feedback: orderFeedback },
+      cleanliness: { points: cleanPoints, maxPoints: SCORE_WEIGHTS.cleanliness, feedback: cleanFeedback },
+      wastedMedia: { points: wastePoints, maxPoints: SCORE_WEIGHTS.wastedMedia, feedback: wasteFeedback },
+      timing: { points: timingPoints, maxPoints: SCORE_WEIGHTS.timing, feedback: timingFeedback }
+    }
+  };
+}
+renderGame = function() {
+  switch (gameState.activeScene) {
+    case "hood":
+      renderHoodScene();
+      break;
+    case "incubator":
+      renderIncubatorScene();
+      break;
+    case "microscope":
+      renderMicroscopeScene();
+      break;
+    case "plate_reader":
+      renderPlateReaderScene();
+      break;
+    case "results":
+      const scoreResult = calculateScore();
+      renderResultsScreen(scoreResult);
+      break;
+  }
+  renderProtocolPanel();
+  renderScoreDisplay();
+};
+document.addEventListener("DOMContentLoaded", () => {
+  gameState = createInitialGameState();
+  renderGame();
+  showNotification("Welcome! Follow the protocol steps on the right.", "info");
+});
+</script>
+</body>
+</html>
