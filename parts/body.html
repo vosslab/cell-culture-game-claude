@@ -37,6 +37,7 @@
 					<label for="step-microscope">Check microscope</label>
 				</li>
 			</ul>
+			<div id="warning-banner" class="warning-banner" style="display: none;"></div>
 		</div>
 	</div>
 
@@ -49,11 +50,7 @@
 				<!-- SVG microscope view will be injected here -->
 				<svg id="microscope-svg" viewBox="0 0 400 300" width="400" height="300"></svg>
 			</div>
-			<div class="cell-count-section">
-				<label for="cell-count-input">Estimated cell count:</label>
-				<input id="cell-count-input" type="number" placeholder="Enter count" min="0">
-				<button id="submit-cell-count">Submit</button>
-			</div>
+			<!-- Cell counting is handled by interactive quadrant selection in microscope_scene.ts -->
 		</div>
 	</div>
 

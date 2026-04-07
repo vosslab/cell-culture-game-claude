@@ -6,6 +6,25 @@
 - Added `README.md` with project overview, quick start, documentation links, and license info
 - Created `docs/INSTALL.md` with prerequisites and setup instructions
 - Created `docs/USAGE.md` with build and gameplay instructions
+- Step-aware target highlighting: valid hood items glow with pulsing green border for current protocol step (`parts/hood_scene.ts`, `parts/style.css`)
+- Real-time warning accumulation system: warnings display immediately in sidebar warning banner instead of end-of-game only (`parts/game_state.ts`, `parts/ui_rendering.ts`)
+- Interactive hemocytometer quadrant selection: replaced text-input cell counting with clickable corner quadrants; select all 4 quadrants to derive count (`parts/microscope_scene.ts`)
+- Serial dilution choice dialog: players choose between 3 dilution series (half-log, binary, shallow) instead of auto-applying; wrong choices trigger educational warnings (`parts/drug_treatment.ts`)
+- Media warming check: warns if player adds media without warming to 37&deg;C first (`parts/feed_cells.ts`)
+- Pre-hood contamination inspection: warns if player starts work without sanitizing the hood first (`parts/hood_scene.ts`)
+- Enhanced volume feedback: explains why too much or too little media is harmful (pH drop, gas diffusion, cost) (`parts/feed_cells.ts`)
+- HTML5 drag-and-drop for tools: items can be dragged to targets as alternative to click workflow; blue glow on valid drop targets (`parts/hood_scene.ts`, `parts/style.css`)
+- Protocol validation on load: `validateProtocolSteps()` checks all step definitions at startup (`parts/init.ts`)
+- Added `targetItems` field to `ProtocolStep` interface for step-aware highlighting (`parts/constants.ts`)
+- Added `warnings: string[]` and `mediaWarmed: boolean` to `GameState` interface
+- Created `cell_culture_game.py` development server for Playwright testing
+- Created `devel/protocol_walkthrough.mjs` automated browser walkthrough with screenshots
+- Created `tests/test_cell_culture_walkthrough.py` pytest wrapper for walkthrough test
+
+### Fixes and Maintenance
+- Fixed pre-existing bug in `parts/cell_model.ts`: `applyIncubation()` referenced non-existent `gameState.drugAdded` and `gameState.drugConcentrationUm`; replaced with correct `gameState.drugsAdded` and per-well max concentration lookup
+- Fixed ASCII compliance: replaced Unicode star characters (U+2605, U+2606) with HTML numeric entities `&#9733;` and `&#9734;` in `parts/ui_rendering.ts`
+- Used HTML entities (`&deg;`, `&micro;`) for temperature and unit symbols to maintain ASCII source compliance
 
 ### Added
 

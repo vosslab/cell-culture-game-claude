@@ -2,6 +2,31 @@
 // init.ts - Bootstrap and main render dispatcher
 // ============================================
 
+// ============================================
+// validateProtocolSteps() - Check protocol integrity at startup
+// ============================================
+function validateProtocolSteps(): string[] {
+	const errors: string[] = [];
+	if (PROTOCOL_STEPS.length === 0) {
+		errors.push('Protocol must have at least one step.');
+		return errors;
+	}
+	const seenIds: string[] = [];
+	for (let i = 0; i < PROTOCOL_STEPS.length; i++) {
+		const step = PROTOCOL_STEPS[i];
+		const prefix = 'Step ' + i + ': ';
+		if (!step.id) errors.push(prefix + 'missing id');
+		if (!step.label) errors.push(prefix + 'missing label');
+		if (!step.scene) errors.push(prefix + 'missing scene');
+		if (!step.requiredAction) errors.push(prefix + 'missing requiredAction');
+		if (seenIds.indexOf(step.id) >= 0) {
+			errors.push(prefix + 'duplicate id "' + step.id + '"');
+		}
+		seenIds.push(step.id);
+	}
+	return errors;
+}
+
 // Override the stub renderGame with the real implementation
 renderGame = function(): void {
 	switch (gameState.activeScene) {
@@ -30,6 +55,11 @@ renderGame = function(): void {
 
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
+	// Validate protocol definitions before starting
+	const protocolErrors = validateProtocolSteps();
+	if (protocolErrors.length > 0) {
+		throw new Error('Protocol validation failed:\n' + protocolErrors.join('\n'));
+	}
 	gameState = createInitialGameState();
 	renderGame();
 	showNotification('Welcome! Follow the protocol steps on the right.', 'info');

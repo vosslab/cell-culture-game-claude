@@ -26,6 +26,10 @@ interface GameState {
 	stepsOutOfOrder: number;
 	mediaWastedMl: number;
 	cleanlinessErrors: number;
+	// Real-time warning messages
+	warnings: string[];
+	// Protocol realism tracking
+	mediaWarmed: boolean;
 	startTime: number;
 	endTime: number | null;
 	selectedTool: string | null;
@@ -73,6 +77,8 @@ function createInitialGameState(): GameState {
 		stepsOutOfOrder: 0,
 		mediaWastedMl: 0,
 		cleanlinessErrors: 0,
+		warnings: [],
+		mediaWarmed: false,
 		startTime: Date.now(),
 		endTime: null,
 		selectedTool: null,
@@ -150,9 +156,24 @@ function selectTool(toolId: string | null): void {
 }
 
 // ============================================
-function recordCleanlinessError(): void {
+function registerWarning(message: string): void {
+	gameState.warnings.push(message);
+	showNotification(message, 'warning');
+	// Update the warning display in the protocol panel
+	renderWarningBanner();
+}
+
+// ============================================
+function recordCleanlinessError(message?: string): void {
 	gameState.cleanlinessErrors++;
-	showNotification('Contamination risk! Remember sterile technique.', 'warning');
+	const warningMsg = message || 'Contamination risk! Remember sterile technique.';
+	registerWarning(warningMsg);
+}
+
+// ============================================
+// Forward declaration - overridden by ui_rendering.ts
+function renderWarningBanner(): void {
+	// Implemented in ui_rendering.ts
 }
 
 // ============================================

@@ -71,6 +71,14 @@ showNotification = function(message: string, type: string = 'info'): void {
 
 	notificationArea.appendChild(notification);
 
+	// Keep at most 3 visible notifications; remove oldest if over limit
+	const existing = notificationArea.querySelectorAll('.notification:not(.fade-out)');
+	if (existing.length > 3) {
+		const oldest = existing[0] as HTMLElement;
+		oldest.classList.add('fade-out');
+		setTimeout(() => { oldest.remove(); }, 300);
+	}
+
 	// Auto-fade after 3 seconds
 	setTimeout(() => {
 		notification.classList.add('fade-out');
@@ -78,6 +86,29 @@ showNotification = function(message: string, type: string = 'info'): void {
 			notification.remove();
 		}, 300);
 	}, 3000);
+};
+
+// ============================================
+// renderWarningBanner(): void
+// Show the latest warning in the protocol panel - REPLACES forward declaration
+// ============================================
+renderWarningBanner = function(): void {
+	const warningEl = document.getElementById('warning-banner');
+	if (!warningEl) return;
+
+	if (gameState.warnings.length === 0) {
+		warningEl.style.display = 'none';
+		return;
+	}
+
+	// Show the latest warning with a count if multiple
+	const latestWarning = gameState.warnings[gameState.warnings.length - 1];
+	let displayText = latestWarning;
+	if (gameState.warnings.length > 1) {
+		displayText += ' (' + gameState.warnings.length + ' warnings total)';
+	}
+	warningEl.textContent = displayText;
+	warningEl.style.display = 'block';
 };
 
 // ============================================
@@ -92,9 +123,9 @@ const renderResultsScreen = (scoreResult: ScoreResult): void => {
 	let starsHtml = '';
 	for (let i = 1; i <= 3; i++) {
 		if (i <= scoreResult.stars) {
-			starsHtml += '<span style="color: #ffc107; font-size: 36px; margin: 0 4px;">★</span>';
+			starsHtml += '<span style="color: #ffc107; font-size: 36px; margin: 0 4px;">&#9733;</span>';
 		} else {
-			starsHtml += '<span style="color: #ddd; font-size: 36px; margin: 0 4px;">☆</span>';
+			starsHtml += '<span style="color: #ddd; font-size: 36px; margin: 0 4px;">&#9734;</span>';
 		}
 	}
 

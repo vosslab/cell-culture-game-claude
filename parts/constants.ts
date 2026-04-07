@@ -17,6 +17,7 @@ const PROTOCOL_STEPS: ProtocolStep[] = [
 		label: 'Spray hood with 70% ethanol',
 		scene: 'hood',
 		requiredAction: 'spray_ethanol',
+		targetItems: ['ethanol_bottle'],
 	},
 	{
 		id: 'aspirate_old_media',
@@ -25,6 +26,7 @@ const PROTOCOL_STEPS: ProtocolStep[] = [
 		requiredAction: 'aspirate',
 		correctVolumeMl: 12,
 		toleranceMl: 2,
+		targetItems: ['aspirating_pipette', 'flask'],
 	},
 	{
 		id: 'add_fresh_media',
@@ -33,36 +35,42 @@ const PROTOCOL_STEPS: ProtocolStep[] = [
 		requiredAction: 'pipette_media',
 		correctVolumeMl: 15,
 		toleranceMl: 1,
+		targetItems: ['serological_pipette', 'media_bottle', 'flask'],
 	},
 	{
 		id: 'microscope_check',
 		label: 'Check cell viability under microscope',
 		scene: 'microscope',
 		requiredAction: 'check_viability',
+		targetItems: ['microscope'],
 	},
 	{
 		id: 'count_cells',
 		label: 'Count cells on hemocytometer',
 		scene: 'microscope',
 		requiredAction: 'count_cells',
+		targetItems: ['microscope'],
 	},
 	{
 		id: 'transfer_to_plate',
 		label: 'Transfer cells to 24-well plate',
 		scene: 'hood',
 		requiredAction: 'pipette_to_plate',
+		targetItems: ['serological_pipette', 'flask', 'well_plate'],
 	},
 	{
 		id: 'add_drugs',
 		label: 'Add drug dilutions to plate',
 		scene: 'hood',
 		requiredAction: 'pipette_drug',
+		targetItems: ['multichannel_pipette', 'drug_vials', 'well_plate'],
 	},
 	{
 		id: 'incubate',
 		label: 'Place plate in incubator',
 		scene: 'incubator',
 		requiredAction: 'place_in_incubator',
+		targetItems: ['well_plate'],
 	},
 	{
 		id: 'plate_read',
@@ -98,18 +106,19 @@ const STAR_THRESHOLDS = {
 	twoStar: 50,
 };
 
-// Hood item positions (as percentage of hood SVG viewBox)
+// Hood item positions (as percentage of hood scene area)
+// All items should be inside the hood cabinet (y < 55%)
 const HOOD_ITEMS: Record<string, HoodItemConfig> = {
-	flask: { x: 30, y: 25, width: 16, height: 28, label: 'T-75 Flask' },
-	well_plate: { x: 25, y: 58, width: 40, height: 22, label: '24-Well Plate' },
-	media_bottle: { x: 8, y: 18, width: 12, height: 26, label: 'DMEM Media' },
-	aspirating_pipette: { x: 72, y: 12, width: 5, height: 32, label: 'Aspirating Pipette' },
-	serological_pipette: { x: 64, y: 12, width: 4, height: 32, label: 'Serological Pipette' },
-	waste_container: { x: 82, y: 50, width: 12, height: 18, label: 'Waste' },
-	drug_vials: { x: 8, y: 55, width: 14, height: 18, label: 'Drug Dilutions' },
-	multichannel_pipette: { x: 78, y: 35, width: 10, height: 22, label: 'Multichannel Pipette' },
-	ethanol_bottle: { x: 88, y: 12, width: 8, height: 18, label: '70% Ethanol' },
-	microscope: { x: 75, y: 58, width: 12, height: 22, label: 'Microscope' },
+	flask: { x: 30, y: 22, width: 16, height: 28, label: 'T-75 Flask' },
+	well_plate: { x: 10, y: 52, width: 35, height: 18, label: '24-Well Plate' },
+	media_bottle: { x: 8, y: 15, width: 12, height: 26, label: 'DMEM Media' },
+	aspirating_pipette: { x: 72, y: 10, width: 5, height: 32, label: 'Aspirating Pipette' },
+	serological_pipette: { x: 64, y: 10, width: 4, height: 32, label: 'Serological Pipette' },
+	waste_container: { x: 82, y: 42, width: 12, height: 18, label: 'Waste' },
+	drug_vials: { x: 52, y: 25, width: 14, height: 18, label: 'Drug Dilutions' },
+	multichannel_pipette: { x: 78, y: 28, width: 10, height: 22, label: 'Multichannel Pipette' },
+	ethanol_bottle: { x: 88, y: 10, width: 8, height: 18, label: '70% Ethanol' },
+	microscope: { x: 82, y: 52, width: 12, height: 22, label: 'Microscope' },
 };
 
 // Type definitions (used across all modules)
@@ -120,6 +129,8 @@ interface ProtocolStep {
 	requiredAction: string;
 	correctVolumeMl?: number;
 	toleranceMl?: number;
+	// Hood items that should glow as valid targets for this step
+	targetItems?: string[];
 }
 
 interface HoodItemConfig {

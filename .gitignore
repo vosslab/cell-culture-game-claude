@@ -1,15 +1,11 @@
 # Build artifacts
 cell_culture_game.html
 cell-culture2-clean.svg
-_temp_all.ts
-_temp_bundle.js
-_temp_flask_svg.ts
-_temp*.py
-_temp*.sh
+_temp*.?*
 
 # Python
-__pycache__/
 *.pyc
+build/
 
 # Reports
 report_*.txt

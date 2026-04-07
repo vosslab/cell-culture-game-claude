@@ -41,6 +41,10 @@ body {
 	display: flex;
 	width: 100%;
 	height: 100%;
+	max-width: 1200px;
+	max-height: 900px;
+	margin: 0 auto;
+	aspect-ratio: 4 / 3;
 	background-color: var(--color-bg);
 }
 
@@ -471,7 +475,7 @@ body {
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
-	z-index: 2000;
+	z-index: 500;
 	pointer-events: none;
 }
 
@@ -481,11 +485,11 @@ body {
 	padding: 14px 20px;
 	border-radius: 8px;
 	box-shadow: 0 4px 12px var(--color-shadow-dark);
-	font-size: 14px;
+	font-size: 18px;
 	font-weight: 500;
 	animation: slideInUp 0.3s ease-out;
 	pointer-events: auto;
-	max-width: 400px;
+	max-width: 500px;
 	display: flex;
 	align-items: center;
 	gap: 12px;
@@ -539,6 +543,43 @@ body {
 	border-left: 4px solid var(--color-steel-gray);
 	background-color: #eceff1;
 	color: var(--color-steel-gray);
+}
+
+/* ===== Target Highlighting ===== */
+.hood-item.is-active {
+	border: 2px solid rgba(76, 175, 80, 0.7) !important;
+	border-radius: 6px;
+	box-shadow: 0 0 12px rgba(76, 175, 80, 0.4);
+	animation: targetPulse 2s ease-in-out infinite;
+}
+
+@keyframes targetPulse {
+	0%, 100% {
+		box-shadow: 0 0 8px rgba(76, 175, 80, 0.3);
+	}
+	50% {
+		box-shadow: 0 0 16px rgba(76, 175, 80, 0.6);
+	}
+}
+
+/* ===== Drag-and-Drop Feedback ===== */
+.hood-item.drag-hover {
+	border: 2px solid #2196f3 !important;
+	box-shadow: 0 0 14px rgba(33, 150, 243, 0.5);
+	background-color: rgba(33, 150, 243, 0.08);
+}
+
+/* ===== Warning Banner ===== */
+.warning-banner {
+	padding: 10px 14px;
+	background: linear-gradient(135deg, #fff8ea, #fff2d5);
+	border-left: 3px solid var(--color-warning-orange);
+	border-radius: 4px;
+	margin: 8px 0;
+	font-size: 13px;
+	color: #e65100;
+	line-height: 1.4;
+	animation: fadeIn 0.3s ease-out;
 }
 
 /* ===== Volume Indicator ===== */

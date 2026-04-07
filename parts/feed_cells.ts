@@ -82,6 +82,13 @@ function startAddingMedia(): void {
 		return;
 	}
 
+	// Check if media was warmed first (protocol realism)
+	if (!gameState.mediaWarmed) {
+		registerWarning('Cold media can shock cells! Warm media to 37&deg;C before adding.');
+		// Still allow the player to continue, but record the error
+		recordCleanlinessError('Used cold media -- always warm to 37&deg;C before adding to cells.');
+	}
+
 	// Reset stop flag
 	stopMediaAddition = false;
 
@@ -153,8 +160,12 @@ function stopAddingMedia(): void {
 		accuracyMessage = 'Excellent! Very close to target.';
 	} else if (differenceAbs <= 1.0) {
 		accuracyMessage = 'Good. Within acceptable range.';
-	} else if (differenceAbs <= 2.0) {
-		accuracyMessage = 'Close, but could be more accurate.';
+	} else if (finalVolume < FRESH_MEDIA_TARGET_ML - 1.0) {
+		// Too little media: explain pH and waste buildup risk
+		accuracyMessage = 'Too little media -- nutrients will deplete faster, causing pH drop and waste buildup.';
+	} else if (finalVolume > FRESH_MEDIA_TARGET_ML + 1.0) {
+		// Too much media: explain gas diffusion issues
+		accuracyMessage = 'Too much media -- excess volume impairs gas exchange and wastes reagents.';
 	} else {
 		accuracyMessage = 'Off target. Practice for better precision.';
 	}

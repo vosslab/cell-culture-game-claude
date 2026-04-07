@@ -48,6 +48,10 @@ body {
 	display: flex;
 	width: 100%;
 	height: 100%;
+	max-width: 1200px;
+	max-height: 900px;
+	margin: 0 auto;
+	aspect-ratio: 4 / 3;
 	background-color: var(--color-bg);
 }
 
@@ -478,7 +482,7 @@ body {
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
-	z-index: 2000;
+	z-index: 500;
 	pointer-events: none;
 }
 
@@ -488,11 +492,11 @@ body {
 	padding: 14px 20px;
 	border-radius: 8px;
 	box-shadow: 0 4px 12px var(--color-shadow-dark);
-	font-size: 14px;
+	font-size: 18px;
 	font-weight: 500;
 	animation: slideInUp 0.3s ease-out;
 	pointer-events: auto;
-	max-width: 400px;
+	max-width: 500px;
 	display: flex;
 	align-items: center;
 	gap: 12px;
@@ -546,6 +550,43 @@ body {
 	border-left: 4px solid var(--color-steel-gray);
 	background-color: #eceff1;
 	color: var(--color-steel-gray);
+}
+
+/* ===== Target Highlighting ===== */
+.hood-item.is-active {
+	border: 2px solid rgba(76, 175, 80, 0.7) !important;
+	border-radius: 6px;
+	box-shadow: 0 0 12px rgba(76, 175, 80, 0.4);
+	animation: targetPulse 2s ease-in-out infinite;
+}
+
+@keyframes targetPulse {
+	0%, 100% {
+		box-shadow: 0 0 8px rgba(76, 175, 80, 0.3);
+	}
+	50% {
+		box-shadow: 0 0 16px rgba(76, 175, 80, 0.6);
+	}
+}
+
+/* ===== Drag-and-Drop Feedback ===== */
+.hood-item.drag-hover {
+	border: 2px solid #2196f3 !important;
+	box-shadow: 0 0 14px rgba(33, 150, 243, 0.5);
+	background-color: rgba(33, 150, 243, 0.08);
+}
+
+/* ===== Warning Banner ===== */
+.warning-banner {
+	padding: 10px 14px;
+	background: linear-gradient(135deg, #fff8ea, #fff2d5);
+	border-left: 3px solid var(--color-warning-orange);
+	border-radius: 4px;
+	margin: 8px 0;
+	font-size: 13px;
+	color: #e65100;
+	line-height: 1.4;
+	animation: fadeIn 0.3s ease-out;
 }
 
 /* ===== Volume Indicator ===== */
@@ -767,6 +808,7 @@ body {
 					<label for="step-microscope">Check microscope</label>
 				</li>
 			</ul>
+			<div id="warning-banner" class="warning-banner" style="display: none;"></div>
 		</div>
 	</div>
 
@@ -779,11 +821,7 @@ body {
 				<!-- SVG microscope view will be injected here -->
 				<svg id="microscope-svg" viewBox="0 0 400 300" width="400" height="300"></svg>
 			</div>
-			<div class="cell-count-section">
-				<label for="cell-count-input">Estimated cell count:</label>
-				<input id="cell-count-input" type="number" placeholder="Enter count" min="0">
-				<button id="submit-cell-count">Submit</button>
-			</div>
+			<!-- Cell counting is handled by interactive quadrant selection in microscope_scene.ts -->
 		</div>
 	</div>
 
@@ -1560,7 +1598,8 @@ const PROTOCOL_STEPS = [
     id: "spray_hood",
     label: "Spray hood with 70% ethanol",
     scene: "hood",
-    requiredAction: "spray_ethanol"
+    requiredAction: "spray_ethanol",
+    targetItems: ["ethanol_bottle"]
   },
   {
     id: "aspirate_old_media",
@@ -1568,7 +1607,8 @@ const PROTOCOL_STEPS = [
     scene: "hood",
     requiredAction: "aspirate",
     correctVolumeMl: 12,
-    toleranceMl: 2
+    toleranceMl: 2,
+    targetItems: ["aspirating_pipette", "flask"]
   },
   {
     id: "add_fresh_media",
@@ -1576,37 +1616,43 @@ const PROTOCOL_STEPS = [
     scene: "hood",
     requiredAction: "pipette_media",
     correctVolumeMl: 15,
-    toleranceMl: 1
+    toleranceMl: 1,
+    targetItems: ["serological_pipette", "media_bottle", "flask"]
   },
   {
     id: "microscope_check",
     label: "Check cell viability under microscope",
     scene: "microscope",
-    requiredAction: "check_viability"
+    requiredAction: "check_viability",
+    targetItems: ["microscope"]
   },
   {
     id: "count_cells",
     label: "Count cells on hemocytometer",
     scene: "microscope",
-    requiredAction: "count_cells"
+    requiredAction: "count_cells",
+    targetItems: ["microscope"]
   },
   {
     id: "transfer_to_plate",
     label: "Transfer cells to 24-well plate",
     scene: "hood",
-    requiredAction: "pipette_to_plate"
+    requiredAction: "pipette_to_plate",
+    targetItems: ["serological_pipette", "flask", "well_plate"]
   },
   {
     id: "add_drugs",
     label: "Add drug dilutions to plate",
     scene: "hood",
-    requiredAction: "pipette_drug"
+    requiredAction: "pipette_drug",
+    targetItems: ["multichannel_pipette", "drug_vials", "well_plate"]
   },
   {
     id: "incubate",
     label: "Place plate in incubator",
     scene: "incubator",
-    requiredAction: "place_in_incubator"
+    requiredAction: "place_in_incubator",
+    targetItems: ["well_plate"]
   },
   {
     id: "plate_read",
@@ -1634,16 +1680,16 @@ const STAR_THRESHOLDS = {
   twoStar: 50
 };
 const HOOD_ITEMS = {
-  flask: { x: 30, y: 25, width: 16, height: 28, label: "T-75 Flask" },
-  well_plate: { x: 25, y: 58, width: 40, height: 22, label: "24-Well Plate" },
-  media_bottle: { x: 8, y: 18, width: 12, height: 26, label: "DMEM Media" },
-  aspirating_pipette: { x: 72, y: 12, width: 5, height: 32, label: "Aspirating Pipette" },
-  serological_pipette: { x: 64, y: 12, width: 4, height: 32, label: "Serological Pipette" },
-  waste_container: { x: 82, y: 50, width: 12, height: 18, label: "Waste" },
-  drug_vials: { x: 8, y: 55, width: 14, height: 18, label: "Drug Dilutions" },
-  multichannel_pipette: { x: 78, y: 35, width: 10, height: 22, label: "Multichannel Pipette" },
-  ethanol_bottle: { x: 88, y: 12, width: 8, height: 18, label: "70% Ethanol" },
-  microscope: { x: 75, y: 58, width: 12, height: 22, label: "Microscope" }
+  flask: { x: 30, y: 22, width: 16, height: 28, label: "T-75 Flask" },
+  well_plate: { x: 10, y: 52, width: 35, height: 18, label: "24-Well Plate" },
+  media_bottle: { x: 8, y: 15, width: 12, height: 26, label: "DMEM Media" },
+  aspirating_pipette: { x: 72, y: 10, width: 5, height: 32, label: "Aspirating Pipette" },
+  serological_pipette: { x: 64, y: 10, width: 4, height: 32, label: "Serological Pipette" },
+  waste_container: { x: 82, y: 42, width: 12, height: 18, label: "Waste" },
+  drug_vials: { x: 52, y: 25, width: 14, height: 18, label: "Drug Dilutions" },
+  multichannel_pipette: { x: 78, y: 28, width: 10, height: 22, label: "Multichannel Pipette" },
+  ethanol_bottle: { x: 88, y: 10, width: 8, height: 18, label: "70% Ethanol" },
+  microscope: { x: 82, y: 52, width: 12, height: 22, label: "Microscope" }
 };
 function createWellPlate() {
   const wells = [];
@@ -1681,6 +1727,8 @@ function createInitialGameState() {
     stepsOutOfOrder: 0,
     mediaWastedMl: 0,
     cleanlinessErrors: 0,
+    warnings: [],
+    mediaWarmed: false,
     startTime: Date.now(),
     endTime: null,
     selectedTool: null,
@@ -1733,9 +1781,17 @@ function selectTool(toolId) {
   gameState.selectedTool = toolId;
   renderGame();
 }
-function recordCleanlinessError() {
+function registerWarning(message) {
+  gameState.warnings.push(message);
+  showNotification(message, "warning");
+  renderWarningBanner();
+}
+function recordCleanlinessError(message) {
   gameState.cleanlinessErrors++;
-  showNotification("Contamination risk! Remember sterile technique.", "warning");
+  const warningMsg = message || "Contamination risk! Remember sterile technique.";
+  registerWarning(warningMsg);
+}
+function renderWarningBanner() {
 }
 function getWell(row, col) {
   return gameState.wellPlate[row * PLATE_COLS + col];
@@ -1788,8 +1844,14 @@ function applyDrugEffect(concentrationUm) {
 function applyIncubation() {
   const growthRate = 1.3;
   gameState.actualCellCount = Math.round(gameState.actualCellCount * growthRate);
-  if (gameState.drugAdded) {
-    applyDrugEffect(gameState.drugConcentrationUm);
+  if (gameState.drugsAdded) {
+    let maxConc = 0;
+    gameState.wellPlate.forEach((well) => {
+      if (well.drugConcentrationUm > maxConc) {
+        maxConc = well.drugConcentrationUm;
+      }
+    });
+    applyDrugEffect(maxConc);
   }
 }
 function getExpectedCellCount() {
@@ -2455,6 +2517,14 @@ showNotification = function(message, type = "info") {
   notification.className = `notification ${type}`;
   notification.textContent = message;
   notificationArea.appendChild(notification);
+  const existing = notificationArea.querySelectorAll(".notification:not(.fade-out)");
+  if (existing.length > 3) {
+    const oldest = existing[0];
+    oldest.classList.add("fade-out");
+    setTimeout(() => {
+      oldest.remove();
+    }, 300);
+  }
   setTimeout(() => {
     notification.classList.add("fade-out");
     setTimeout(() => {
@@ -2462,15 +2532,30 @@ showNotification = function(message, type = "info") {
     }, 300);
   }, 3e3);
 };
+renderWarningBanner = function() {
+  const warningEl = document.getElementById("warning-banner");
+  if (!warningEl) return;
+  if (gameState.warnings.length === 0) {
+    warningEl.style.display = "none";
+    return;
+  }
+  const latestWarning = gameState.warnings[gameState.warnings.length - 1];
+  let displayText = latestWarning;
+  if (gameState.warnings.length > 1) {
+    displayText += " (" + gameState.warnings.length + " warnings total)";
+  }
+  warningEl.textContent = displayText;
+  warningEl.style.display = "block";
+};
 const renderResultsScreen = (scoreResult) => {
   const resultsScreen = document.getElementById("results-screen");
   if (!resultsScreen) return;
   let starsHtml = "";
   for (let i = 1; i <= 3; i++) {
     if (i <= scoreResult.stars) {
-      starsHtml += '<span style="color: #ffc107; font-size: 36px; margin: 0 4px;">\u2605</span>';
+      starsHtml += '<span style="color: #ffc107; font-size: 36px; margin: 0 4px;">&#9733;</span>';
     } else {
-      starsHtml += '<span style="color: #ddd; font-size: 36px; margin: 0 4px;">\u2606</span>';
+      starsHtml += '<span style="color: #ddd; font-size: 36px; margin: 0 4px;">&#9734;</span>';
     }
   }
   const categoryFeedback = `
@@ -2658,19 +2743,24 @@ function renderHoodScene() {
   html += '<div id="hood-bg" style="position:absolute;top:0;left:0;width:100%;height:100%;">';
   html += getHoodBackgroundSvg();
   html += "</div>";
+  const currentStepData = getCurrentStep();
+  const activeTargets = currentStepData && currentStepData.targetItems ? currentStepData.targetItems : [];
   const entries = Object.entries(HOOD_ITEMS);
   for (let i = 0; i < entries.length; i++) {
     const itemId = entries[i][0];
     const config = entries[i][1];
     const isSelected = gameState.selectedTool === itemId;
+    const isTarget = activeTargets.indexOf(itemId) >= 0;
     const borderStyle = isSelected ? "3px solid #4caf50" : "2px solid transparent";
     const opacity = isSelected ? "0.7" : "1";
-    html += '<div class="hood-item" data-item-id="' + itemId + '" ';
+    const activeClass = isTarget && !isSelected ? " is-active" : "";
+    html += '<div class="hood-item' + activeClass + '" data-item-id="' + itemId + '" ';
     html += 'style="position:absolute;';
     html += "left:" + config.x + "%;top:" + config.y + "%;";
     html += "width:" + config.width + "%;height:" + config.height + "%;";
     html += "cursor:pointer;border:" + borderStyle + ";border-radius:4px;";
     html += "opacity:" + opacity + ';transition:all 0.2s ease;" ';
+    html += 'draggable="true" ';
     html += 'title="' + config.label + '">';
     html += getItemSvgHtml(itemId);
     html += "</div>";
@@ -2685,10 +2775,10 @@ function renderHoodScene() {
     const toolLabel = toolConfig ? toolConfig.label : gameState.selectedTool;
     hintText = "Holding: " + toolLabel + " -- Click a target to use";
   }
-  html += '<div id="hood-toolbar" style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);';
-  html += "background:rgba(255,255,255,0.9);padding:8px 20px;border-radius:20px;";
-  html += "font-size:14px;color:#212121;box-shadow:0 2px 8px rgba(0,0,0,0.15);";
-  html += 'white-space:nowrap;">';
+  html += '<div id="hood-toolbar" style="position:absolute;top:8px;left:50%;transform:translateX(-50%);';
+  html += "background:rgba(255,255,255,0.92);padding:10px 24px;border-radius:20px;";
+  html += "font-size:16px;font-weight:500;color:#212121;box-shadow:0 2px 8px rgba(0,0,0,0.15);";
+  html += 'white-space:nowrap;z-index:100;">';
   html += hintText;
   html += "</div>";
   hoodScene.style.position = "relative";
@@ -2725,6 +2815,10 @@ function onItemClick(itemId) {
   }
   const tool = gameState.selectedTool;
   if (tool === "aspirating_pipette" && itemId === "flask") {
+    if (!gameState.hoodSprayed) {
+      registerWarning("Always sanitize the hood before working! Spray with 70% ethanol first.");
+      recordCleanlinessError("Started work without sanitizing the hood.");
+    }
     gameState.selectedTool = null;
     startAspiration();
     renderHoodScene();
@@ -2733,8 +2827,9 @@ function onItemClick(itemId) {
     return;
   }
   if (tool === "serological_pipette" && itemId === "media_bottle") {
+    gameState.mediaWarmed = true;
     gameState.selectedTool = "serological_pipette_with_media";
-    showNotification("Loaded media into pipette. Click the flask.");
+    showNotification("Media warmed to 37&deg;C and loaded into pipette. Click the flask.");
     renderHoodScene();
     return;
   }
@@ -2779,18 +2874,15 @@ function onItemClick(itemId) {
   }
   if (tool === "multichannel_pipette_with_drug" && itemId === "well_plate") {
     gameState.selectedTool = null;
-    gameState.wellPlate.forEach((well) => {
-      well.drugConcentrationUm = DRUG_CONCENTRATIONS_UM[well.col];
-    });
-    gameState.drugsAdded = true;
-    completeStep("add_drugs");
-    showNotification("Drug dilutions added to plate. Column 1 = control.", "success");
-    renderHoodScene();
-    renderProtocolPanel();
-    renderScoreDisplay();
+    startDrugAddition();
     return;
   }
-  showNotification("That combination does not work. Try something else.", "warning");
+  const stepHint = getCurrentStep();
+  let warningMsg = "That combination does not work.";
+  if (stepHint) {
+    warningMsg += " Current step: " + stepHint.label;
+  }
+  registerWarning(warningMsg);
   gameState.selectedTool = null;
   renderHoodScene();
 }
@@ -2810,6 +2902,35 @@ function setupHoodEventListeners() {
     el.addEventListener("mouseleave", () => {
       el.style.filter = "";
       el.style.transform = "";
+    });
+    el.addEventListener("dragstart", (e) => {
+      if (e.dataTransfer) {
+        e.dataTransfer.setData("text/plain", itemId);
+        e.dataTransfer.effectAllowed = "move";
+      }
+      el.style.opacity = "0.5";
+    });
+    el.addEventListener("dragend", () => {
+      el.style.opacity = "";
+    });
+    el.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      if (e.dataTransfer) {
+        e.dataTransfer.dropEffect = "move";
+      }
+      el.classList.add("drag-hover");
+    });
+    el.addEventListener("dragleave", () => {
+      el.classList.remove("drag-hover");
+    });
+    el.addEventListener("drop", (e) => {
+      e.preventDefault();
+      el.classList.remove("drag-hover");
+      const draggedToolId = e.dataTransfer ? e.dataTransfer.getData("text/plain") : "";
+      if (draggedToolId && draggedToolId !== itemId) {
+        gameState.selectedTool = draggedToolId;
+        onItemClick(itemId);
+      }
     });
   });
   const hoodScene = document.getElementById("hood-scene");
@@ -2905,6 +3026,10 @@ function startAddingMedia() {
     showNotification("Flask must be aspirated first.", "warning");
     return;
   }
+  if (!gameState.mediaWarmed) {
+    registerWarning("Cold media can shock cells! Warm media to 37&deg;C before adding.");
+    recordCleanlinessError("Used cold media -- always warm to 37&deg;C before adding to cells.");
+  }
   stopMediaAddition = false;
   showNotification("Adding fresh media. Click to stop when target is reached.");
   showVolumeIndicator(0, FRESH_MEDIA_TARGET_ML);
@@ -2943,8 +3068,10 @@ function stopAddingMedia() {
     accuracyMessage = "Excellent! Very close to target.";
   } else if (differenceAbs <= 1) {
     accuracyMessage = "Good. Within acceptable range.";
-  } else if (differenceAbs <= 2) {
-    accuracyMessage = "Close, but could be more accurate.";
+  } else if (finalVolume < FRESH_MEDIA_TARGET_ML - 1) {
+    accuracyMessage = "Too little media -- nutrients will deplete faster, causing pH drop and waste buildup.";
+  } else if (finalVolume > FRESH_MEDIA_TARGET_ML + 1) {
+    accuracyMessage = "Too much media -- excess volume impairs gas exchange and wastes reagents.";
   } else {
     accuracyMessage = "Off target. Practice for better precision.";
   }
@@ -2954,14 +3081,92 @@ function stopAddingMedia() {
 function onStopMediaAddition() {
   stopMediaAddition = true;
 }
+const DILUTION_OPTIONS = [
+  {
+    label: "Half-log dilution (10x to vehicle)",
+    doses: [0, 0.1, 0.5, 1, 5, 10],
+    correct: true,
+    description: "Spans 3 orders of magnitude for a full dose-response curve."
+  },
+  {
+    label: "Binary dilution (2-fold serial)",
+    doses: [0, 0.5, 1, 2, 4, 8],
+    correct: false,
+    description: "Only 16-fold range -- too narrow to capture the full dose-response."
+  },
+  {
+    label: "Shallow gradient (uniform spacing)",
+    doses: [0, 2, 4, 6, 8, 10],
+    correct: false,
+    description: "Linear spacing misses the low-dose region where the curve is most informative."
+  }
+];
 function startDrugAddition() {
+  const overlay = document.getElementById("microscope-overlay");
+  if (!overlay) return;
+  overlay.classList.add("active");
+  const modal = overlay.querySelector(".modal-content");
+  if (!modal) return;
+  let html = '<button class="modal-close" aria-label="Close">&times;</button>';
+  html += "<h2>Choose Dilution Series</h2>";
+  html += '<div style="padding:0 8px 16px 8px;">';
+  html += '<p style="font-size:14px;color:#212121;margin:0 0 16px 0;">';
+  html += "Select the dilution series for your drug treatment across 6 columns (column 1 = vehicle control):</p>";
+  for (let i = 0; i < DILUTION_OPTIONS.length; i++) {
+    const opt = DILUTION_OPTIONS[i];
+    const bgColor = "#f5f5f5";
+    const borderColor = "#e0e0e0";
+    html += '<button class="dilution-choice" data-dilution-index="' + i + '" ';
+    html += 'style="display:block;width:100%;text-align:left;padding:14px 16px;margin-bottom:10px;';
+    html += "background:" + bgColor + ";border:2px solid " + borderColor + ";border-radius:8px;";
+    html += 'cursor:pointer;transition:all 0.2s ease;font-size:14px;">';
+    html += '<div style="font-weight:600;margin-bottom:4px;">' + opt.label + "</div>";
+    html += '<div style="font-size:12px;color:#757575;">Concentrations (&micro;M): ' + opt.doses.join(", ") + "</div>";
+    html += "</button>";
+  }
+  html += "</div>";
+  modal.innerHTML = html;
+  const buttons = modal.querySelectorAll(".dilution-choice");
+  buttons.forEach((btn) => {
+    const el = btn;
+    const idx = parseInt(el.getAttribute("data-dilution-index") || "0");
+    el.addEventListener("click", () => {
+      selectDilutionSeries(idx);
+    });
+    el.addEventListener("mouseenter", () => {
+      el.style.transform = "translateX(4px)";
+      el.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
+    });
+    el.addEventListener("mouseleave", () => {
+      el.style.transform = "";
+      el.style.boxShadow = "";
+    });
+  });
+  const closeBtn = modal.querySelector(".modal-close");
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => {
+      overlay.classList.remove("active");
+    });
+  }
+}
+function selectDilutionSeries(index) {
+  const option = DILUTION_OPTIONS[index];
+  const overlay = document.getElementById("microscope-overlay");
+  if (!option.correct) {
+    registerWarning("Suboptimal dilution: " + option.description);
+  }
   gameState.wellPlate.forEach((well) => {
-    well.drugConcentrationUm = DRUG_CONCENTRATIONS_UM[well.col];
+    well.drugConcentrationUm = option.doses[well.col];
   });
   gameState.drugsAdded = true;
+  if (option.correct) {
+    showNotification("Half-log dilution applied -- good choice for a full dose-response!", "success");
+  }
   completeStep("add_drugs");
-  showNotification("Drug dilutions added to plate.", "success");
-  renderGame();
+  if (overlay) overlay.classList.remove("active");
+  renderHoodScene();
+  renderProtocolPanel();
+  renderScoreDisplay();
 }
 function renderIncubatorScene() {
   const overlay = document.getElementById("incubator-screen");
@@ -3023,14 +3228,19 @@ function renderMicroscopeScene() {
     html += '<button id="confirm-viability" class="btn-primary" style="padding:10px 24px;">Confirm Viability and Proceed to Counting</button>';
   } else {
     html += "<h2>Hemocytometer - Cell Count</h2>";
-    html += '<div class="microscope-view">';
+    html += '<div class="microscope-view" style="position:relative;">';
     html += '<svg id="microscope-svg" viewBox="0 0 400 300" width="400" height="300"></svg>';
+    html += '<div id="quadrant-buttons" style="position:absolute;top:0;left:0;width:100%;height:100%;">';
+    html += renderQuadrantButtons();
     html += "</div>";
-    html += '<div class="cell-count-section">';
-    html += '<label for="cell-count-input">Enter your cell count (cells/mL):</label>';
-    html += '<p style="margin:4px 0;font-size:12px;color:#757575;">Count cells in the 4 highlighted corner squares, average, then multiply by 10,000</p>';
-    html += '<input id="cell-count-input" type="number" placeholder="e.g. 500000" min="0">';
-    html += '<button id="submit-cell-count">Submit Count</button>';
+    html += "</div>";
+    html += '<div style="padding:12px;background:#f0f2f5;border-radius:8px;margin-bottom:12px;">';
+    html += '<p style="margin:0 0 6px 0;font-size:14px;color:#212121;">Click each corner square to count cells in that quadrant.</p>';
+    html += '<p style="margin:0;font-size:12px;color:#757575;">Select all 4 quadrants, then submit. The average is multiplied by 10,000 to get cells/mL.</p>';
+    html += "</div>";
+    html += '<div style="display:flex;align-items:center;gap:12px;">';
+    html += '<span id="quadrant-status" style="font-size:13px;color:#757575;">0 of 4 quadrants selected</span>';
+    html += '<button id="submit-cell-count" class="btn-primary" style="padding:10px 24px;" disabled>Submit Count</button>';
     html += "</div>";
   }
   modal.innerHTML = html;
@@ -3049,16 +3259,10 @@ function renderMicroscopeScene() {
       });
     }
   } else {
+    setupQuadrantListeners();
     const submitBtn = document.getElementById("submit-cell-count");
     if (submitBtn) {
-      submitBtn.addEventListener("click", submitCellCount);
-    }
-    const input = document.getElementById("cell-count-input");
-    if (input) {
-      input.focus();
-      input.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") submitCellCount();
-      });
+      submitBtn.addEventListener("click", submitQuadrantCount);
     }
   }
   const closeBtn = modal.querySelector(".modal-close");
@@ -3165,24 +3369,102 @@ function drawCellsOnGrid(cellState) {
     svg.appendChild(circle);
   });
 }
-function submitCellCount() {
-  const input = document.getElementById("cell-count-input");
-  if (!input) return;
-  const count = parseInt(input.value);
-  if (isNaN(count) || count < 0) {
-    showNotification("Please enter a valid positive number.", "warning");
+let selectedQuadrants = [false, false, false, false];
+const QUADRANT_CORNERS = [
+  { x: 0, y: 0, label: "Top-Left (A1)" },
+  { x: 300, y: 0, label: "Top-Right (A4)" },
+  { x: 0, y: 225, label: "Bottom-Left (D1)" },
+  { x: 300, y: 225, label: "Bottom-Right (D4)" }
+];
+function renderQuadrantButtons() {
+  let html = "";
+  for (let i = 0; i < 4; i++) {
+    const c = QUADRANT_CORNERS[i];
+    const leftPct = c.x / 400 * 100;
+    const topPct = c.y / 300 * 100;
+    const widthPct = 100 / 400 * 100;
+    const heightPct = 75 / 300 * 100;
+    html += '<div class="quadrant-btn" data-quadrant="' + i + '" ';
+    html += 'title="' + c.label + '" ';
+    html += 'style="position:absolute;';
+    html += "left:" + leftPct + "%;top:" + topPct + "%;";
+    html += "width:" + widthPct + "%;height:" + heightPct + "%;";
+    html += "cursor:pointer;border:2px solid transparent;border-radius:2px;";
+    html += 'transition:all 0.2s ease;z-index:10;">';
+    html += "</div>";
+  }
+  return html;
+}
+function setupQuadrantListeners() {
+  selectedQuadrants = [false, false, false, false];
+  const buttons = document.querySelectorAll(".quadrant-btn");
+  buttons.forEach((btn) => {
+    const el = btn;
+    const idx = parseInt(el.getAttribute("data-quadrant") || "0");
+    el.addEventListener("click", () => {
+      selectedQuadrants[idx] = !selectedQuadrants[idx];
+      if (selectedQuadrants[idx]) {
+        el.style.border = "3px solid #4caf50";
+        el.style.backgroundColor = "rgba(76, 175, 80, 0.15)";
+      } else {
+        el.style.border = "2px solid transparent";
+        el.style.backgroundColor = "transparent";
+      }
+      updateQuadrantStatus();
+    });
+    el.addEventListener("mouseenter", () => {
+      if (!selectedQuadrants[idx]) {
+        el.style.backgroundColor = "rgba(76, 175, 80, 0.08)";
+      }
+    });
+    el.addEventListener("mouseleave", () => {
+      if (!selectedQuadrants[idx]) {
+        el.style.backgroundColor = "transparent";
+      }
+    });
+  });
+}
+function updateQuadrantStatus() {
+  let count = 0;
+  for (let i = 0; i < 4; i++) {
+    if (selectedQuadrants[i]) count++;
+  }
+  const statusEl = document.getElementById("quadrant-status");
+  if (statusEl) {
+    statusEl.textContent = count + " of 4 quadrants selected";
+  }
+  const submitBtn = document.getElementById("submit-cell-count");
+  if (submitBtn) {
+    submitBtn.disabled = count < 4;
+  }
+}
+function submitQuadrantCount() {
+  let selectedCount = 0;
+  for (let i = 0; i < 4; i++) {
+    if (selectedQuadrants[i]) selectedCount++;
+  }
+  if (selectedCount < 4) {
+    showNotification("Please select all 4 corner quadrants.", "warning");
     return;
   }
-  gameState.cellCount = count;
+  const cellState = getCellState();
+  let totalLiveCells = 0;
+  cellState.positions.forEach((pos) => {
+    if (pos.alive) totalLiveCells++;
+  });
+  const cellsInFourSquares = Math.round(totalLiveCells * 0.25);
+  const avgPerSquare = cellsInFourSquares / 4;
+  const estimatedCount = Math.round(avgPerSquare * 1e4);
+  gameState.cellCount = estimatedCount;
   const actual = gameState.actualCellCount;
-  const errorPercent = Math.abs(count - actual) / actual * 100;
-  let feedback = "";
+  const errorPercent = Math.abs(estimatedCount - actual) / actual * 100;
+  let feedback = "Count: ~" + estimatedCount.toLocaleString() + " cells/mL. ";
   if (errorPercent <= 10) {
-    feedback = "Excellent count! Very close to actual.";
+    feedback += "Excellent -- very close to actual!";
   } else if (errorPercent <= 25) {
-    feedback = "Good count. Within acceptable range.";
+    feedback += "Good count, within acceptable range.";
   } else {
-    feedback = "Count is off. Actual was ~" + actual.toLocaleString() + " cells/mL.";
+    feedback += "Actual was ~" + actual.toLocaleString() + " cells/mL.";
   }
   showNotification(feedback, errorPercent <= 25 ? "success" : "info");
   completeStep("count_cells");
@@ -3328,6 +3610,27 @@ function calculateScore() {
     }
   };
 }
+function validateProtocolSteps() {
+  const errors = [];
+  if (PROTOCOL_STEPS.length === 0) {
+    errors.push("Protocol must have at least one step.");
+    return errors;
+  }
+  const seenIds = [];
+  for (let i = 0; i < PROTOCOL_STEPS.length; i++) {
+    const step = PROTOCOL_STEPS[i];
+    const prefix = "Step " + i + ": ";
+    if (!step.id) errors.push(prefix + "missing id");
+    if (!step.label) errors.push(prefix + "missing label");
+    if (!step.scene) errors.push(prefix + "missing scene");
+    if (!step.requiredAction) errors.push(prefix + "missing requiredAction");
+    if (seenIds.indexOf(step.id) >= 0) {
+      errors.push(prefix + 'duplicate id "' + step.id + '"');
+    }
+    seenIds.push(step.id);
+  }
+  return errors;
+}
 renderGame = function() {
   switch (gameState.activeScene) {
     case "hood":
@@ -3351,6 +3654,10 @@ renderGame = function() {
   renderScoreDisplay();
 };
 document.addEventListener("DOMContentLoaded", () => {
+  const protocolErrors = validateProtocolSteps();
+  if (protocolErrors.length > 0) {
+    throw new Error("Protocol validation failed:\n" + protocolErrors.join("\n"));
+  }
   gameState = createInitialGameState();
   renderGame();
   showNotification("Welcome! Follow the protocol steps on the right.", "info");

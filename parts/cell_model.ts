@@ -69,9 +69,15 @@ function applyIncubation(): void {
 	const growthRate = 1.3; // 30% increase over 24h
 	gameState.actualCellCount = Math.round(gameState.actualCellCount * growthRate);
 
-	// If drug was added, apply its effect
-	if (gameState.drugAdded) {
-		applyDrugEffect(gameState.drugConcentrationUm);
+	// If drugs were added, apply effect using the max concentration from the plate
+	if (gameState.drugsAdded) {
+		let maxConc = 0;
+		gameState.wellPlate.forEach(well => {
+			if (well.drugConcentrationUm > maxConc) {
+				maxConc = well.drugConcentrationUm;
+			}
+		});
+		applyDrugEffect(maxConc);
 	}
 }
 

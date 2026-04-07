@@ -34,21 +34,30 @@ function renderHoodScene(): void {
 	html += getHoodBackgroundSvg();
 	html += '</div>';
 
+	// Determine which items should glow for the current step
+	const currentStepData = getCurrentStep();
+	const activeTargets: string[] = currentStepData && currentStepData.targetItems
+		? currentStepData.targetItems : [];
+
 	// Place each hood item
 	const entries = Object.entries(HOOD_ITEMS);
 	for (let i = 0; i < entries.length; i++) {
 		const itemId = entries[i][0];
 		const config = entries[i][1];
 		const isSelected = gameState.selectedTool === itemId;
+		const isTarget = activeTargets.indexOf(itemId) >= 0;
 		const borderStyle = isSelected ? '3px solid #4caf50' : '2px solid transparent';
 		const opacity = isSelected ? '0.7' : '1';
+		// Add is-active class for step-aware target highlighting
+		const activeClass = isTarget && !isSelected ? ' is-active' : '';
 
-		html += '<div class="hood-item" data-item-id="' + itemId + '" ';
+		html += '<div class="hood-item' + activeClass + '" data-item-id="' + itemId + '" ';
 		html += 'style="position:absolute;';
 		html += 'left:' + config.x + '%;top:' + config.y + '%;';
 		html += 'width:' + config.width + '%;height:' + config.height + '%;';
 		html += 'cursor:pointer;border:' + borderStyle + ';border-radius:4px;';
 		html += 'opacity:' + opacity + ';transition:all 0.2s ease;" ';
+		html += 'draggable="true" ';
 		html += 'title="' + config.label + '">';
 		html += getItemSvgHtml(itemId);
 		html += '</div>';
@@ -66,10 +75,10 @@ function renderHoodScene(): void {
 		hintText = 'Holding: ' + toolLabel + ' -- Click a target to use';
 	}
 
-	html += '<div id="hood-toolbar" style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);';
-	html += 'background:rgba(255,255,255,0.9);padding:8px 20px;border-radius:20px;';
-	html += 'font-size:14px;color:#212121;box-shadow:0 2px 8px rgba(0,0,0,0.15);';
-	html += 'white-space:nowrap;">';
+	html += '<div id="hood-toolbar" style="position:absolute;top:8px;left:50%;transform:translateX(-50%);';
+	html += 'background:rgba(255,255,255,0.92);padding:10px 24px;border-radius:20px;';
+	html += 'font-size:16px;font-weight:500;color:#212121;box-shadow:0 2px 8px rgba(0,0,0,0.15);';
+	html += 'white-space:nowrap;z-index:100;">';
 	html += hintText;
 	html += '</div>';
 
@@ -123,6 +132,11 @@ function onItemClick(itemId: string): void {
 
 	// Aspirating pipette -> flask: aspirate old media
 	if (tool === 'aspirating_pipette' && itemId === 'flask') {
+		// Check if hood was sprayed first (aseptic technique)
+		if (!gameState.hoodSprayed) {
+			registerWarning('Always sanitize the hood before working! Spray with 70% ethanol first.');
+			recordCleanlinessError('Started work without sanitizing the hood.');
+		}
 		gameState.selectedTool = null;
 		startAspiration();
 		renderHoodScene();
@@ -131,10 +145,11 @@ function onItemClick(itemId: string): void {
 		return;
 	}
 
-	// Serological pipette -> media_bottle: load media
+	// Serological pipette -> media_bottle: load media (and mark as warmed)
 	if (tool === 'serological_pipette' && itemId === 'media_bottle') {
+		gameState.mediaWarmed = true;
 		gameState.selectedTool = 'serological_pipette_with_media';
-		showNotification('Loaded media into pipette. Click the flask.');
+		showNotification('Media warmed to 37&deg;C and loaded into pipette. Click the flask.');
 		renderHoodScene();
 		return;
 	}
@@ -187,24 +202,20 @@ function onItemClick(itemId: string): void {
 		return;
 	}
 
-	// Loaded multichannel pipette -> well_plate: add drugs to wells
+	// Loaded multichannel pipette -> well_plate: show dilution choice dialog
 	if (tool === 'multichannel_pipette_with_drug' && itemId === 'well_plate') {
 		gameState.selectedTool = null;
-		// Add drug concentrations: column 1 = control (0), columns 2-6 = increasing concentrations
-		gameState.wellPlate.forEach(well => {
-			well.drugConcentrationUm = DRUG_CONCENTRATIONS_UM[well.col];
-		});
-		gameState.drugsAdded = true;
-		completeStep('add_drugs');
-		showNotification('Drug dilutions added to plate. Column 1 = control.', 'success');
-		renderHoodScene();
-		renderProtocolPanel();
-		renderScoreDisplay();
+		startDrugAddition();
 		return;
 	}
 
-	// Invalid combination
-	showNotification('That combination does not work. Try something else.', 'warning');
+	// Invalid combination -- register a warning with educational guidance
+	const stepHint = getCurrentStep();
+	let warningMsg = 'That combination does not work.';
+	if (stepHint) {
+		warningMsg += ' Current step: ' + stepHint.label;
+	}
+	registerWarning(warningMsg);
 	gameState.selectedTool = null;
 	renderHoodScene();
 }
@@ -228,6 +239,40 @@ function setupHoodEventListeners(): void {
 		el.addEventListener('mouseleave', () => {
 			el.style.filter = '';
 			el.style.transform = '';
+		});
+
+		// Drag-and-drop: start dragging a tool
+		el.addEventListener('dragstart', (e) => {
+			if (e.dataTransfer) {
+				e.dataTransfer.setData('text/plain', itemId);
+				e.dataTransfer.effectAllowed = 'move';
+			}
+			el.style.opacity = '0.5';
+		});
+		el.addEventListener('dragend', () => {
+			el.style.opacity = '';
+		});
+
+		// Drop target: accept a dropped tool
+		el.addEventListener('dragover', (e) => {
+			e.preventDefault();
+			if (e.dataTransfer) {
+				e.dataTransfer.dropEffect = 'move';
+			}
+			el.classList.add('drag-hover');
+		});
+		el.addEventListener('dragleave', () => {
+			el.classList.remove('drag-hover');
+		});
+		el.addEventListener('drop', (e) => {
+			e.preventDefault();
+			el.classList.remove('drag-hover');
+			const draggedToolId = e.dataTransfer ? e.dataTransfer.getData('text/plain') : '';
+			if (draggedToolId && draggedToolId !== itemId) {
+				// Simulate picking up the dragged tool then using it on this target
+				gameState.selectedTool = draggedToolId;
+				onItemClick(itemId);
+			}
 		});
 	});
 

@@ -33,16 +33,22 @@ function renderMicroscopeScene(): void {
 		html += '</div>';
 		html += '<button id="confirm-viability" class="btn-primary" style="padding:10px 24px;">Confirm Viability and Proceed to Counting</button>';
 	} else {
-		// Step 2: Cell counting on hemocytometer
+		// Step 2: Cell counting via interactive quadrant selection
 		html += '<h2>Hemocytometer - Cell Count</h2>';
-		html += '<div class="microscope-view">';
+		html += '<div class="microscope-view" style="position:relative;">';
 		html += '<svg id="microscope-svg" viewBox="0 0 400 300" width="400" height="300"></svg>';
+		// Overlay clickable quadrant buttons on top of the 4 corner squares
+		html += '<div id="quadrant-buttons" style="position:absolute;top:0;left:0;width:100%;height:100%;">';
+		html += renderQuadrantButtons();
 		html += '</div>';
-		html += '<div class="cell-count-section">';
-		html += '<label for="cell-count-input">Enter your cell count (cells/mL):</label>';
-		html += '<p style="margin:4px 0;font-size:12px;color:#757575;">Count cells in the 4 highlighted corner squares, average, then multiply by 10,000</p>';
-		html += '<input id="cell-count-input" type="number" placeholder="e.g. 500000" min="0">';
-		html += '<button id="submit-cell-count">Submit Count</button>';
+		html += '</div>';
+		html += '<div style="padding:12px;background:#f0f2f5;border-radius:8px;margin-bottom:12px;">';
+		html += '<p style="margin:0 0 6px 0;font-size:14px;color:#212121;">Click each corner square to count cells in that quadrant.</p>';
+		html += '<p style="margin:0;font-size:12px;color:#757575;">Select all 4 quadrants, then submit. The average is multiplied by 10,000 to get cells/mL.</p>';
+		html += '</div>';
+		html += '<div style="display:flex;align-items:center;gap:12px;">';
+		html += '<span id="quadrant-status" style="font-size:13px;color:#757575;">0 of 4 quadrants selected</span>';
+		html += '<button id="submit-cell-count" class="btn-primary" style="padding:10px 24px;" disabled>Submit Count</button>';
 		html += '</div>';
 	}
 
@@ -67,16 +73,10 @@ function renderMicroscopeScene(): void {
 			});
 		}
 	} else {
+		setupQuadrantListeners();
 		const submitBtn = document.getElementById('submit-cell-count');
 		if (submitBtn) {
-			submitBtn.addEventListener('click', submitCellCount);
-		}
-		const input = document.getElementById('cell-count-input') as HTMLInputElement;
-		if (input) {
-			input.focus();
-			input.addEventListener('keydown', (e) => {
-				if (e.key === 'Enter') submitCellCount();
-			});
+			submitBtn.addEventListener('click', submitQuadrantCount);
 		}
 	}
 
@@ -199,35 +199,141 @@ function drawCellsOnGrid(cellState: CellState): void {
 	});
 }
 
-// ============================================
-function submitCellCount(): void {
-	const input = document.getElementById('cell-count-input') as HTMLInputElement;
-	if (!input) return;
+// Track which quadrants are selected (indices 0-3 for TL, TR, BL, BR)
+let selectedQuadrants: boolean[] = [false, false, false, false];
 
-	const count = parseInt(input.value);
-	if (isNaN(count) || count < 0) {
-		showNotification('Please enter a valid positive number.', 'warning');
+// ============================================
+// Quadrant corner positions matching the SVG grid corners
+// Each quadrant covers a 100x75 region of the 400x300 SVG
+const QUADRANT_CORNERS = [
+	{ x: 0, y: 0, label: 'Top-Left (A1)' },
+	{ x: 300, y: 0, label: 'Top-Right (A4)' },
+	{ x: 0, y: 225, label: 'Bottom-Left (D1)' },
+	{ x: 300, y: 225, label: 'Bottom-Right (D4)' },
+];
+
+// ============================================
+function renderQuadrantButtons(): string {
+	// Position clickable divs over the 4 corner squares of the hemocytometer
+	// SVG is 400x300, each corner square is 100x75
+	let html = '';
+	for (let i = 0; i < 4; i++) {
+		const c = QUADRANT_CORNERS[i];
+		// Convert SVG coordinates to percentages
+		const leftPct = (c.x / 400) * 100;
+		const topPct = (c.y / 300) * 100;
+		const widthPct = (100 / 400) * 100;
+		const heightPct = (75 / 300) * 100;
+		html += '<div class="quadrant-btn" data-quadrant="' + i + '" ';
+		html += 'title="' + c.label + '" ';
+		html += 'style="position:absolute;';
+		html += 'left:' + leftPct + '%;top:' + topPct + '%;';
+		html += 'width:' + widthPct + '%;height:' + heightPct + '%;';
+		html += 'cursor:pointer;border:2px solid transparent;border-radius:2px;';
+		html += 'transition:all 0.2s ease;z-index:10;">';
+		html += '</div>';
+	}
+	return html;
+}
+
+// ============================================
+function setupQuadrantListeners(): void {
+	selectedQuadrants = [false, false, false, false];
+	const buttons = document.querySelectorAll('.quadrant-btn');
+	buttons.forEach((btn) => {
+		const el = btn as HTMLElement;
+		const idx = parseInt(el.getAttribute('data-quadrant') || '0');
+
+		el.addEventListener('click', () => {
+			// Toggle selection
+			selectedQuadrants[idx] = !selectedQuadrants[idx];
+			if (selectedQuadrants[idx]) {
+				el.style.border = '3px solid #4caf50';
+				el.style.backgroundColor = 'rgba(76, 175, 80, 0.15)';
+			} else {
+				el.style.border = '2px solid transparent';
+				el.style.backgroundColor = 'transparent';
+			}
+			updateQuadrantStatus();
+		});
+
+		// Hover feedback
+		el.addEventListener('mouseenter', () => {
+			if (!selectedQuadrants[idx]) {
+				el.style.backgroundColor = 'rgba(76, 175, 80, 0.08)';
+			}
+		});
+		el.addEventListener('mouseleave', () => {
+			if (!selectedQuadrants[idx]) {
+				el.style.backgroundColor = 'transparent';
+			}
+		});
+	});
+}
+
+// ============================================
+function updateQuadrantStatus(): void {
+	let count = 0;
+	for (let i = 0; i < 4; i++) {
+		if (selectedQuadrants[i]) count++;
+	}
+	const statusEl = document.getElementById('quadrant-status');
+	if (statusEl) {
+		statusEl.textContent = count + ' of 4 quadrants selected';
+	}
+	// Enable submit only when all 4 are selected
+	const submitBtn = document.getElementById('submit-cell-count') as HTMLButtonElement;
+	if (submitBtn) {
+		submitBtn.disabled = count < 4;
+	}
+}
+
+// ============================================
+function submitQuadrantCount(): void {
+	// Count how many are selected (should be 4)
+	let selectedCount = 0;
+	for (let i = 0; i < 4; i++) {
+		if (selectedQuadrants[i]) selectedCount++;
+	}
+	if (selectedCount < 4) {
+		showNotification('Please select all 4 corner quadrants.', 'warning');
 		return;
 	}
 
-	gameState.cellCount = count;
+	// The cell count is derived from the cells visible on the grid
+	// Real hemocytometer: the grid has 4x4 = 16 large squares, player counts 4 corner squares
+	// Formula: cells/mL = (total in 4 squares / 4) * 10,000
+	// Since our visible cells represent a scaled sample, count ALL live cells
+	// and scale by (4 squares / 16 total squares) to simulate counting corners only
+	const cellState = getCellState();
+	let totalLiveCells = 0;
+	cellState.positions.forEach((pos) => {
+		if (pos.alive) totalLiveCells++;
+	});
+
+	// 4 corner squares out of 16 total = 25% of the grid area
+	// Average per corner square, then multiply by 10,000
+	const cellsInFourSquares = Math.round(totalLiveCells * 0.25);
+	const avgPerSquare = cellsInFourSquares / 4;
+	const estimatedCount = Math.round(avgPerSquare * 10000);
+	gameState.cellCount = estimatedCount;
 
 	const actual = gameState.actualCellCount;
-	const errorPercent = Math.abs(count - actual) / actual * 100;
+	const errorPercent = Math.abs(estimatedCount - actual) / actual * 100;
 
-	let feedback = '';
+	let feedback = 'Count: ~' + estimatedCount.toLocaleString() + ' cells/mL. ';
 	if (errorPercent <= 10) {
-		feedback = 'Excellent count! Very close to actual.';
+		feedback += 'Excellent -- very close to actual!';
 	} else if (errorPercent <= 25) {
-		feedback = 'Good count. Within acceptable range.';
+		feedback += 'Good count, within acceptable range.';
 	} else {
-		feedback = 'Count is off. Actual was ~' + actual.toLocaleString() + ' cells/mL.';
+		feedback += 'Actual was ~' + actual.toLocaleString() + ' cells/mL.';
 	}
 
 	showNotification(feedback, errorPercent <= 25 ? 'success' : 'info');
 	completeStep('count_cells');
 
-	// Close microscope, return to hood for plating
+	// Close microscope, return to hood
 	const overlay = document.getElementById('microscope-overlay');
 	if (overlay) overlay.classList.remove('active');
 	switchScene('hood');
