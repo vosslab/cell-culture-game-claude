@@ -1,6 +1,11 @@
 # Changelog
 
-## [Unreleased]
+## 2026-04-06
+
+### Additions and New Features
+- Added `README.md` with project overview, quick start, documentation links, and license info
+- Created `docs/INSTALL.md` with prerequisites and setup instructions
+- Created `docs/USAGE.md` with build and gameplay instructions
 
 ### Added
 
