@@ -1,0 +1,49 @@
+# Artwork / SVG assets
+git clone https://github.com/duerrsimon/bioicons.git
+git clone https://github.com/continuous-foundation/scienceicons.git
+
+# Virtual lab simulations (pedagogy + structure)
+git clone https://github.com/virtual-labs/exp-western-blot-cell-lysate-antibody-iitg.git
+git clone https://github.com/virtual-labs/ph3-lab-mgmt.git
+
+# Protocol schema (Autoprotocol)
+git clone https://github.com/autoprotocol/autoprotocol-python.git
+git clone https://github.com/autoprotocol/autoprotocol-js.git
+
+# Domain-specific (western blot logic / analysis)
+git clone https://github.com/ucsf-ferguson-lab/blotRig.git
+
+# Niche / exploratory
+git clone https://github.com/AbramGiller/western_blot_simulator.git
+
+Yes. I would clone these first, in this order.
+
+1. duerrsimon/bioicons
+Best repo to review for scientific SVG asset organization, metadata, and reuse. It is a library of open scientific vector illustrations, and Bioicons says assets are under permissive licenses including CC0, CC BY, and MIT. This is the strongest starting point for how to structure your own artwork library, even though it is not a protocol trainer.  ￼
+
+2. virtual-labs/exp-western-blot-cell-lysate-antibody-iitg
+This is the closest direct example for your use case: an open western blot teaching simulation repo, with an AGPL-3.0 license. I would study it for pedagogical flow, scene sequencing, and how they present the procedure, simulation, and assessment.  ￼
+
+3. virtual-labs/ph3-lab-mgmt
+Not western blot specific, but useful if you want to understand how Virtual Labs structures experiments as a broader platform. The repo description says each experiment includes theory, reading material, interactive simulations, and quizzes/tests. That makes it a good repo to inspect for content packaging and platform architecture.  ￼
+
+4. autoprotocol/autoprotocol-python and autoprotocol/autoprotocol-js
+Clone these if you want ideas for a machine-readable protocol schema. Autoprotocol describes itself as a language for specifying experimental protocols in biological research, and the org exposes both Python and JavaScript repos. This is not a teaching simulator, but it is probably the best precedent for your protocol data model.  ￼
+
+5. continuous-foundation/scienceicons
+Worth reviewing if you think you may ship a React-friendly icon package alongside raw SVG. The repo provides open science SVG icons and explicitly offers first-party React and Vue libraries. That makes it useful for packaging ideas, naming, and component export patterns.  ￼
+
+6. ucsf-ferguson-lab/blotRig
+This is not a simulator, but it is useful for understanding western blot domain logic, especially experimental design, replication, and analysis. I would mine it for terminology, failure modes, and output concepts you may want to visualize in a teaching tool.  ￼
+
+7. AbramGiller/western_blot_simulator
+I would clone this last. It looks minimal, has very little activity, and does not appear widely used, but it is close enough in topic that it is still worth a quick read to avoid duplicating any obvious ideas.  ￼
+
+My practical shortlist would be:
+	•	For artwork: bioicons, scienceicons
+	•	For learning-flow design: exp-western-blot-cell-lysate-antibody-iitg, ph3-lab-mgmt
+	•	For protocol schema: autoprotocol-python, autoprotocol-js
+	•	For western blot domain details: blotRig
+
+One caution: the licenses vary. Bioicons includes permissive asset licenses, while the Virtual Labs western blot repo is AGPL-3.0, so you should review reuse boundaries before copying code or bundled assets into your own project.  ￼
+
