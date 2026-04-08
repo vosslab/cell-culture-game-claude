@@ -242,6 +242,83 @@ const hideVolumeIndicator = (): void => {
 };
 
 // ============================================
+// renderMeters(): void
+// Render 3 live gauge meters in the protocol panel sidebar:
+// Cell Health, Confluency, and Contamination Risk
+// ============================================
+const renderMeters = (): void => {
+	const metersPanel = document.getElementById('meters-panel');
+	if (!metersPanel) return;
+
+	// Derive values from global gameState
+	const healthPct = Math.round(gameState.cellViability * 100);
+	const confluencyPct = Math.round(INITIAL_CONFLUENCY * 100);
+	// Contamination risk: escalates with cleanliness errors, clamped to 0-100
+	const contaminationPct = Math.min(gameState.cleanlinessErrors * 15, 100);
+
+	// Determine bar color for cell health (green >=80, yellow 60-79, red <60)
+	let healthColor = '#4caf50';
+	if (healthPct < 60) {
+		healthColor = '#ef5350';
+	} else if (healthPct < 80) {
+		healthColor = '#ff9800';
+	}
+
+	// Determine bar color for confluency (green >=70, yellow 50-69, red <50)
+	let confluencyColor = '#4caf50';
+	if (confluencyPct < 50) {
+		confluencyColor = '#ef5350';
+	} else if (confluencyPct < 70) {
+		confluencyColor = '#ff9800';
+	}
+
+	// Determine bar color for contamination (inverted: green <=10, yellow 11-25, red >25)
+	let contaminationColor = '#4caf50';
+	if (contaminationPct > 25) {
+		contaminationColor = '#ef5350';
+	} else if (contaminationPct > 10) {
+		contaminationColor = '#ff9800';
+	}
+
+	// Build the meters HTML using string concatenation
+	let html = '';
+	html += '<div class="meters-panel">';
+
+	// Cell Health meter
+	html += '<div class="meter-item">';
+	html += '<div class="meter-label">Cell Health</div>';
+	html += '<div class="meter-bar">';
+	html += '<div class="meter-fill" style="width: ' + healthPct + '%;';
+	html += ' background-color: ' + healthColor + ';"></div>';
+	html += '</div>';
+	html += '<div class="meter-value">' + healthPct + '%</div>';
+	html += '</div>';
+
+	// Confluency meter
+	html += '<div class="meter-item">';
+	html += '<div class="meter-label">Confluency</div>';
+	html += '<div class="meter-bar">';
+	html += '<div class="meter-fill" style="width: ' + confluencyPct + '%;';
+	html += ' background-color: ' + confluencyColor + ';"></div>';
+	html += '</div>';
+	html += '<div class="meter-value">' + confluencyPct + '%</div>';
+	html += '</div>';
+
+	// Contamination Risk meter
+	html += '<div class="meter-item">';
+	html += '<div class="meter-label">Contamination Risk</div>';
+	html += '<div class="meter-bar">';
+	html += '<div class="meter-fill" style="width: ' + contaminationPct + '%;';
+	html += ' background-color: ' + contaminationColor + ';"></div>';
+	html += '</div>';
+	html += '<div class="meter-value">' + contaminationPct + '%</div>';
+	html += '</div>';
+
+	html += '</div>';
+	metersPanel.innerHTML = html;
+};
+
+// ============================================
 // renderToolbar(): string
 // Return HTML for a toolbar showing available tools
 // ============================================

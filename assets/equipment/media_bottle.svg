@@ -1,0 +1,81 @@
+<svg id="media_bottle" viewBox="0 0 80 120" xmlns="http://www.w3.org/2000/svg">
+	<defs>
+		<!-- Liquid clip: inner bottle wall rectangle -->
+		<clipPath id="anchor_liquid_clip">
+			<rect x="19" y="31" width="42" height="72" rx="2"/>
+		</clipPath>
+	</defs>
+
+	<!-- BODY SHADOW: depth offset (3px right, 3px down) -->
+	<g id="body_shadow">
+		<!-- bottle body shadow -->
+		<rect x="18" y="30" width="50" height="80" rx="4" fill="#cccccc"/>
+		<!-- neck shadow -->
+		<path d="M 33 20 L 30 30 L 53 30 L 50 20 Z" fill="#cccccc"/>
+		<!-- cap shadow -->
+		<rect x="31" y="6" width="24" height="14" rx="2" fill="#777777"/>
+	</g>
+
+	<!-- BODY: main bottle shape -->
+	<g id="body">
+		<!-- main bottle body (flat polystyrene rectangle) -->
+		<rect x="15" y="27" width="50" height="80" rx="4"
+			fill="#f0f0f0" stroke="#333333" stroke-width="1.5"/>
+		<!-- inner face (slightly lighter for depth) -->
+		<rect x="19" y="31" width="42" height="72" rx="3"
+			fill="#f8f8f8" stroke="none"/>
+		<!-- left side shine -->
+		<rect x="20" y="35" width="4" height="60" rx="1"
+			fill="#ffffff" opacity="0.5"/>
+		<!-- bottom edge highlight -->
+		<line x1="19" y1="104" x2="61" y2="104"
+			stroke="#dddddd" stroke-width="0.8"/>
+	</g>
+
+	<!-- NECK: connecting to cap -->
+	<g id="neck">
+		<path d="M 30 17 L 27 27 L 53 27 L 50 17 Z"
+			fill="#f0f0f0" stroke="#333333" stroke-width="1.5"/>
+		<path d="M 33 19 L 30 25 L 50 25 L 47 19 Z"
+			fill="#f8f8f8" stroke="none"/>
+		<line x1="32" y1="22" x2="48" y2="22"
+			stroke="#999999" stroke-width="0.4"/>
+	</g>
+
+	<!-- CAP: screw cap -->
+	<g id="cap">
+		<rect x="28" y="3" width="24" height="16" rx="2"
+			fill="#888888" stroke="#333333" stroke-width="1.5"/>
+		<ellipse cx="40" cy="3" rx="12" ry="2.5"
+			fill="#999999" stroke="#333333" stroke-width="1"/>
+		<line x1="32" y1="9" x2="52" y2="9"
+			stroke="#666666" stroke-width="0.4"/>
+		<line x1="32" y1="12" x2="52" y2="12"
+			stroke="#666666" stroke-width="0.4"/>
+		<line x1="32" y1="15" x2="52" y2="15"
+			stroke="#666666" stroke-width="0.4"/>
+	</g>
+
+	<!-- LABEL_FRAME: static label background -->
+	<g id="label_frame">
+		<rect x="20" y="60" width="40" height="28" rx="1"
+			fill="#ffffff" opacity="0.85" stroke="#999999" stroke-width="0.8"/>
+	</g>
+
+	<!-- OVERLAY_ROOT: engine injects dynamic overlays here -->
+	<g id="overlay_root"/>
+
+	<!-- ANCHORS: invisible positioning elements -->
+	<rect id="anchor_liquid_bounds"
+		x="19" y="31" width="42" height="72"
+		fill="none" stroke="none" display="none"/>
+	<rect id="anchor_highlight"
+		x="13" y="1" width="56" height="110"
+		fill="none" stroke="none" display="none"/>
+	<rect id="anchor_label"
+		x="20" y="60" width="40" height="28"
+		fill="none" stroke="none" display="none"/>
+	<rect id="anchor_error"
+		x="60" y="24" width="16" height="16"
+		fill="none" stroke="none" display="none"/>
+</svg>

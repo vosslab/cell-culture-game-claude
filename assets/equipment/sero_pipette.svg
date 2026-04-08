@@ -1,0 +1,53 @@
+<svg id="sero_pipette" viewBox="0 0 20 150" xmlns="http://www.w3.org/2000/svg">
+
+	<!-- BODY SHADOW: depth offset (3px right, 3px down) -->
+	<g id="body_shadow">
+		<!-- tube shadow -->
+		<rect x="9" y="18" width="9" height="105" rx="1" fill="#cccccc"/>
+		<!-- cotton plug shadow -->
+		<rect x="7" y="9" width="13" height="10" rx="1" fill="#cccccc"/>
+	</g>
+
+	<!-- BODY: main pipette shape -->
+	<g id="body">
+		<!-- cotton plug at top -->
+		<rect x="4" y="6" width="12" height="10" rx="1"
+			fill="#e8d4c0" stroke="#cccccc" stroke-width="0.8"/>
+		<ellipse cx="10" cy="6" rx="5" ry="2"
+			fill="#ddccb0" opacity="0.7"/>
+		<!-- graduated glass tube -->
+		<rect x="6" y="15" width="8" height="105" rx="1"
+			fill="#f0f0f0" stroke="#999999" stroke-width="0.8"/>
+		<!-- inner tube glass tint -->
+		<rect x="7.5" y="17" width="5" height="101" rx="0.5"
+			fill="#f8f8f8" stroke="none"/>
+		<!-- glass shine -->
+		<rect x="8" y="20" width="1.5" height="95"
+			fill="#ffffff" opacity="0.5"/>
+		<!-- major graduation marks -->
+		<line x1="4" y1="30" x2="16" y2="30" stroke="#999999" stroke-width="0.5"/>
+		<line x1="4" y1="50" x2="16" y2="50" stroke="#999999" stroke-width="0.5"/>
+		<line x1="4" y1="70" x2="16" y2="70" stroke="#999999" stroke-width="0.5"/>
+		<line x1="4" y1="90" x2="16" y2="90" stroke="#999999" stroke-width="0.5"/>
+		<line x1="4" y1="110" x2="16" y2="110" stroke="#999999" stroke-width="0.5"/>
+		<!-- minor graduation marks -->
+		<line x1="6" y1="40" x2="14" y2="40" stroke="#cccccc" stroke-width="0.3"/>
+		<line x1="6" y1="60" x2="14" y2="60" stroke="#cccccc" stroke-width="0.3"/>
+		<line x1="6" y1="80" x2="14" y2="80" stroke="#cccccc" stroke-width="0.3"/>
+		<line x1="6" y1="100" x2="14" y2="100" stroke="#cccccc" stroke-width="0.3"/>
+		<!-- pointed tip at bottom -->
+		<path d="M 6 120 L 10 142 L 14 120 Z"
+			fill="#cccccc" stroke="#999999" stroke-width="0.4"/>
+	</g>
+
+	<!-- OVERLAY_ROOT: engine injects dynamic overlays here -->
+	<g id="overlay_root"/>
+
+	<!-- ANCHORS: invisible positioning elements -->
+	<rect id="anchor_highlight"
+		x="3" y="4" width="15" height="144"
+		fill="none" stroke="none" display="none"/>
+	<rect id="anchor_error"
+		x="11" y="5" width="12" height="12"
+		fill="none" stroke="none" display="none"/>
+</svg>

@@ -11,5 +11,8 @@ build/
 # Reports
 report_*.txt
 
+# Superpowers brainstorming sessions
+.superpowers/
+
 # OS
 .DS_Store

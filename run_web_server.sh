@@ -10,5 +10,16 @@ cd "$REPO_ROOT"
 echo "Building game..."
 bash build_game.sh
 
+# Detect the local IP address for the LAN URL
+LOCAL_IP=$(ipconfig getifaddr en0 2>/dev/null || hostname -I 2>/dev/null | awk '{print $1}')
+PORT=5080
+
+echo ""
+echo "========================================"
+echo "  Send this link to others on your network:"
+echo "  http://${LOCAL_IP}:${PORT}"
+echo "========================================"
+echo ""
+
 # Start the server on all interfaces for LAN access
-source source_me.sh && python3 cell_culture_game.py --lan
+source source_me.sh && python3 cell_culture_game.py --lan --port "$PORT"

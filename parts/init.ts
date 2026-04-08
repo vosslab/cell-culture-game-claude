@@ -51,6 +51,7 @@ renderGame = function(): void {
 	// Always update the sidebar
 	renderProtocolPanel();
 	renderScoreDisplay();
+	renderMeters();
 };
 
 // ============================================

@@ -1,0 +1,46 @@
+<svg id="aspirating_pipette" viewBox="0 0 25 140" xmlns="http://www.w3.org/2000/svg">
+
+	<!-- BODY SHADOW: depth offset (3px right, 3px down) -->
+	<g id="body_shadow">
+		<!-- bulb shadow -->
+		<ellipse cx="15.5" cy="13" rx="7" ry="9" fill="#cccccc"/>
+		<!-- tube shadow -->
+		<rect x="13" y="22" width="7" height="97" rx="0.5" fill="#cccccc"/>
+	</g>
+
+	<!-- BODY: main aspirating pipette shape -->
+	<g id="body">
+		<!-- rubber bulb (gray plastic/silicone) -->
+		<ellipse cx="12.5" cy="12" rx="6" ry="9"
+			fill="#b0b0b0" stroke="#333333" stroke-width="1.5"/>
+		<!-- bulb highlight -->
+		<ellipse cx="10.5" cy="8" rx="2.5" ry="3.5"
+			fill="#cccccc" opacity="0.4"/>
+		<!-- tubing connection collar -->
+		<rect x="10" y="18" width="5" height="5" rx="1"
+			fill="#888888" stroke="#333333" stroke-width="1"/>
+		<!-- glass tube body -->
+		<rect x="10" y="22" width="5" height="96" rx="0.5"
+			fill="#f0f0f0" stroke="#999999" stroke-width="0.8"/>
+		<!-- inner tube glass tint -->
+		<rect x="11" y="24" width="3" height="92" rx="0.5"
+			fill="#f8f8f8" stroke="none"/>
+		<!-- glass shine -->
+		<line x1="11.5" y1="27" x2="11.5" y2="112"
+			stroke="#ffffff" stroke-width="0.4" opacity="0.6"/>
+		<!-- narrow tapered tip -->
+		<path d="M 10 118 L 12.5 138 L 15 118 Z"
+			fill="#cccccc" stroke="#999999" stroke-width="0.4"/>
+	</g>
+
+	<!-- OVERLAY_ROOT: engine injects dynamic overlays here -->
+	<g id="overlay_root"/>
+
+	<!-- ANCHORS: invisible positioning elements -->
+	<rect id="anchor_highlight"
+		x="4" y="1" width="18" height="140"
+		fill="none" stroke="none" display="none"/>
+	<rect id="anchor_error"
+		x="15" y="1" width="12" height="12"
+		fill="none" stroke="none" display="none"/>
+</svg>

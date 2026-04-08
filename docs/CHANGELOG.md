@@ -3,6 +3,48 @@
 ## 2026-04-08
 
 ### Additions and New Features
+- Added `getHealthBandMessage()` helper to `parts/microscope_scene.ts` and `ui/overlays.ts`: translates numeric viability and confluency into descriptive health bands (thriving/stable/stressed and dense/moderate/light) with contextual feedback messages shown alongside the viability percentage during the microscope viability check phase
+- Added `renderMeters()` function to `parts/ui_rendering.ts` and `ui/sidebar.ts`: renders 3 real-time gauge meters (Cell Health, Confluency, Contamination Risk) in the protocol panel sidebar with color-coded bars (green/yellow/red thresholds) and percentage readouts, called every render cycle from `parts/init.ts`
+- Added meters CSS to `parts/style.css`: `.meters-panel`, `.meter-item`, `.meter-bar`, `.meter-fill`, `.meter-label`, `.meter-value` classes styled to match the existing volume-indicator pattern with smooth transitions
+- Added `<div id="meters-panel">` to `parts/body.html` between score-display and protocol-content in the protocol panel sidebar
+- Created `ui/overlays.ts` with 5 overlay modals ported to new typed architecture: `renderMicroscopeOverlay()` (two-phase viability check + hemocytometer counting), `renderDilutionCalculatorOverlay()` (new 3-choice volume quiz), `renderIncubatorOverlay()` (4-second progress bar simulating 24h), `renderDrugSelectionOverlay()` (3 dilution series choices), `renderPlateReaderOverlay()` (absorbance table with column averages). All overlays receive `GameState`, dispatch semantic `Action`s, and report scene changes via callbacks. Full keyboard accessibility with `tabindex="0"`, `role="button"`, Enter/Space activation on all interactive elements.
+- Created `ui/hood_scene.ts` with typed hood scene rendering: `renderHoodScene()` ported from `parts/hood_scene.ts` to use the new `GameState`/`Action`/`Step`/`SceneId` types. UI reads state and dispatches semantic actions (sterilize, aspirate, dispense, transfer, add_drug) through a callback instead of mutating global `gameState`. Multi-click pipette loading tracked as local intermediate state (`PipetteLoad`). Adds `tabindex="0"`, `role="button"`, keyboard activation (Enter/Space), drag-and-drop, right-click/Escape deselect, and hover effects. Scene placements read from `content/tc_scenes.ts` instead of legacy `HOOD_ITEMS` constant.
+- Created `ui/sidebar.ts` with typed sidebar rendering functions: `renderProtocolPanel()`, `renderScoreDisplay()`, `renderResultsScreen()`, `renderWarningBanner()`, `showVolumeIndicator()`, `hideVolumeIndicator()` -- ported from `parts/ui_rendering.ts` to use the new `GameState`/`Step`/`ScoreResult`/`WarningEntry` types from `core/types.ts`
+- Created `ui/notifications.ts` with typed `showNotification()` toast system -- ported from `parts/ui_rendering.ts` with extracted constants for fade timing and max-visible limit
+- Created `content/tc_protocol.ts` with typed 10-step `TC_PROTOCOL` using discriminated union steps (instruction/checkpoint), including new `calculate_dilution` checkpoint between `count_cells` and `transfer_to_plate`
+- Created `content/tc_tools.ts` with `TC_TOOLS` registry defining aspirating, serological, and multichannel pipettes with typed valid targets
+- Created `content/tc_scenes.ts` with `TC_SCENES` scene layout definitions (hood 800x600 with 10 placements, microscope/incubator/plate_reader 400x300)
+- Created `content/validate.ts` with `validateProtocol()` and `validateTools()` manual runtime validation (no Zod dependency)
+- Created `core/types.ts` with full typed domain model: category-split IDs (VesselId, ToolId, ReagentId), TargetRef discriminated union, semantic Action union (9 lab operations), Step discriminated union (instruction/checkpoint), three-way state split (ProtocolState, LabState with vessel registry, UIState), typed WarningEntry, scene layout types (AssetSpec, ScenePlacement, SceneDefinition)
+- Created `core/engine.ts` with pure game engine: `createInitialGameState()`, `dispatchAction()` (exhaustive switch on 9 action types), `validateAction()`, `advanceStep()`, `GAME_CONFIG` constant. Zero DOM references.
+- Created `core/scoring.ts` with `computeScore()` (4-category weighted, backward compatible) and `computeStars()` (5-star negative system for M6)
+- Created `core/cell_model.ts` with per-well drug viability model: `getCellState()`, `applyDrugEffect()` (IC50=2), `applyIncubation()` (per-well independent), `generatePlateReaderResults()` (Hill equation dose-response)
+- Created `core/util.ts` with `clampValue()` utility used across all bounded numeric mutations
+- Created `main.ts` as composition root: re-exports engine, scoring, and cell model for transition period
+- Created `tsconfig.json` (unified strict) and `tsconfig.core.json` (scoped to core/content) with strict, noUncheckedIndexedAccess, exactOptionalPropertyTypes, noImplicitOverride
+
+### Fixes and Maintenance
+- Removed dead `getExpectedCellCount()` function and undefined `CELLS_PER_SQUARE_FACTOR` reference from `parts/cell_model.ts`
+- Replaced stale 6-item hardcoded checklist in `parts/body.html` with empty container populated by JS from `PROTOCOL_STEPS`
+- Fixed `TypeError` in `tests/test_cell_culture_walkthrough.py`: wrapped `git_file_utils.get_repo_root()` string return in `pathlib.Path()`
+
+### Decisions and Failures
+- Architecture overhaul plan approved: 6 milestones (stabilization, types, engine, content, UI, gameplay features) with discriminated unions, semantic lab actions, three-way state split, pure engine. Full plan at `.claude/plans/starry-soaring-starlight.md`
+
+### Additions and New Features
+- Phase 3 Hybrid C SVG migration complete: authored 9 remaining equipment base SVGs (`media_bottle`, `sero_pipette`, `aspirating_pipette`, `microscope`, `well_plate_24`, `waste_container`, `ethanol_spray`, `drug_vial_rack`, `multichannel_pipette`) and migrated all corresponding `get*Svg()` functions in `parts/svg_assets.ts` to load base SVG constants with engine-generated overlays via `composeSvg()`
+- Removed dead code from `parts/svg_assets.ts`: `getPipetteAidSvg()`, `getDrugVialSvg()`, `getMicropipetteSvg()`, `getHandSvg()`, `getHemocytometerGridSvg()` (none were called; microscope scene uses DOM-based `drawHemocytometerGrid()`)
+- Hybrid C artwork system: Inkscape-authored base SVGs with TypeScript dynamic overlays
+- Created `assets/equipment/` directory for curator-owned base SVG files
+- Created `assets/components/` directory for reusable SVG sub-parts
+- Created `parts/style_constants.ts` with typed `ColorRole` union, `COLOR_MAP`, stroke/radius/depth constants
+- Created `parts/svg_overlays.ts` with anchor-based overlay API: `createLiquidOverlay()`, `createHighlightOverlay()`, `createErrorOverlay()`, `createDynamicLabel()`, `createArrowOverlay()`, `composeSvg()`
+- Extended `build_game.sh` with SVG asset pipeline: strips Inkscape metadata, rewrites IDs with equipment prefix (e.g., `body` -> `t75_flask__body`), rewrites internal references, injects as TypeScript constants
+- Created `tests/test_svg_assets.py` SVG contract lint: validates viewBox, required groups, no raster images, no duplicate IDs, size/node budgets
+- Authored `assets/equipment/t75_flask.svg` as first Hybrid C asset with full layer contract: `body`, `body_shadow`, `neck`, `cap`, `graduation`, `label_frame`, `overlay_root`, liquid clip path, anchor elements
+- Migrated `getFlaskSvg()` to Hybrid C: loads base SVG constant, composes with liquid overlay and dynamic label via `composeSvg()`
+- Created `docs/superpowers/specs/2026-04-08-artwork-system-design.md` with full visual language specification
+- Added `cell-culture2-clean.svg` stripped of Inkscape/Sodipodi metadata, xmlns noise, and RDF blocks (12% smaller than source)
 - Created [run_web_server.sh](../run_web_server.sh) to build the game and serve it on the local network
 - Added `--host`, `--port`, and `--lan` flags to [cell_culture_game.py](../cell_culture_game.py) via argparse; `--lan` binds to `0.0.0.0` for intranet access
 - Created [docs/CODE_ARCHITECTURE.md](CODE_ARCHITECTURE.md) with system overview, component descriptions, data flow diagram, scoring breakdown, and extension points

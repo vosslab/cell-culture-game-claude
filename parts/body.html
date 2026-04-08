@@ -9,33 +9,11 @@
 			<div class="score-label">Score</div>
 			<div class="score-value">0</div>
 		</div>
+		<div id="meters-panel"></div>
 		<div class="protocol-content">
 			<h2>Protocol</h2>
 			<ul id="protocol-checklist" class="protocol-checklist">
-				<li class="protocol-step">
-					<input type="checkbox" id="step-spray" disabled>
-					<label for="step-spray">Spray ethanol</label>
-				</li>
-				<li class="protocol-step">
-					<input type="checkbox" id="step-aspirate" disabled>
-					<label for="step-aspirate">Aspirate old media</label>
-				</li>
-				<li class="protocol-step">
-					<input type="checkbox" id="step-add-media" disabled>
-					<label for="step-add-media">Add fresh media</label>
-				</li>
-				<li class="protocol-step">
-					<input type="checkbox" id="step-add-drug" disabled>
-					<label for="step-add-drug">Add drug</label>
-				</li>
-				<li class="protocol-step">
-					<input type="checkbox" id="step-incubate" disabled>
-					<label for="step-incubate">Incubate</label>
-				</li>
-				<li class="protocol-step">
-					<input type="checkbox" id="step-microscope" disabled>
-					<label for="step-microscope">Check microscope</label>
-				</li>
+				<!-- Populated dynamically by renderProtocolPanel() from PROTOCOL_STEPS -->
 			</ul>
 			<div id="warning-banner" class="warning-banner" style="display: none;"></div>
 		</div>

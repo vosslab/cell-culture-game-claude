@@ -81,12 +81,3 @@ function applyIncubation(): void {
 	}
 }
 
-// ============================================
-function getExpectedCellCount(): number {
-	// Calculate what the actual cell count should be for scoring
-	// This is the count in cells per mL that the student should report
-	const cellState = getCellState();
-	// Hemocytometer formula: cells/mL = (total counted / squares counted) * 10000
-	const cellsPerSquare = cellState.totalCells / CELLS_PER_SQUARE_FACTOR;
-	return Math.round(cellsPerSquare * CELLS_PER_SQUARE_FACTOR);
-}

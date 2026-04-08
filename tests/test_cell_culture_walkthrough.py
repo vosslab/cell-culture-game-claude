@@ -8,7 +8,7 @@ import pytest
 # local repo modules
 import git_file_utils
 
-REPO_ROOT = git_file_utils.get_repo_root()
+REPO_ROOT = pathlib.Path(git_file_utils.get_repo_root())
 # Playwright may install browsers in node_modules or the system cache
 LOCAL_BROWSER_DIR = REPO_ROOT / "node_modules" / "playwright-core" / ".local-browsers"
 SYSTEM_CACHE_DIR = pathlib.Path.home() / "Library" / "Caches" / "ms-playwright"

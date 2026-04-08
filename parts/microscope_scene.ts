@@ -3,6 +3,31 @@
 // ============================================
 
 // ============================================
+// Helper: descriptive health band message based on viability and confluency
+// ============================================
+function getHealthBandMessage(viability: number, confluency: number): string {
+	// Health bands
+	let healthDesc = "stable";
+	if (viability >= 0.88) healthDesc = "thriving";
+	else if (viability < 0.70) healthDesc = "stressed";
+
+	// Confluency bands
+	let confDesc = "moderate";
+	if (confluency >= 0.75) confDesc = "dense";
+	else if (confluency <= 0.55) confDesc = "light";
+
+	// Compose message
+	if (healthDesc === "thriving") {
+		return "Cells look bright, spread well, and are ready for counting. "
+			+ "Confluency appears " + confDesc + ".";
+	} else if (healthDesc === "stressed") {
+		return "Cells look stressed -- some appear rounded or detached. "
+			+ "Review the order of operations. Confluency appears " + confDesc + ".";
+	}
+	return "Cells look calm and attached. Confluency appears " + confDesc + ".";
+}
+
+// ============================================
 // MICROSCOPE VIEW - Cell viability check and hemocytometer counting
 // ============================================
 function renderMicroscopeScene(): void {
@@ -29,7 +54,11 @@ function renderMicroscopeScene(): void {
 		html += '<div style="padding:16px;background:#f0f2f5;border-radius:8px;margin-bottom:16px;">';
 		html += '<p style="margin:0 0 8px 0;font-size:14px;color:#212121;">Observe the cells stained with trypan blue.</p>';
 		html += '<p style="margin:0 0 8px 0;font-size:13px;color:#757575;">Live cells appear clear/gray. Dead cells stain blue.</p>';
-		html += '<p style="margin:0;font-size:13px;color:#757575;">Estimated viability: <strong>' + Math.round(cellState.viability * 100) + '%</strong></p>';
+		html += '<p style="margin:0 0 8px 0;font-size:13px;color:#757575;">Estimated viability: <strong>' + Math.round(cellState.viability * 100) + '%</strong></p>';
+		// Descriptive health band feedback
+		html += '<p style="margin:0;font-size:13px;color:#555555;font-style:italic;">';
+		html += getHealthBandMessage(cellState.viability, cellState.confluency);
+		html += '</p>';
 		html += '</div>';
 		html += '<button id="confirm-viability" class="btn-primary" style="padding:10px 24px;">Confirm Viability and Proceed to Counting</button>';
 	} else {
