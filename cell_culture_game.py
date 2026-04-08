@@ -4,13 +4,14 @@
 # Standard Library
 import http
 import http.server
+import argparse
 import pathlib
 import subprocess
-import sys
 
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parent
 HTML_PATH = REPO_ROOT / "cell_culture_game.html"
+DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 5080
 
 
@@ -77,22 +78,41 @@ class GameHandler(http.server.BaseHTTPRequestHandler):
 
 
 #============================================
-def parse_port(argv: list[str]) -> int:
-	"""Parse an optional port argument from argv."""
-	if len(argv) < 2:
-		return DEFAULT_PORT
-	return int(argv[1])
+def parse_args() -> argparse.Namespace:
+	"""Parse command-line arguments."""
+	parser = argparse.ArgumentParser(description="Development server for the cell culture game")
+	parser.add_argument(
+		'-p', '--port', dest='port', type=int, default=DEFAULT_PORT,
+		help="Port to listen on (default: %(default)s)",
+	)
+	parser.add_argument(
+		'-H', '--host', dest='host', type=str, default=DEFAULT_HOST,
+		help="Host address to bind to (default: %(default)s)",
+	)
+	parser.add_argument(
+		'-l', '--lan', dest='lan', action='store_true',
+		help="Bind to 0.0.0.0 for LAN access (shortcut for --host 0.0.0.0)",
+	)
+	args = parser.parse_args()
+	# --lan overrides --host
+	if args.lan:
+		args.host = "0.0.0.0"
+	return args
 
 
 #============================================
-def main(argv: list[str] | None = None) -> None:
+def main() -> None:
 	"""Run the local development server."""
-	if argv is None:
-		argv = sys.argv
-	port = parse_port(argv)
+	args = parse_args()
 	ensure_built()
-	server = ReuseAddrHTTPServer(("127.0.0.1", port), GameHandler)
-	print(f"Serving Cell Culture Game at http://127.0.0.1:{port}")
+	server = ReuseAddrHTTPServer((args.host, args.port), GameHandler)
+	# Show the actual URL users should open
+	if args.host == "0.0.0.0":
+		print(f"Serving Cell Culture Game on all interfaces, port {args.port}")
+		print(f"  Local:   http://127.0.0.1:{args.port}")
+		print(f"  Network: http://<your-ip>:{args.port}")
+	else:
+		print(f"Serving Cell Culture Game at http://{args.host}:{args.port}")
 	# KeyboardInterrupt is the expected shutdown signal for a dev server
 	server.serve_forever()
 

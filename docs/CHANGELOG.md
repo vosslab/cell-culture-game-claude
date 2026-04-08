@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-04-08
+
+### Additions and New Features
+- Created [run_web_server.sh](../run_web_server.sh) to build the game and serve it on the local network
+- Added `--host`, `--port`, and `--lan` flags to [cell_culture_game.py](../cell_culture_game.py) via argparse; `--lan` binds to `0.0.0.0` for intranet access
+- Created [docs/CODE_ARCHITECTURE.md](CODE_ARCHITECTURE.md) with system overview, component descriptions, data flow diagram, scoring breakdown, and extension points
+- Created [docs/FILE_STRUCTURE.md](FILE_STRUCTURE.md) with top-level layout, key subtree maps, generated artifacts, and guidance for adding new work
+- Added links to both architecture docs in [README.md](../README.md)
+- Refreshed [docs/INSTALL.md](INSTALL.md) with verify-install command, Bash requirement, known gaps, and Playwright note
+- Refreshed [docs/USAGE.md](USAGE.md) with full 9-step protocol, dev server docs, scoring table, and test scope control
+
 ## 2026-04-06
 
 ### Additions and New Features

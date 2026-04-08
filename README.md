@@ -18,6 +18,8 @@ self-contained HTML file. Open it in any modern browser to play.
 
 - [docs/INSTALL.md](docs/INSTALL.md): prerequisites and setup
 - [docs/USAGE.md](docs/USAGE.md): how to build and play
+- [docs/CODE_ARCHITECTURE.md](docs/CODE_ARCHITECTURE.md): system design and data flow
+- [docs/FILE_STRUCTURE.md](docs/FILE_STRUCTURE.md): directory map and file purposes
 - [docs/CHANGELOG.md](docs/CHANGELOG.md): record of changes
 - [docs/AUTHORS.md](docs/AUTHORS.md): maintainers and contributors
 - [docs/PYTHON_STYLE.md](docs/PYTHON_STYLE.md): Python conventions for this repo
