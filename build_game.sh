@@ -11,6 +11,10 @@ TEMP_TS="_temp_all.ts"
 # Concatenate all TypeScript files in dependency order, then compile
 TS_FILES=(
 	"$PARTS_DIR/style_constants.ts"
+	"$PARTS_DIR/scene_types.ts"
+	"$PARTS_DIR/asset_specs.ts"
+	"$PARTS_DIR/hood_config.ts"
+	"$PARTS_DIR/layout_engine.ts"
 	"$PARTS_DIR/constants.ts"
 	"$PARTS_DIR/game_state.ts"
 	"$PARTS_DIR/cell_model.ts"

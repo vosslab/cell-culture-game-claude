@@ -576,18 +576,54 @@ body {
 	color: var(--color-steel-gray);
 }
 
+/* ===== Hood Scene Layers ===== */
+#hood-items-layer {
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+}
+
+#hood-labels-layer {
+	position: absolute;
+	inset: 0;
+	z-index: 2;
+	pointer-events: none;
+}
+
 /* ===== Hood Item Labels ===== */
 .hood-item-label {
 	position: absolute;
-	bottom: -16px;
-	left: 50%;
 	transform: translateX(-50%);
-	font-size: 10px;
+	font-size: 9px;
 	font-weight: 600;
 	color: var(--color-text-dark);
-	white-space: nowrap;
+	white-space: normal;
+	line-height: 1.1;
+	text-align: center;
 	pointer-events: none;
 	text-shadow: 0 0 3px var(--color-white), 0 0 3px var(--color-white);
+}
+
+/* ===== Hood Item SVG Scaling ===== */
+.hood-item svg {
+	width: 100%;
+	height: 100%;
+	display: block;
+}
+
+/* ===== Hood Item Base Styles ===== */
+.hood-item {
+	position: absolute;
+	cursor: pointer;
+	border: 2px solid transparent;
+	border-radius: 4px;
+	transition: all 0.2s ease;
+}
+
+.hood-item.is-selected {
+	border: 4px solid #2196f3 !important;
+	border-radius: 4px;
+	box-shadow: 0 0 12px rgba(33, 150, 243, 0.5);
 }
 
 /* ===== Target Highlighting ===== */
@@ -2573,6 +2609,401 @@ const RADIUS_LABELS = 1;
 const DEPTH_OFFSET_X = 0;
 const DEPTH_OFFSET_Y = 0;
 const TOP_FACE_RATIO = 0.25;
+const ASSET_SPECS = {
+  flask: { defaultWidth: 12, labelWidth: 6 },
+  well_plate: { defaultWidth: 18, labelWidth: 8 },
+  media_bottle: { defaultWidth: 8, labelWidth: 7 },
+  trypsin_bottle: { defaultWidth: 7, labelWidth: 8 },
+  ethanol_bottle: { defaultWidth: 5, labelWidth: 7 },
+  serological_pipette: { defaultWidth: 3, labelWidth: 8, anchorYOffset: 0 },
+  aspirating_pipette: { defaultWidth: 3, labelWidth: 8, anchorYOffset: 0 },
+  multichannel_pipette: { defaultWidth: 5, labelWidth: 8, anchorYOffset: 0 },
+  drug_vials: { defaultWidth: 14, labelWidth: 8 },
+  waste_container: { defaultWidth: 7, labelWidth: 5 },
+  microscope: { defaultWidth: 8, labelWidth: 7 },
+  incubator: { defaultWidth: 10, labelWidth: 6 }
+};
+const HOOD_ZONES = {
+  // Flask dominates left side
+  primary: { x0: 3, x1: 20, baseline: 50, gap: 2 },
+  // Plate, media, trypsin across the back
+  secondary: { x0: 22, x1: 46, baseline: 50, gap: 3 },
+  // Ethanol in front working area near flask
+  tools_active: { x0: 6, x1: 18, baseline: 68, gap: 2 },
+  // Drug dilutions and waste in front
+  dirty: { x0: 28, x1: 50, baseline: 68, gap: 3 },
+  // Pipettes stored together, right side back row
+  tools_storage: { x0: 50, x1: 76, baseline: 50, gap: 2 },
+  // Outside hood: microscope and incubator
+  outside: { x0: 78, x1: 96, baseline: 68, gap: 2, align: "left" }
+};
+const HOOD_SCENE_ITEMS = [
+  { id: "flask", asset: "flask", kind: "flask", zone: "primary", priority: 1, widthScale: 1.2, label: "T-75 Flask", anchorY: "bottom" },
+  { id: "well_plate", asset: "well_plate", kind: "plate", zone: "secondary", priority: 2, widthScale: 1, label: "24-Well Plate", anchorY: "bottom" },
+  { id: "media_bottle", asset: "media_bottle", kind: "bottle", zone: "secondary", priority: 3, widthScale: 1, label: "DMEM Media", anchorY: "bottom" },
+  { id: "trypsin_bottle", asset: "trypsin_bottle", kind: "bottle", zone: "secondary", priority: 4, widthScale: 1, label: "Trypsin-EDTA", anchorY: "bottom" },
+  { id: "ethanol_bottle", asset: "ethanol_bottle", kind: "bottle", zone: "tools_active", priority: 5, widthScale: 1, label: "70% Ethanol", anchorY: "bottom" },
+  { id: "serological_pipette", asset: "serological_pipette", kind: "pipette", zone: "tools_storage", priority: 6, widthScale: 1, label: "Serological Pipette", shortLabel: "Serological", anchorY: "tip" },
+  { id: "aspirating_pipette", asset: "aspirating_pipette", kind: "pipette", zone: "tools_storage", priority: 7, widthScale: 1, label: "Aspirating Pipette", shortLabel: "Aspirating", anchorY: "tip" },
+  { id: "multichannel_pipette", asset: "multichannel_pipette", kind: "pipette", zone: "tools_storage", priority: 8, widthScale: 1, label: "Multichannel Pipette", shortLabel: "Multichannel", anchorY: "tip" },
+  { id: "drug_vials", asset: "drug_vials", kind: "rack", zone: "dirty", priority: 9, widthScale: 1, label: "Drug Dilutions", anchorY: "bottom" },
+  { id: "waste_container", asset: "waste_container", kind: "waste", zone: "dirty", priority: 10, widthScale: 1, label: "Waste", anchorY: "bottom" },
+  { id: "microscope", asset: "microscope", kind: "equipment", zone: "outside", priority: 11, widthScale: 1, label: "Microscope", anchorY: "bottom" },
+  { id: "incubator", asset: "incubator", kind: "equipment", zone: "outside", priority: 12, widthScale: 1, label: "Incubator", anchorY: "bottom" }
+];
+const HOOD_LAYOUT_RULES = {
+  zones: HOOD_ZONES,
+  labelFontSize: 9,
+  labelLineHeight: 1.1,
+  labelOffsetY: 3
+};
+function getHoodItemLabel(itemId) {
+  for (let i = 0; i < HOOD_SCENE_ITEMS.length; i++) {
+    if (HOOD_SCENE_ITEMS[i].id === itemId) {
+      return HOOD_SCENE_ITEMS[i].label;
+    }
+  }
+  return itemId;
+}
+const AVG_CHAR_WIDTH_PCT = 0.55;
+var _aspectRatioCache = {};
+function parseSvgAspectRatio(svgHtml) {
+  var match = svgHtml.match(/viewBox="([^"]+)"/);
+  if (!match) return 1;
+  var parts = match[1].split(/\s+/);
+  if (parts.length < 4) return 1;
+  var vbWidth = parseFloat(parts[2]);
+  var vbHeight = parseFloat(parts[3]);
+  if (vbWidth <= 0) return 1;
+  return vbHeight / vbWidth;
+}
+function getStaticSvg(assetId) {
+  switch (assetId) {
+    case "flask":
+      return SVG_T75_FLASK;
+    case "well_plate":
+      return SVG_WELL_PLATE_24;
+    case "media_bottle":
+      return SVG_MEDIA_BOTTLE;
+    case "trypsin_bottle":
+      return SVG_MEDIA_BOTTLE;
+    case "ethanol_bottle":
+      return SVG_ETHANOL_SPRAY;
+    case "serological_pipette":
+      return SVG_SERO_PIPETTE;
+    case "aspirating_pipette":
+      return SVG_ASPIRATING_PIPETTE;
+    case "multichannel_pipette":
+      return SVG_MULTICHANNEL_PIPETTE;
+    case "drug_vials":
+      return SVG_DRUG_VIAL_RACK;
+    case "waste_container":
+      return SVG_WASTE_CONTAINER;
+    case "microscope":
+      return SVG_MICROSCOPE;
+    case "incubator":
+      return SVG_INCUBATOR;
+    default:
+      return "";
+  }
+}
+function getAssetAspectRatio(assetId) {
+  if (_aspectRatioCache[assetId] !== void 0) {
+    return _aspectRatioCache[assetId];
+  }
+  var svgHtml = getStaticSvg(assetId);
+  if (svgHtml) {
+    var ratio = parseSvgAspectRatio(svgHtml);
+    _aspectRatioCache[assetId] = ratio;
+    return ratio;
+  }
+  return 1;
+}
+const MIN_SCALE = 0.75;
+const ZONE_PADDING = 1;
+function splitLabelAtMiddle(text) {
+  var mid = Math.floor(text.length / 2);
+  var bestIdx = -1;
+  var bestDist = text.length;
+  for (var i = 0; i < text.length; i++) {
+    if (text[i] === " ") {
+      var dist = Math.abs(i - mid);
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestIdx = i;
+      }
+    }
+  }
+  if (bestIdx < 0) {
+    return [text];
+  }
+  return [text.substring(0, bestIdx), text.substring(bestIdx + 1)];
+}
+function layoutZoneItems(zoneItems, zone, specs, viewportW, viewportH) {
+  var results = [];
+  var n = zoneItems.length;
+  if (n === 0) {
+    return results;
+  }
+  var effectiveX0 = zone.x0 + ZONE_PADDING;
+  var effectiveX1 = zone.x1 - ZONE_PADDING;
+  var zoneWidth = effectiveX1 - effectiveX0;
+  var widths = [];
+  var footprints = [];
+  var totalFootprint = 0;
+  for (var i = 0; i < n; i++) {
+    var item = zoneItems[i];
+    var spec = specs[item.asset];
+    var visualW = spec.defaultWidth * item.widthScale;
+    var charW = item.label.length * AVG_CHAR_WIDTH_PCT;
+    var specLabelW = spec.labelWidth * item.widthScale;
+    var estLabelW = Math.max(charW, specLabelW);
+    if (estLabelW > visualW && item.label.indexOf(" ") >= 0) {
+      var split = splitLabelAtMiddle(item.label);
+      var maxLineW = 0;
+      for (var li = 0; li < split.length; li++) {
+        var lineW = split[li].length * AVG_CHAR_WIDTH_PCT;
+        if (lineW > maxLineW) maxLineW = lineW;
+      }
+      estLabelW = Math.max(maxLineW, specLabelW);
+    }
+    var footprint = Math.max(visualW, estLabelW);
+    widths.push(visualW);
+    footprints.push(footprint);
+    totalFootprint += footprint;
+  }
+  var scaleFactor = 1;
+  var gap = 0;
+  var startX = effectiveX0;
+  if (n === 1) {
+    var align = zone.align || "center";
+    if (align === "center") {
+      startX = effectiveX0 + (zoneWidth - footprints[0]) / 2;
+    } else if (align === "right") {
+      startX = effectiveX1 - footprints[0];
+    }
+  } else {
+    var totalGapWidth = (n - 1) * zone.gap;
+    if (totalFootprint + totalGapWidth <= zoneWidth) {
+      gap = Math.max(
+        zone.gap,
+        (zoneWidth - totalFootprint) / (n - 1)
+      );
+    } else {
+      gap = zone.gap;
+      totalGapWidth = (n - 1) * gap;
+      scaleFactor = Math.min(
+        (zoneWidth - totalGapWidth) / totalFootprint,
+        1
+      );
+      scaleFactor = Math.max(scaleFactor, MIN_SCALE);
+    }
+    var scaledFootprintTotal = 0;
+    for (var i = 0; i < n; i++) {
+      widths[i] = widths[i] * scaleFactor;
+      footprints[i] = footprints[i] * scaleFactor;
+      scaledFootprintTotal += footprints[i];
+    }
+    var totalSpan = scaledFootprintTotal + (n - 1) * gap;
+    var align = zone.align || "center";
+    if (align === "center") {
+      startX = effectiveX0 + (zoneWidth - totalSpan) / 2;
+    } else if (align === "right") {
+      startX = effectiveX1 - totalSpan;
+    }
+  }
+  var curX = startX;
+  for (var i = 0; i < n; i++) {
+    var item = zoneItems[i];
+    var spec = specs[item.asset];
+    var itemWidth = widths[i];
+    var itemFootprint = footprints[i];
+    var visualOffset = (itemFootprint - itemWidth) / 2;
+    var aspectRatio = getAssetAspectRatio(item.asset);
+    var height = itemWidth * aspectRatio * (viewportW / viewportH);
+    var baseline = item.baselineOverride ?? zone.baseline;
+    var anchorOffset = spec.anchorYOffset ?? 0;
+    var top = 0;
+    if (item.anchorY === "bottom") {
+      top = baseline - height;
+    } else if (item.anchorY === "tip") {
+      top = baseline - height + anchorOffset;
+    } else {
+      top = baseline - height / 2;
+    }
+    var visualX = curX + visualOffset;
+    if (visualX < effectiveX0) {
+      visualX = effectiveX0;
+    }
+    if (visualX + itemWidth > effectiveX1) {
+      visualX = effectiveX1 - itemWidth;
+    }
+    var layout = {
+      id: item.id,
+      x: visualX,
+      y: top,
+      width: itemWidth,
+      height,
+      tooltip: item.label,
+      labelLines: [],
+      labelX: visualX + itemWidth / 2,
+      labelY: 0,
+      labelWidth: 0,
+      labelMultiline: false
+    };
+    results.push(layout);
+    curX += itemFootprint + gap;
+  }
+  return results;
+}
+function layoutLabels(layouts, items, specs, rules) {
+  var itemMap = {};
+  for (var i = 0; i < items.length; i++) {
+    itemMap[items[i].id] = items[i];
+  }
+  for (var i = 0; i < layouts.length; i++) {
+    var lay = layouts[i];
+    var item = itemMap[lay.id];
+    var spec = specs[item.asset];
+    var zone = rules.zones[item.zone];
+    var charWidth = item.label.length * AVG_CHAR_WIDTH_PCT;
+    var specWidth = spec.labelWidth * item.widthScale;
+    var estWidth = Math.max(charWidth, specWidth);
+    var availableWidth = Math.max(
+      lay.width,
+      specWidth
+    );
+    var labelText = item.label;
+    var lines = [labelText];
+    var finalWidth = estWidth;
+    if (estWidth > availableWidth) {
+      var split = splitLabelAtMiddle(labelText);
+      if (split.length === 2) {
+        var w1 = split[0].length * AVG_CHAR_WIDTH_PCT;
+        var w2 = split[1].length * AVG_CHAR_WIDTH_PCT;
+        finalWidth = Math.max(w1, w2, specWidth);
+        lines = split;
+      }
+      if (finalWidth > availableWidth && item.shortLabel) {
+        labelText = item.shortLabel;
+        var shortCharW = labelText.length * AVG_CHAR_WIDTH_PCT;
+        finalWidth = Math.max(shortCharW, specWidth);
+        lines = [labelText];
+        if (finalWidth > availableWidth && labelText.indexOf(" ") >= 0) {
+          var sSplit = splitLabelAtMiddle(labelText);
+          if (sSplit.length === 2) {
+            var sw1 = sSplit[0].length * AVG_CHAR_WIDTH_PCT;
+            var sw2 = sSplit[1].length * AVG_CHAR_WIDTH_PCT;
+            finalWidth = Math.max(sw1, sw2, specWidth);
+            lines = sSplit;
+          }
+        }
+      }
+      if (finalWidth > availableWidth && lines.length === 1 && !item.shortLabel) {
+        var maxChars = Math.floor(
+          availableWidth / AVG_CHAR_WIDTH_PCT
+        );
+        if (maxChars > 2) {
+          lines = [labelText.substring(0, maxChars - 1) + "..."];
+          finalWidth = availableWidth;
+        }
+      }
+    }
+    lay.labelLines = lines;
+    lay.labelWidth = finalWidth;
+    lay.labelMultiline = lines.length > 1;
+    var centerX = lay.x + lay.width / 2;
+    var halfW = finalWidth / 2;
+    var paddedX0 = zone.x0 + ZONE_PADDING;
+    var paddedX1 = zone.x1 - ZONE_PADDING;
+    var minX = paddedX0 + halfW;
+    var maxX = paddedX1 - halfW;
+    lay.labelX = Math.max(minX, Math.min(maxX, centerX));
+    lay.labelY = zone.baseline + rules.labelOffsetY;
+  }
+  var zoneGroups = {};
+  for (var i = 0; i < layouts.length; i++) {
+    var zoneId = itemMap[layouts[i].id].zone;
+    if (!zoneGroups[zoneId]) {
+      zoneGroups[zoneId] = [];
+    }
+    zoneGroups[zoneId].push(layouts[i]);
+  }
+  var zoneKeys = Object.keys(zoneGroups);
+  for (var z = 0; z < zoneKeys.length; z++) {
+    var group = zoneGroups[zoneKeys[z]];
+    var zone = rules.zones[zoneKeys[z]];
+    group.sort(function(a, b) {
+      return a.labelX - b.labelX;
+    });
+    var tolerance = 0.5;
+    for (var pass = 0; pass < 3; pass++)
+      for (var i = 0; i < group.length - 1; i++) {
+        var left = group[i];
+        var right = group[i + 1];
+        var leftEdge = left.labelX + left.labelWidth / 2;
+        var rightEdge = right.labelX - right.labelWidth / 2;
+        if (leftEdge + tolerance > rightEdge) {
+          var overlap = leftEdge + tolerance - rightEdge;
+          var nudge = Math.min(overlap / 2, zone.gap * 2);
+          left.labelX -= nudge;
+          right.labelX += nudge;
+          var pX0 = zone.x0 + ZONE_PADDING;
+          var pX1 = zone.x1 - ZONE_PADDING;
+          var lHalf = left.labelWidth / 2;
+          var rHalf = right.labelWidth / 2;
+          left.labelX = Math.max(
+            pX0 + lHalf,
+            Math.min(pX1 - lHalf, left.labelX)
+          );
+          right.labelX = Math.max(
+            pX0 + rHalf,
+            Math.min(pX1 - rHalf, right.labelX)
+          );
+        }
+      }
+  }
+}
+function computeSceneLayout(items, specs, rules, viewportW, viewportH) {
+  var zoneGroups = {};
+  for (var i = 0; i < items.length; i++) {
+    var zoneId = items[i].zone;
+    if (!zoneGroups[zoneId]) {
+      zoneGroups[zoneId] = [];
+    }
+    zoneGroups[zoneId].push(items[i]);
+  }
+  var zoneKeys = Object.keys(zoneGroups);
+  for (var z = 0; z < zoneKeys.length; z++) {
+    zoneGroups[zoneKeys[z]].sort(
+      function(a, b) {
+        if (a.priority !== b.priority) {
+          return a.priority - b.priority;
+        }
+        if (a.id < b.id) return -1;
+        if (a.id > b.id) return 1;
+        return 0;
+      }
+    );
+  }
+  var allLayouts = [];
+  for (var z = 0; z < zoneKeys.length; z++) {
+    var key = zoneKeys[z];
+    var zone = rules.zones[key];
+    var zoneLayouts = layoutZoneItems(
+      zoneGroups[key],
+      zone,
+      specs,
+      viewportW,
+      viewportH
+    );
+    for (var j = 0; j < zoneLayouts.length; j++) {
+      allLayouts.push(zoneLayouts[j]);
+    }
+  }
+  layoutLabels(allLayouts, items, specs, rules);
+  return allLayouts;
+}
 const PLATE_ROWS = 4;
 const PLATE_COLS = 6;
 const DRUG_CONCENTRATIONS_UM = [0, 0.1, 0.5, 1, 5, 10];
@@ -2683,32 +3114,6 @@ const SCORE_WEIGHTS = {
 const STAR_THRESHOLDS = {
   threeStar: 80,
   twoStar: 50
-};
-const BACK_ROW = 50;
-const FRONT_ROW = 68;
-const OUTSIDE_ROW = 68;
-const HOOD_ITEMS = {
-  // Back row (left to right): clean vessels, do not block airflow
-  flask: { x: 8, groundY: BACK_ROW, width: 12, label: "T-75 Flask", alignY: "bottom" },
-  well_plate: { x: 22, groundY: BACK_ROW, width: 18, label: "24-Well Plate", alignY: "bottom" },
-  media_bottle: { x: 42, groundY: BACK_ROW, width: 8, label: "DMEM Media", alignY: "bottom" },
-  trypsin_bottle: { x: 52, groundY: BACK_ROW, width: 7, label: "Trypsin-EDTA", alignY: "bottom" },
-  // Center working area: pipettes and ethanol (left to right, clean to dirty)
-  ethanol_bottle: { x: 8, groundY: FRONT_ROW, width: 5, label: "70% Ethanol", alignY: "bottom" },
-  serological_pipette: { x: 18, groundY: FRONT_ROW, width: 3, label: "Serological Pipette", alignY: "tip" },
-  aspirating_pipette: { x: 23, groundY: FRONT_ROW, width: 3, label: "Aspirating Pipette", alignY: "tip" },
-  multichannel_pipette: { x: 28, groundY: FRONT_ROW, width: 5, label: "Multichannel Pipette", alignY: "tip" },
-  drug_vials: { x: 38, groundY: FRONT_ROW, width: 14, label: "Drug Dilutions", alignY: "bottom" },
-  // Front-right corner: waste (dirty side)
-  waste_container: { x: 56, groundY: FRONT_ROW, width: 7, label: "Waste", alignY: "bottom" },
-  // Outside hood (right side wall area, x>78%): lab equipment
-  incubator: { x: 78, groundY: OUTSIDE_ROW, width: 10, label: "Incubator", alignY: "bottom" },
-  microscope: { x: 78, groundY: 35, width: 8, label: "Microscope", alignY: "bottom" }
-};
-const TIP_OFFSET = {
-  serological_pipette: 0,
-  aspirating_pipette: 0,
-  multichannel_pipette: 0
 };
 function createWellPlate() {
   const wells = [];
@@ -3502,32 +3907,6 @@ const renderToolbar = () => {
   html += "</div>";
   return html;
 };
-function getItemTopY(itemId, config, heightPct) {
-  const align = config.alignY || "bottom";
-  switch (align) {
-    case "top":
-      return config.groundY;
-    case "center":
-      return config.groundY - heightPct / 2;
-    case "tip": {
-      const offset = TIP_OFFSET[itemId] || 0;
-      return config.groundY - heightPct + offset;
-    }
-    case "bottom":
-    default:
-      return config.groundY - heightPct;
-  }
-}
-function getSvgAspectRatio(svgHtml) {
-  const match = svgHtml.match(/viewBox="([^"]+)"/);
-  if (!match) return 1;
-  const parts = match[1].split(/\s+/);
-  if (parts.length < 4) return 1;
-  const vbWidth = parseFloat(parts[2]);
-  const vbHeight = parseFloat(parts[3]);
-  if (vbWidth <= 0) return 1;
-  return vbHeight / vbWidth;
-}
 function getItemSvgHtml(itemId) {
   switch (itemId) {
     case "flask":
@@ -3563,42 +3942,63 @@ function getItemSvgHtml(itemId) {
 function renderHoodScene() {
   const hoodScene = document.getElementById("hood-scene");
   if (!hoodScene) return;
-  let html = "";
-  html += '<div id="hood-bg" style="position:absolute;top:0;left:0;width:100%;height:100%;">';
-  html += getHoodBackgroundSvg();
-  html += "</div>";
+  const viewportW = hoodScene.clientWidth || 800;
+  const viewportH = hoodScene.clientHeight || 600;
+  const layout = computeSceneLayout(
+    HOOD_SCENE_ITEMS,
+    ASSET_SPECS,
+    HOOD_LAYOUT_RULES,
+    viewportW,
+    viewportH
+  );
   const currentStepData = getCurrentStep();
   const activeTargets = currentStepData && currentStepData.targetItems ? currentStepData.targetItems : [];
-  const sceneEl = document.getElementById("hood-scene");
-  const sceneW = sceneEl ? sceneEl.clientWidth : 800;
-  const sceneH = sceneEl ? sceneEl.clientHeight : 600;
-  const entries = Object.entries(HOOD_ITEMS);
-  for (let i = 0; i < entries.length; i++) {
-    const itemId = entries[i][0];
-    const config = entries[i][1];
-    const isSelected = gameState.selectedTool === itemId;
-    const isTarget = activeTargets.indexOf(itemId) >= 0;
-    const borderStyle = isSelected ? "4px solid #2196f3" : "2px solid transparent";
-    const boxShadow = isSelected ? "0 0 12px rgba(33, 150, 243, 0.5)" : "none";
-    const opacity = "1";
+  let itemsHtml = "";
+  let labelsHtml = "";
+  for (let i = 0; i < layout.length; i++) {
+    const item = layout[i];
+    const isSelected = gameState.selectedTool === item.id;
+    const isTarget = activeTargets.indexOf(item.id) >= 0;
     const activeClass = isTarget && !isSelected ? " is-active" : "";
-    const svgHtml = getItemSvgHtml(itemId);
-    const svgAspect = getSvgAspectRatio(svgHtml);
-    const heightPct = config.width * (sceneW / sceneH) * svgAspect;
-    const topPct = getItemTopY(itemId, config, heightPct);
-    html += '<div class="hood-item' + activeClass + '" data-item-id="' + itemId + '" ';
-    html += 'style="position:absolute;';
-    html += "left:" + config.x + "%;top:" + topPct.toFixed(1) + "%;";
-    html += "width:" + config.width + "%;height:" + heightPct.toFixed(1) + "%;";
-    html += "cursor:pointer;border:" + borderStyle + ";border-radius:4px;";
-    html += "box-shadow:" + boxShadow + ";";
-    html += "opacity:" + opacity + ';transition:all 0.2s ease;" ';
-    html += 'draggable="true" ';
-    html += 'title="' + config.label + '">';
-    html += svgHtml;
-    html += '<div class="hood-item-label">' + config.label + "</div>";
-    html += "</div>";
+    const selectedClass = isSelected ? " is-selected" : "";
+    const svgHtml = getItemSvgHtml(item.id);
+    itemsHtml += '<div class="hood-item' + activeClass + selectedClass + '"';
+    itemsHtml += ' data-item-id="' + item.id + '"';
+    itemsHtml += ' tabindex="0" role="button"';
+    itemsHtml += ' aria-label="' + item.tooltip + '"';
+    itemsHtml += ' aria-pressed="' + (isSelected ? "true" : "false") + '"';
+    itemsHtml += ' data-x="' + item.x.toFixed(1) + '"';
+    itemsHtml += ' data-y="' + item.y.toFixed(1) + '"';
+    itemsHtml += ' draggable="true"';
+    itemsHtml += ' title="' + item.tooltip + '"';
+    itemsHtml += ' style="left:' + item.x.toFixed(1) + "%;";
+    itemsHtml += "top:" + item.y.toFixed(1) + "%;";
+    itemsHtml += "width:" + item.width.toFixed(1) + "%;";
+    itemsHtml += "height:" + item.height.toFixed(1) + '%;">';
+    itemsHtml += svgHtml;
+    itemsHtml += "</div>";
+    const multiClass = item.labelMultiline ? " multiline" : "";
+    labelsHtml += '<div class="hood-item-label' + multiClass + '"';
+    labelsHtml += ' style="left:' + item.labelX.toFixed(1) + "%;";
+    labelsHtml += "top:" + item.labelY.toFixed(1) + "%;";
+    labelsHtml += "width:" + item.labelWidth.toFixed(1) + '%;">';
+    for (let li = 0; li < item.labelLines.length; li++) {
+      if (li > 0) labelsHtml += "<br>";
+      labelsHtml += item.labelLines[li];
+    }
+    labelsHtml += "</div>";
   }
+  let html = "";
+  html += '<div id="hood-bg" style="position:absolute;top:0;left:0;';
+  html += 'width:100%;height:100%;">';
+  html += getHoodBackgroundSvg();
+  html += "</div>";
+  html += '<div id="hood-items-layer">';
+  html += itemsHtml;
+  html += "</div>";
+  html += '<div id="hood-labels-layer">';
+  html += labelsHtml;
+  html += "</div>";
   const currentStep = getCurrentStep();
   let hintText = "Protocol complete!";
   if (currentStep) {
@@ -3610,8 +4010,7 @@ function renderHoodScene() {
     }
   }
   if (gameState.selectedTool) {
-    const toolConfig = HOOD_ITEMS[gameState.selectedTool];
-    const toolLabel = toolConfig ? toolConfig.label : gameState.selectedTool;
+    const toolLabel = getHoodItemLabel(gameState.selectedTool);
     if (gameState.selectedTool === "serological_pipette") {
       if (gameState.trypsinAdded && !gameState.trypsinNeutralized) {
         hintText = "Holding: " + toolLabel + " -- Click the media bottle to neutralize trypsin";
@@ -3695,7 +4094,7 @@ function onItemClick(itemId) {
       return;
     }
     gameState.selectedTool = itemId;
-    showNotification("Picked up " + HOOD_ITEMS[itemId].label);
+    showNotification("Picked up " + getHoodItemLabel(itemId));
     renderHoodScene();
     return;
   }

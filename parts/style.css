@@ -569,18 +569,54 @@ body {
 	color: var(--color-steel-gray);
 }
 
+/* ===== Hood Scene Layers ===== */
+#hood-items-layer {
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+}
+
+#hood-labels-layer {
+	position: absolute;
+	inset: 0;
+	z-index: 2;
+	pointer-events: none;
+}
+
 /* ===== Hood Item Labels ===== */
 .hood-item-label {
 	position: absolute;
-	bottom: -16px;
-	left: 50%;
 	transform: translateX(-50%);
-	font-size: 10px;
+	font-size: 9px;
 	font-weight: 600;
 	color: var(--color-text-dark);
-	white-space: nowrap;
+	white-space: normal;
+	line-height: 1.1;
+	text-align: center;
 	pointer-events: none;
 	text-shadow: 0 0 3px var(--color-white), 0 0 3px var(--color-white);
+}
+
+/* ===== Hood Item SVG Scaling ===== */
+.hood-item svg {
+	width: 100%;
+	height: 100%;
+	display: block;
+}
+
+/* ===== Hood Item Base Styles ===== */
+.hood-item {
+	position: absolute;
+	cursor: pointer;
+	border: 2px solid transparent;
+	border-radius: 4px;
+	transition: all 0.2s ease;
+}
+
+.hood-item.is-selected {
+	border: 4px solid #2196f3 !important;
+	border-radius: 4px;
+	box-shadow: 0 0 12px rgba(33, 150, 243, 0.5);
 }
 
 /* ===== Target Highlighting ===== */

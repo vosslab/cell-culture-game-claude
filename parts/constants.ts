@@ -127,35 +127,6 @@ const STAR_THRESHOLDS = {
 	twoStar: 50,
 };
 
-// Hood item positions (as percentage of hood scene area)
-// groundY = bottom edge percentage; items on the same surface share a groundY
-// Hood interior: x ~7-93%, y ~33-92% (walls, glass sash, work surface)
-// Layout follows sterile technique: clean-to-dirty left-to-right
-//   Back row: vessels that stay put (flask, well plate, media, trypsin)
-//   Center: pipettes and ethanol (active working zone)
-//   Front-right: waste container (dirty side)
-//   Outside hood (right of hood wall): microscope and incubator
-const BACK_ROW = 50;   // back row sitting on hood floor
-const FRONT_ROW = 68;  // front row in the working zone
-const OUTSIDE_ROW = 68; // outside hood equipment on lab bench
-const HOOD_ITEMS: Record<string, HoodItemConfig> = {
-	// Back row (left to right): clean vessels, do not block airflow
-	flask: { x: 8, groundY: BACK_ROW, width: 12, label: 'T-75 Flask', alignY: 'bottom' },
-	well_plate: { x: 22, groundY: BACK_ROW, width: 18, label: '24-Well Plate', alignY: 'bottom' },
-	media_bottle: { x: 42, groundY: BACK_ROW, width: 8, label: 'DMEM Media', alignY: 'bottom' },
-	trypsin_bottle: { x: 52, groundY: BACK_ROW, width: 7, label: 'Trypsin-EDTA', alignY: 'bottom' },
-	// Center working area: pipettes and ethanol (left to right, clean to dirty)
-	ethanol_bottle: { x: 8, groundY: FRONT_ROW, width: 5, label: '70% Ethanol', alignY: 'bottom' },
-	serological_pipette: { x: 18, groundY: FRONT_ROW, width: 3, label: 'Serological Pipette', alignY: 'tip' },
-	aspirating_pipette: { x: 23, groundY: FRONT_ROW, width: 3, label: 'Aspirating Pipette', alignY: 'tip' },
-	multichannel_pipette: { x: 28, groundY: FRONT_ROW, width: 5, label: 'Multichannel Pipette', alignY: 'tip' },
-	drug_vials: { x: 38, groundY: FRONT_ROW, width: 14, label: 'Drug Dilutions', alignY: 'bottom' },
-	// Front-right corner: waste (dirty side)
-	waste_container: { x: 56, groundY: FRONT_ROW, width: 7, label: 'Waste', alignY: 'bottom' },
-	// Outside hood (right side wall area, x>78%): lab equipment
-	incubator: { x: 78, groundY: OUTSIDE_ROW, width: 10, label: 'Incubator', alignY: 'bottom' },
-	microscope: { x: 78, groundY: 35, width: 8, label: 'Microscope', alignY: 'bottom' },
-};
 
 // Type definitions (used across all modules)
 interface ProtocolStep {
@@ -169,29 +140,7 @@ interface ProtocolStep {
 	targetItems?: string[];
 }
 
-// Anchor documents how groundY should be interpreted for layout.
-// For the current normalized assets, 'bottom' and 'tip' produce the same
-// vertical placement. They remain separate semantic anchors by design:
-// 1. Future assets may not share that geometry
-// 2. The config stays self-documenting
-// 3. Other anchors such as 'center' remain available for flat objects
-type VerticalAlign = 'bottom' | 'tip' | 'center' | 'top';
 
-interface HoodItemConfig {
-	x: number;
-	groundY: number;  // reference line (percentage); meaning depends on alignY
-	width: number;
-	label: string;
-	alignY?: VerticalAlign;  // default: 'bottom'
-}
-
-// Per-item tip offset in percentage points, for when pipette tips
-// do not exactly coincide with the SVG bottom edge
-const TIP_OFFSET: Record<string, number> = {
-	serological_pipette: 0,
-	aspirating_pipette: 0,
-	multichannel_pipette: 0,
-};
 
 interface WellData {
 	row: number;

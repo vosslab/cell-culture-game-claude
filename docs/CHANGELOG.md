@@ -3,15 +3,35 @@
 ## 2026-04-09
 
 ### Additions and New Features
+- Created `parts/scene_types.ts` with type definitions for the scene layout engine: `SceneItem`, `AssetSpec`, `ZoneDef`, `SceneLayoutRules`, `ComputedItemLayout`
+- Created `parts/asset_specs.ts` with `ASSET_SPECS` constant mapping asset names to layout metrics (defaultWidth, labelWidth, anchorYOffset); aspect ratio is derived from SVG viewBox at runtime, not hardcoded
+- Created `parts/hood_config.ts` with `HOOD_ZONES`, `HOOD_SCENE_ITEMS`, `HOOD_LAYOUT_RULES` constants and `getHoodItemLabel()` helper; semantic config only, no pixel coordinates
+- Added three new files to `build_game.sh` TS_FILES array before `constants.ts`: `scene_types.ts`, `asset_specs.ts`, `hood_config.ts`
+- Created `parts/layout_engine.ts` with zone-based scene layout engine: `computeSceneLayout()` distributes items within named zones, computes anchor-based Y positioning, wraps labels, and resolves label collisions in a single deterministic pass; engine is scene-agnostic and reusable for future lab scenes
+- Added Playwright unit tests (`devel/test_layout_engine.mjs`) for layout engine: single-item alignment, priority ordering, zone containment, overflow scaling, all anchor modes, label wrapping, label collision, and deterministic sort
+- Added Playwright visual verification (`devel/test_hood_layout.mjs`) for hood scene: label overlap detection, flask prominence, item count, label count, and layer structure checks
 - Created [docs/ROADMAP.md](docs/ROADMAP.md) with planned hood setup phase where students arrange equipment themselves
 - Created `normalize_svg.py` script to normalize SVG viewBoxes to 0,0 origin by computing content bounding box, shifting all coordinates, and cropping whitespace; supports rect, circle, ellipse, line, path (absolute commands), text; exits on unsupported features (transforms, relative paths, gradients, use/symbol)
 
 ### Behavior or Interface Changes
+- Hood scene renderer now consumes `ComputedItemLayout[]` from the layout engine instead of doing inline layout math; items and labels render in separate z-indexed DOM layers (`#hood-items-layer`, `#hood-labels-layer`)
+- Hood item labels now wrap to two lines when too wide, with collision resolution to prevent overlap; labels use shortLabel fallback for tight zones; full educational labels preserved (e.g., "Serological Pipette" not "Sero")
+- Layout engine uses separate visual width and layout footprint: narrow items like pipettes get spacing based on label width, not visual width, preventing label collisions without shrinking objects
+- Pipettes moved from front `tools` zone to back-right `tools_storage` zone, freeing front working area and reducing label density
+- Layout engine derives aspect ratios from SVG viewBox at runtime instead of hardcoded values, making layout robust to SVG asset changes
+- Zone padding (1%) and minimum scale (0.6) prevent items from touching zone edges or shrinking excessively
+- T-75 Flask is now visually larger (widthScale 1.2) and positioned as the primary focal object in the `primary` zone
+- Label font size reduced from 10px to 9px with `white-space: normal` and `text-align: center` for multi-line support
+- Added accessibility attributes on hood items: `role="button"`, `tabindex="0"`, `aria-label`, `aria-pressed`
 - Changed held item highlight from 3px solid green to 4px solid blue border with blue box-shadow; target items now use 4px dashed green border instead of 2px solid green, making holding vs clickable states visually distinct (`parts/hood_scene.ts`, `parts/style.css`)
 - Normalized all 11 SVG assets to tight viewBoxes with 2px padding, eliminating excess whitespace so selection borders hug artwork closely (`assets/equipment/*.svg`)
 - Updated `run_web_server.sh` to clean previous build artifacts before rebuilding
 - Removed `height` from `HoodItemConfig`; hood-item div height is now computed automatically from SVG viewBox aspect ratio at render time, so swapping SVG assets auto-sizes correctly (`parts/hood_scene.ts`, `parts/constants.ts`)
 - Reorganized hood item layout to mimic a real biosafety hood: reagent bottles at back, flask and drug vials in middle working area, pipettes standing on right side, well plate and waste in front, incubator and microscope outside hood (`parts/constants.ts`)
+
+### Removals and Deprecations
+- Removed `HOOD_ITEMS`, `HoodItemConfig`, `TIP_OFFSET`, `BACK_ROW`, `FRONT_ROW`, `OUTSIDE_ROW` from `parts/constants.ts` (replaced by layout engine)
+- Deleted dead code: `content/tc_scenes.ts` and `ui/hood_scene.ts` (prior refactoring attempt, never integrated)
 
 ## 2026-04-08
 
