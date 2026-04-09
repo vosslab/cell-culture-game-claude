@@ -96,7 +96,7 @@ def parse_args() -> argparse.Namespace:
 	args = parser.parse_args()
 	# --lan overrides --host
 	if args.lan:
-		args.host = "0.0.0.0"
+		args.host = "0.0.0.0"  # nosec B104 - intentional LAN binding via --lan flag
 	return args
 
 
@@ -107,7 +107,7 @@ def main() -> None:
 	ensure_built()
 	server = ReuseAddrHTTPServer((args.host, args.port), GameHandler)
 	# Show the actual URL users should open
-	if args.host == "0.0.0.0":
+	if args.host == "0.0.0.0":  # nosec B104 - comparison, not binding
 		print(f"Serving Cell Culture Game on all interfaces, port {args.port}")
 		print(f"  Local:   http://127.0.0.1:{args.port}")
 		print(f"  Network: http://<your-ip>:{args.port}")

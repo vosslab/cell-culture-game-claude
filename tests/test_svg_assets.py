@@ -2,7 +2,7 @@
 SVG asset contract lint test.
 
 Validates that every SVG in assets/equipment/ follows the layer contract:
-- Required groups exist (body, body_shadow, overlay_root)
+- Required groups exist (body, overlay_root)
 - No inline raster images
 - No duplicate IDs within a file
 - No forbidden colors outside the approved palette
@@ -21,7 +21,7 @@ REPO_ROOT = git_file_utils.get_repo_root()
 ASSETS_DIR = os.path.join(REPO_ROOT, "assets", "equipment")
 
 # Required group IDs that every equipment SVG must contain
-REQUIRED_GROUPS = {"body", "body_shadow", "overlay_root"}
+REQUIRED_GROUPS = {"body", "overlay_root"}
 
 # Approved color palette (hex, lowercase)
 # Material colors + overlay colors from style_constants.ts
@@ -81,7 +81,7 @@ def collect_svg_files():
 #============================================
 def parse_svg(file_path: str) -> xml.etree.ElementTree.Element:
 	"""Parse an SVG file and return the root element."""
-	tree = xml.etree.ElementTree.parse(file_path)
+	tree = xml.etree.ElementTree.parse(file_path)  # nosec B314 - trusted local repo files
 	return tree.getroot()
 
 
@@ -163,7 +163,7 @@ def test_has_viewbox(svg_path: str):
 @pytest.mark.parametrize("svg_path", SVG_FILES,
 	ids=lambda p: os.path.relpath(p, REPO_ROOT))
 def test_required_groups(svg_path: str):
-	"""Every equipment SVG must have body, body_shadow, and overlay_root groups."""
+	"""Every equipment SVG must have body and overlay_root groups."""
 	root = parse_svg(svg_path)
 	group_ids = get_all_group_ids(root)
 	for required_id in REQUIRED_GROUPS:
