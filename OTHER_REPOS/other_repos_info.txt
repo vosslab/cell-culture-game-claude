@@ -1,20 +1,20 @@
 # Artwork / SVG assets
-git clone https://github.com/duerrsimon/bioicons.git
-git clone https://github.com/continuous-foundation/scienceicons.git
+git clone --depth 1 https://github.com/duerrsimon/bioicons.git
+git clone --depth 1 https://github.com/continuous-foundation/scienceicons.git
 
 # Virtual lab simulations (pedagogy + structure)
-git clone https://github.com/virtual-labs/exp-western-blot-cell-lysate-antibody-iitg.git
-git clone https://github.com/virtual-labs/ph3-lab-mgmt.git
+git clone --depth 1 https://github.com/virtual-labs/exp-western-blot-cell-lysate-antibody-iitg.git
+git clone --depth 1 https://github.com/virtual-labs/ph3-lab-mgmt.git
 
 # Protocol schema (Autoprotocol)
-git clone https://github.com/autoprotocol/autoprotocol-python.git
-git clone https://github.com/autoprotocol/autoprotocol-js.git
+git clone --depth 1 https://github.com/autoprotocol/autoprotocol-python.git
+git clone --depth 1 https://github.com/autoprotocol/autoprotocol-js.git
 
 # Domain-specific (western blot logic / analysis)
-git clone https://github.com/ucsf-ferguson-lab/blotRig.git
+git clone --depth 1 https://github.com/ucsf-ferguson-lab/blotRig.git
 
 # Niche / exploratory
-git clone https://github.com/AbramGiller/western_blot_simulator.git
+git clone --depth 1 https://github.com/AbramGiller/western_blot_simulator.git
 
 Yes. I would clone these first, in this order.
 

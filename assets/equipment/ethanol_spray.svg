@@ -6,17 +6,6 @@
 		</clipPath>
 	</defs>
 
-	<!-- BODY SHADOW: depth offset (3px right, 3px down) -->
-	<g id="body_shadow">
-		<!-- bottle body shadow -->
-		<path d="M 15 18 L 15 62 Q 15 70 19 73 L 25 73 Q 31 70 31 62 L 31 18 Z"
-			fill="#cccccc"/>
-		<!-- trigger shadow -->
-		<path d="M 17 23 L 11 37 Q 10 43 14 45 L 17 38 Z"
-			fill="#cccccc"/>
-		<!-- nozzle shadow -->
-		<rect x="18" y="7" width="9" height="5" rx="0.5" fill="#777777"/>
-	</g>
 
 	<!-- BODY: spray bottle with trigger -->
 	<g id="body">

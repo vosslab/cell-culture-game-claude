@@ -6,15 +6,6 @@
 		</clipPath>
 	</defs>
 
-	<!-- BODY SHADOW: depth offset (3px right, 3px down) -->
-	<g id="body_shadow">
-		<!-- Flask body shadow -->
-		<rect x="18" y="53" width="88" height="112" rx="4" fill="#cccccc"/>
-		<!-- Neck shadow -->
-		<path d="M 43 18 L 38 50 L 82 50 L 77 18 Z" fill="#cccccc"/>
-		<!-- Cap shadow -->
-		<rect x="43" y="6" width="34" height="14" rx="2" fill="#777777"/>
-	</g>
 
 	<!-- BODY: main flask shape (flat rectangular T-75) -->
 	<g id="body">

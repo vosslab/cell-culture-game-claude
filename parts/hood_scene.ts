@@ -11,6 +11,7 @@ function getItemSvgHtml(itemId: string): string {
 			return getFlaskSvg(mediaLevel, mediaColor);
 		case 'well_plate': return getWellPlateSvg(gameState.wellPlate);
 		case 'media_bottle': return getMediaBottleSvg();
+		case 'trypsin_bottle': return getTrypsinBottleSvg();
 		case 'aspirating_pipette': return getAspiratingPipetteSvg();
 		case 'serological_pipette': return getSeroPipetteSvg();
 		case 'waste_container': return getWasteContainerSvg();
@@ -18,6 +19,7 @@ function getItemSvgHtml(itemId: string): string {
 		case 'multichannel_pipette': return getMultichannelPipetteSvg();
 		case 'ethanol_bottle': return getEthanolBottleSvg();
 		case 'microscope': return getMicroscopeSvg();
+		case 'incubator': return getIncubatorSvg();
 		default: return '';
 	}
 }
@@ -60,26 +62,70 @@ function renderHoodScene(): void {
 		html += 'draggable="true" ';
 		html += 'title="' + config.label + '">';
 		html += getItemSvgHtml(itemId);
+		html += '<div class="hood-item-label">' + config.label + '</div>';
 		html += '</div>';
 	}
 
-	// Toolbar at bottom
+	// Toolbar with context-sensitive next-action hint
 	const currentStep = getCurrentStep();
 	let hintText = 'Protocol complete!';
 	if (currentStep) {
-		hintText = 'Current step: ' + currentStep.label;
+		// Use getAvailableActions() for specific next-action guidance
+		const actions = getAvailableActions();
+		if (actions.length > 0) {
+			hintText = actions[0];
+		} else {
+			hintText = 'Current step: ' + currentStep.label;
+		}
 	}
 	if (gameState.selectedTool) {
 		const toolConfig = HOOD_ITEMS[gameState.selectedTool];
 		const toolLabel = toolConfig ? toolConfig.label : gameState.selectedTool;
-		hintText = 'Holding: ' + toolLabel + ' -- Click a target to use';
+		// Provide context-aware next action when holding a tool
+		if (gameState.selectedTool === 'serological_pipette') {
+			if (gameState.trypsinAdded && !gameState.trypsinNeutralized) {
+				hintText = 'Holding: ' + toolLabel + ' -- Click the media bottle to neutralize trypsin';
+			} else if (!gameState.trypsinAdded && gameState.flaskMediaMl < 1) {
+				hintText = 'Holding: ' + toolLabel + ' -- Click the trypsin bottle';
+			} else if (gameState.flaskMediaAge === 'old' || gameState.flaskMediaMl < 1) {
+				hintText = 'Holding: ' + toolLabel + ' -- Click the trypsin or media bottle';
+			} else {
+				hintText = 'Holding: ' + toolLabel + ' -- Click the flask';
+			}
+		} else if (gameState.selectedTool === 'serological_pipette_with_trypsin') {
+			hintText = 'Trypsin loaded -- Click the flask to add';
+		} else if (gameState.selectedTool === 'serological_pipette_with_sample') {
+			hintText = 'Cell sample loaded -- Click the microscope to load hemocytometer';
+		} else if (gameState.selectedTool === 'serological_pipette_with_media') {
+			hintText = 'Media loaded -- Click the flask to add';
+		} else if (gameState.selectedTool === 'serological_pipette_with_cells') {
+			hintText = 'Cells loaded -- Click the 24-well plate';
+		} else if (gameState.selectedTool === 'multichannel_pipette') {
+			hintText = 'Holding: ' + toolLabel + ' -- Click the drug vials';
+		} else if (gameState.selectedTool === 'multichannel_pipette_with_drug') {
+			hintText = 'Drugs loaded -- Click the 24-well plate';
+		} else if (gameState.selectedTool === 'aspirating_pipette') {
+			hintText = 'Holding: ' + toolLabel + ' -- Click the flask to aspirate';
+		} else if (gameState.selectedTool === 'well_plate') {
+			hintText = 'Holding plate -- Click the incubator to place it inside';
+		} else if (gameState.selectedTool === 'flask' && gameState.trypsinAdded && !gameState.trypsinIncubated) {
+			hintText = 'Holding flask -- Click the incubator for trypsin incubation';
+		} else {
+			hintText = 'Holding: ' + toolLabel + ' -- Click a target to use';
+		}
 	}
 
 	html += '<div id="hood-toolbar" style="position:absolute;top:8px;left:50%;transform:translateX(-50%);';
 	html += 'background:rgba(255,255,255,0.92);padding:10px 24px;border-radius:20px;';
-	html += 'font-size:16px;font-weight:500;color:#212121;box-shadow:0 2px 8px rgba(0,0,0,0.15);';
-	html += 'white-space:nowrap;z-index:100;">';
-	html += hintText;
+	html += 'font-size:16px;font-weight:500;color:#212121;';
+	html += 'white-space:nowrap;z-index:100;display:flex;align-items:center;gap:12px;">';
+	html += '<span>' + hintText + '</span>';
+	// Show put-down button when a tool is selected
+	if (gameState.selectedTool) {
+		html += '<button id="put-down-btn" style="padding:4px 12px;background:#ef5350;color:#fff;';
+		html += 'border:none;border-radius:12px;font-size:13px;font-weight:600;cursor:pointer;">';
+		html += 'Put down (Esc)</button>';
+	}
 	html += '</div>';
 
 	hoodScene.style.position = 'relative';
@@ -103,22 +149,37 @@ function onItemClick(itemId: string): void {
 			return;
 		}
 
-		// Microscope click: go to microscope for viability/counting
-		if (itemId === 'microscope' && gameState.flaskMediaAge === 'fresh'
+		// Microscope click: go to microscope if hemocytometer loaded
+		if (itemId === 'microscope' && gameState.hemocytometerLoaded
 			&& !gameState.completedSteps.includes('count_cells')) {
 			switchScene('microscope');
 			return;
 		}
 
-		// Microscope click but not ready yet
-		if (itemId === 'microscope' && gameState.flaskMediaAge !== 'fresh') {
-			showNotification('Add fresh media to the flask first.', 'warning');
+		// Microscope click but hemocytometer not loaded yet
+		if (itemId === 'microscope' && !gameState.hemocytometerLoaded) {
+			if (!gameState.trypsinNeutralized) {
+				showNotification('Complete trypsinization and media neutralization first.', 'warning');
+			} else {
+				showNotification('Load a cell sample onto the hemocytometer first.', 'warning');
+			}
 			return;
 		}
 
-		// Well plate click when ready for incubator
-		if (itemId === 'well_plate' && gameState.cellsTransferred && gameState.drugsAdded) {
-			switchScene('incubator');
+		// Well plate click when ready for incubator: pick it up
+		if (itemId === 'well_plate' && gameState.cellsTransferred && gameState.drugsAdded
+			&& !gameState.incubated) {
+			gameState.selectedTool = 'well_plate';
+			showNotification('Holding plate. Click the incubator to place it inside.');
+			renderHoodScene();
+			return;
+		}
+
+		// Flask click when trypsin added but not incubated: pick up for incubation
+		if (itemId === 'flask' && gameState.trypsinAdded && !gameState.trypsinIncubated) {
+			gameState.selectedTool = 'flask';
+			showNotification('Holding flask. Click the incubator to incubate with trypsin.');
+			renderHoodScene();
 			return;
 		}
 
@@ -145,18 +206,57 @@ function onItemClick(itemId: string): void {
 		return;
 	}
 
-	// Serological pipette -> media_bottle: load media (and mark as warmed)
-	if (tool === 'serological_pipette' && itemId === 'media_bottle') {
-		gameState.mediaWarmed = true;
-		gameState.selectedTool = 'serological_pipette_with_media';
-		showNotification('Media warmed to 37&deg;C and loaded into pipette. Click the flask.');
+	// Flask held -> incubator: trypsin incubation
+	if (tool === 'flask' && itemId === 'incubator'
+		&& gameState.trypsinAdded && !gameState.trypsinIncubated) {
+		gameState.selectedTool = null;
+		renderTrypsinIncubation();
+		return;
+	}
+
+	// Well plate held -> incubator: plate incubation
+	if (tool === 'well_plate' && itemId === 'incubator') {
+		gameState.selectedTool = null;
+		renderIncubatorScene();
+		return;
+	}
+
+	// Serological pipette -> trypsin_bottle: load trypsin
+	if (tool === 'serological_pipette' && itemId === 'trypsin_bottle') {
+		gameState.selectedTool = 'serological_pipette_with_trypsin';
+		showNotification('Loaded trypsin-EDTA. Click the flask to add.');
 		renderHoodScene();
 		return;
 	}
 
-	// Loaded serological pipette -> flask: add fresh media
+	// Loaded serological pipette (trypsin) -> flask: add trypsin to detach cells
+	if (tool === 'serological_pipette_with_trypsin' && itemId === 'flask') {
+		gameState.selectedTool = null;
+		gameState.trypsinAdded = true;
+		completeStep('add_trypsin');
+		showNotification('Trypsin added to flask. Incubate 3-5 min at 37C.', 'success');
+		renderHoodScene();
+		renderProtocolPanel();
+		renderScoreDisplay();
+		return;
+	}
+
+	// Serological pipette -> media_bottle: load media (and mark as warmed)
+	if (tool === 'serological_pipette' && itemId === 'media_bottle') {
+		gameState.mediaWarmed = true;
+		gameState.selectedTool = 'serological_pipette_with_media';
+		showNotification('Media warmed to 37\u00B0C and loaded into pipette. Click the flask.');
+		renderHoodScene();
+		return;
+	}
+
+	// Loaded serological pipette -> flask: add fresh media (neutralize trypsin)
 	if (tool === 'serological_pipette_with_media' && itemId === 'flask') {
 		gameState.selectedTool = null;
+		// Mark trypsin as neutralized when media is added
+		if (gameState.trypsinIncubated && !gameState.trypsinNeutralized) {
+			gameState.trypsinNeutralized = true;
+		}
 		startAddingMedia();
 		renderHoodScene();
 		renderProtocolPanel();
@@ -164,11 +264,31 @@ function onItemClick(itemId: string): void {
 		return;
 	}
 
-	// Serological pipette -> flask (with fresh media): load cells for transfer
+	// Serological pipette -> flask (with fresh media): load sample for hemocytometer or plate
 	if (tool === 'serological_pipette' && itemId === 'flask' && gameState.flaskMediaAge === 'fresh') {
+		if (!gameState.hemocytometerLoaded) {
+			// First: load sample for hemocytometer
+			gameState.selectedTool = 'serological_pipette_with_sample';
+			showNotification('Cell sample loaded. Click the microscope to load the hemocytometer.');
+			renderHoodScene();
+			return;
+		}
+		// After counting: load cells for plate transfer
 		gameState.selectedTool = 'serological_pipette_with_cells';
 		showNotification('Loaded cell suspension. Click the 24-well plate to transfer.');
 		renderHoodScene();
+		return;
+	}
+
+	// Loaded sample -> microscope: load hemocytometer with trypan blue mix
+	if (tool === 'serological_pipette_with_sample' && itemId === 'microscope') {
+		gameState.selectedTool = null;
+		gameState.hemocytometerLoaded = true;
+		completeStep('load_hemocytometer');
+		showNotification('Sample mixed with trypan blue and loaded onto hemocytometer.', 'success');
+		renderHoodScene();
+		renderProtocolPanel();
+		renderScoreDisplay();
 		return;
 	}
 
@@ -275,6 +395,16 @@ function setupHoodEventListeners(): void {
 			}
 		});
 	});
+
+	// Wire the put-down button
+	const putDownBtn = document.getElementById('put-down-btn');
+	if (putDownBtn) {
+		putDownBtn.addEventListener('click', () => {
+			gameState.selectedTool = null;
+			showNotification('Tool deselected.');
+			renderHoodScene();
+		});
+	}
 
 	const hoodScene = document.getElementById('hood-scene');
 	if (hoodScene) {

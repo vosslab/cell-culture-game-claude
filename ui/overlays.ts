@@ -24,21 +24,21 @@ const SVG_NS = "http://www.w3.org/2000/svg";
 // Shared constants
 // ============================================
 
-// SVG hemocytometer grid dimensions
+// SVG hemocytometer grid dimensions (square, like a real hemocytometer)
 const GRID_WIDTH = 400;
-const GRID_HEIGHT = 300;
+const GRID_HEIGHT = 400;
 
 // Hemocytometer corner quadrant positions (top-left x,y and labels)
 const QUADRANT_CORNERS = [
 	{ x: 0, y: 0, label: "Top-Left (A1)" },
 	{ x: 300, y: 0, label: "Top-Right (A4)" },
-	{ x: 0, y: 225, label: "Bottom-Left (D1)" },
-	{ x: 300, y: 225, label: "Bottom-Right (D4)" },
+	{ x: 0, y: 300, label: "Bottom-Left (D1)" },
+	{ x: 300, y: 300, label: "Bottom-Right (D4)" },
 ];
 
 // Quadrant square dimensions within the SVG
 const QUADRANT_WIDTH = 100;
-const QUADRANT_HEIGHT = 75;
+const QUADRANT_HEIGHT = 100;
 
 // Incubation animation duration in milliseconds (simulates 24h)
 const INCUBATION_DURATION_MS = 4000;
@@ -92,6 +92,8 @@ const DILUTION_VOLUME_CHOICES_UL = [25, 42, 75];
 // ============================================
 
 let selectedQuadrants: boolean[] = [false, false, false, false];
+// User-entered cell counts per quadrant (null means not yet counted)
+let quadrantCounts: (number | null)[] = [null, null, null, null];
 
 // ============================================
 // Helper: add keyboard accessibility to an element
@@ -169,11 +171,11 @@ function drawHemocytometerGrid(svg: SVGElement): void {
 		rect.setAttribute("y", String(c.y));
 		rect.setAttribute("width", String(QUADRANT_WIDTH));
 		rect.setAttribute("height", String(QUADRANT_HEIGHT));
-		rect.setAttribute("fill", "#fff9e6");
-		rect.setAttribute("fill-opacity", "0.5");
-		rect.setAttribute("stroke", "#e6c200");
-		rect.setAttribute("stroke-width", "1.5");
-		rect.setAttribute("stroke-dasharray", "4,2");
+		rect.setAttribute("fill", "#e8f5e9");
+		rect.setAttribute("fill-opacity", "0.4");
+		rect.setAttribute("stroke", "#4caf50");
+		rect.setAttribute("stroke-width", "2");
+		rect.setAttribute("rx", "3");
 		svg.appendChild(rect);
 	}
 
@@ -192,9 +194,9 @@ function drawHemocytometerGrid(svg: SVGElement): void {
 		// Horizontal major line
 		const hLine = document.createElementNS(SVG_NS, "line");
 		hLine.setAttribute("x1", "0");
-		hLine.setAttribute("y1", String(i * 75));
+		hLine.setAttribute("y1", String(i * 100));
 		hLine.setAttribute("x2", String(GRID_WIDTH));
-		hLine.setAttribute("y2", String(i * 75));
+		hLine.setAttribute("y2", String(i * 100));
 		hLine.setAttribute("stroke", "#999");
 		hLine.setAttribute("stroke-width", i === 0 || i === 4 ? "2" : "1");
 		svg.appendChild(hLine);
@@ -218,21 +220,21 @@ function drawHemocytometerGrid(svg: SVGElement): void {
 		if (i % 4 === 0) continue;
 		const hLine = document.createElementNS(SVG_NS, "line");
 		hLine.setAttribute("x1", "0");
-		hLine.setAttribute("y1", String(i * 18.75));
+		hLine.setAttribute("y1", String(i * 25));
 		hLine.setAttribute("x2", String(GRID_WIDTH));
-		hLine.setAttribute("y2", String(i * 18.75));
+		hLine.setAttribute("y2", String(i * 25));
 		hLine.setAttribute("stroke", "#ddd");
 		hLine.setAttribute("stroke-width", "0.5");
 		svg.appendChild(hLine);
 	}
 
-	// Instruction label at bottom center
+	// Instruction label moved below the grid (inside extended viewBox)
 	const label = document.createElementNS(SVG_NS, "text");
 	label.setAttribute("x", "200");
-	label.setAttribute("y", "295");
+	label.setAttribute("y", "418");
 	label.setAttribute("text-anchor", "middle");
-	label.setAttribute("font-size", "10");
-	label.setAttribute("fill", "#999");
+	label.setAttribute("font-size", "11");
+	label.setAttribute("fill", "#666");
 	label.textContent = "Count cells in highlighted corner squares";
 	svg.appendChild(label);
 }
@@ -252,14 +254,16 @@ function drawCellsOnGrid(svg: SVGElement, cellState: CellState): void {
 		circle.setAttribute("cy", String(pos.y * GRID_HEIGHT));
 		circle.setAttribute("r", String(pos.radius * GRID_HEIGHT));
 
-		// Live cells appear gray, dead cells stain blue (trypan blue exclusion)
+		// Live cells appear clear/light, dead cells stain dark blue (trypan blue)
 		if (pos.alive) {
-			circle.setAttribute("fill", "rgba(200,200,200,0.6)");
+			circle.setAttribute("fill", "rgba(220,220,210,0.7)");
+			circle.setAttribute("stroke", "#888");
+			circle.setAttribute("stroke-width", "0.8");
 		} else {
-			circle.setAttribute("fill", "rgba(50,100,200,0.7)");
+			circle.setAttribute("fill", "rgba(30,70,180,0.8)");
+			circle.setAttribute("stroke", "#1a3a80");
+			circle.setAttribute("stroke-width", "1.0");
 		}
-		circle.setAttribute("stroke", "#333");
-		circle.setAttribute("stroke-width", "0.5");
 		svg.appendChild(circle);
 	}
 }
@@ -269,12 +273,13 @@ function drawCellsOnGrid(svg: SVGElement, cellState: CellState): void {
 // ============================================
 
 function buildQuadrantButtonsHtml(): string {
+	// Percentages are relative to the grid-only area, not the full SVG
 	let html = "";
 	for (let i = 0; i < 4; i++) {
 		const c = QUADRANT_CORNERS[i];
 		if (!c) continue;
 
-		// Convert SVG coordinates to percentage positions within the container
+		// Convert SVG grid coordinates to percentage positions
 		const leftPct = (c.x / GRID_WIDTH) * 100;
 		const topPct = (c.y / GRID_HEIGHT) * 100;
 		const widthPct = (QUADRANT_WIDTH / GRID_WIDTH) * 100;
@@ -287,8 +292,14 @@ function buildQuadrantButtonsHtml(): string {
 		html += 'style="position:absolute;';
 		html += "left:" + leftPct + "%;top:" + topPct + "%;";
 		html += "width:" + widthPct + "%;height:" + heightPct + "%;";
-		html += 'cursor:pointer;border:2px solid transparent;border-radius:2px;';
-		html += 'transition:all 0.2s ease;z-index:10;">';
+		html += 'cursor:pointer;border:2px solid transparent;border-radius:3px;';
+		html += 'transition:all 0.2s ease;z-index:10;';
+		html += 'display:flex;align-items:center;justify-content:center;">';
+		// Count badge (shown after user enters a count)
+		html += '<span class="quadrant-count-badge" data-badge="' + i + '" ';
+		html += 'style="display:none;background:rgba(255,255,255,0.9);';
+		html += 'border-radius:4px;padding:2px 8px;font-size:14px;font-weight:600;';
+		html += 'color:#2e7d32;pointer-events:none;"></span>';
 		html += "</div>";
 	}
 	return html;
@@ -299,31 +310,49 @@ function buildQuadrantButtonsHtml(): string {
 // ============================================
 
 function setupQuadrantListeners(onStatusChange: () => void): void {
-	// Reset selection state for a fresh counting session
+	// Reset selection and count state for a fresh counting session
 	selectedQuadrants = [false, false, false, false];
+	quadrantCounts = [null, null, null, null];
 
 	const buttons = document.querySelectorAll(".quadrant-btn");
 	for (let b = 0; b < buttons.length; b++) {
 		const el = buttons[b] as HTMLElement;
 		const idx = parseInt(el.getAttribute("data-quadrant") || "0");
+		const corner = QUADRANT_CORNERS[idx];
+		if (!corner) continue;
 
-		// Click toggle handler
-		const toggleQuadrant = (): void => {
-			selectedQuadrants[idx] = !selectedQuadrants[idx];
-			if (selectedQuadrants[idx]) {
-				el.style.border = "3px solid #4caf50";
-				el.style.backgroundColor = "rgba(76, 175, 80, 0.15)";
-			} else {
-				el.style.border = "2px solid transparent";
-				el.style.backgroundColor = "transparent";
+		// Click handler: prompt user for live cell count in this quadrant
+		const promptCount = (): void => {
+			const existing = quadrantCounts[idx];
+			const defaultVal = existing !== null ? String(existing) : "";
+			const input = prompt(
+				"How many LIVE cells do you count in " + corner.label + "?",
+				defaultVal,
+			);
+			if (input === null) return;
+			const parsed = parseInt(input, 10);
+			if (isNaN(parsed) || parsed < 0) {
+				showNotification("Enter a non-negative whole number.", "warning");
+				return;
+			}
+			// Store the count and mark as selected
+			quadrantCounts[idx] = parsed;
+			selectedQuadrants[idx] = true;
+			el.style.border = "3px solid #4caf50";
+			el.style.backgroundColor = "rgba(76, 175, 80, 0.15)";
+			// Show the count badge on the quadrant
+			const badge = el.querySelector('[data-badge="' + idx + '"]') as HTMLElement;
+			if (badge) {
+				badge.style.display = "block";
+				badge.textContent = String(parsed);
 			}
 			onStatusChange();
 		};
 
-		el.addEventListener("click", toggleQuadrant);
+		el.addEventListener("click", promptCount);
 
 		// Keyboard activation for the quadrant button
-		addKeyboardActivation(el, toggleQuadrant);
+		addKeyboardActivation(el, promptCount);
 
 		// Hover feedback for unselected quadrants
 		el.addEventListener("mouseenter", () => {
@@ -340,7 +369,7 @@ function setupQuadrantListeners(onStatusChange: () => void): void {
 }
 
 // ============================================
-// Count how many quadrants are currently selected
+// Count how many quadrants have been counted by the user
 // ============================================
 
 function countSelectedQuadrants(): number {
@@ -349,6 +378,27 @@ function countSelectedQuadrants(): number {
 		if (selectedQuadrants[i]) count++;
 	}
 	return count;
+}
+
+// ============================================
+// Calculate cells/mL from user-entered quadrant counts
+// ============================================
+
+function calculateCellsPerMlFromCounts(): number {
+	let total = 0;
+	let counted = 0;
+	for (let i = 0; i < 4; i++) {
+		if (quadrantCounts[i] !== null) {
+			total += quadrantCounts[i] as number;
+			counted++;
+		}
+	}
+	if (counted === 0) return 0;
+	// Hemocytometer formula with 1:10 trypan blue dilution:
+	// cells/mL = (avg per square) x dilution_factor x 10,000
+	const avgPerSquare = total / counted;
+	const cellsPerMl = Math.round(avgPerSquare * 10 * 10000);
+	return cellsPerMl;
 }
 
 // ============================================
@@ -437,23 +487,30 @@ export function renderMicroscopeOverlay(
 	} else {
 		// Phase 2: Interactive hemocytometer cell counting
 		html += "<h2>Hemocytometer - Cell Count</h2>";
-		html += '<div class="microscope-view" style="position:relative;">';
-		html += '<svg id="microscope-svg" viewBox="0 0 ' + GRID_WIDTH + " " + GRID_HEIGHT + '" ';
-		html += 'width="' + GRID_WIDTH + '" height="' + GRID_HEIGHT + '"></svg>';
-		// Overlay clickable quadrant buttons on top of the SVG
-		html += '<div id="quadrant-buttons" style="position:absolute;top:0;left:0;width:100%;height:100%;">';
+		html += '<div class="microscope-view">';
+		// Tight wrapper around SVG + buttons so buttons align exactly with SVG
+		const svgHeight = GRID_HEIGHT + 30;
+		html += '<div id="svg-wrapper" style="position:relative;display:inline-block;';
+		html += 'width:' + GRID_WIDTH + 'px;height:' + svgHeight + 'px;">';
+		html += '<svg id="microscope-svg" viewBox="0 0 ' + GRID_WIDTH + " " + svgHeight + '" ';
+		html += 'style="display:block;width:100%;height:100%;"></svg>';
+		// Button container covers only the grid area, not the label below
+		const gridHeightPct = (GRID_HEIGHT / svgHeight) * 100;
+		html += '<div id="quadrant-buttons" style="position:absolute;top:0;left:0;';
+		html += 'width:100%;height:' + gridHeightPct.toFixed(1) + '%;">';
 		html += buildQuadrantButtonsHtml();
+		html += "</div>";
 		html += "</div>";
 		html += "</div>";
 		html += '<div style="padding:12px;background:#f0f2f5;border-radius:8px;margin-bottom:12px;">';
 		html += '<p style="margin:0 0 6px 0;font-size:14px;color:#212121;">';
-		html += "Click each corner square to count cells in that quadrant.</p>";
+		html += "Click each corner square and enter your live cell count for that quadrant.</p>";
 		html += '<p style="margin:0;font-size:12px;color:#757575;">';
-		html += "Select all 4 quadrants, then submit. The average is multiplied by 10,000 to get cells/mL.</p>";
+		html += "Count all 4 corners, then submit. Formula: (avg per square) &times; dilution (10) &times; 10,000 = cells/mL.</p>";
 		html += "</div>";
 		html += '<div style="display:flex;align-items:center;gap:12px;">';
 		html += '<span id="quadrant-status" style="font-size:13px;color:#757575;">';
-		html += "0 of 4 quadrants selected</span>";
+		html += "0 of 4 quadrants counted</span>";
 		html += '<button id="submit-cell-count" class="btn-primary" tabindex="0" ';
 		html += 'style="padding:10px 24px;" disabled>Submit Count</button>';
 		html += "</div>";
@@ -493,9 +550,9 @@ export function renderMicroscopeOverlay(
 			const count = countSelectedQuadrants();
 			const statusEl = document.getElementById("quadrant-status");
 			if (statusEl) {
-				statusEl.textContent = count + " of 4 quadrants selected";
+				statusEl.textContent = count + " of 4 quadrants counted";
 			}
-			// Enable submit only when all 4 quadrants are selected
+			// Enable submit only when all 4 quadrants have counts
 			const submitBtn = document.getElementById("submit-cell-count") as HTMLButtonElement;
 			if (submitBtn) {
 				submitBtn.disabled = count < 4;
@@ -509,22 +566,36 @@ export function renderMicroscopeOverlay(
 			const onSubmit = (): void => {
 				const selectedCount = countSelectedQuadrants();
 				if (selectedCount < 4) {
-					showNotification("Please select all 4 corner quadrants.", "warning");
+					showNotification("Please count cells in all 4 corner quadrants.", "warning");
 					return;
 				}
 
-				// Dispatch count_cells action with all 4 quadrants selected
+				// Calculate cells/mL from the user's manual counts
+				const userEstimate = calculateCellsPerMlFromCounts();
+
+				// Dispatch count_cells action
 				dispatch({ type: "count_cells", quadrantsSelected: 4 });
 
-				// Provide feedback based on count accuracy
+				// Compare against actual count for accuracy feedback
 				const flask = state.lab.vessels["tc.flask"];
-				const estimatedCount = flask && flask.cellCount !== null
+				const actual = flask && flask.cellCount !== null
 					? flask.cellCount
 					: state.lab.actualCellCount;
-				showNotification(
-					"Count: ~" + estimatedCount.toLocaleString() + " cells/mL.",
-					"success",
-				);
+				const errorPct = actual > 0
+					? Math.abs(userEstimate - actual) / actual * 100
+					: 0;
+
+				let feedback = "Your count: ~" + userEstimate.toLocaleString() + " cells/mL. ";
+				if (errorPct <= 10) {
+					feedback += "Excellent -- very close to actual!";
+					showNotification(feedback, "success");
+				} else if (errorPct <= 25) {
+					feedback += "Good count, within acceptable range.";
+					showNotification(feedback, "success");
+				} else {
+					feedback += "Actual was ~" + actual.toLocaleString() + " cells/mL.";
+					showNotification(feedback, "info");
+				}
 
 				// Close the overlay and transition to hood
 				overlay.classList.remove("active");
@@ -535,8 +606,15 @@ export function renderMicroscopeOverlay(
 		}
 	}
 
-	// Close button handler
+	// Close button handler with confirmation if counting is in progress
 	const closeOverlay = (): void => {
+		const counted = countSelectedQuadrants();
+		if (counted > 0 && counted < 4) {
+			const confirmed = confirm(
+				"You have counted " + counted + " of 4 quadrants. Close and lose progress?",
+			);
+			if (!confirmed) return;
+		}
 		overlay.classList.remove("active");
 		onSceneChange("hood");
 	};

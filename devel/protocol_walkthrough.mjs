@@ -106,6 +106,12 @@ async function capture(page, index, name) {
 async function runWalkthrough(page, port) {
 	let shot = 1;
 	await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: "networkidle" });
+	// Dismiss welcome overlay if present
+	const startBtn = page.locator("#welcome-start-btn");
+	if (await startBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+		await startBtn.click();
+		await sleep(300);
+	}
 	// Wait for game to render
 	await page.locator("#hood-scene").waitFor({ state: "visible" });
 	await sleep(500);

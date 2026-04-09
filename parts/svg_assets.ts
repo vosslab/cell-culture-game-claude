@@ -13,6 +13,7 @@ declare const SVG_ETHANOL_SPRAY: string;
 declare const SVG_DRUG_VIAL_RACK: string;
 declare const SVG_MULTICHANNEL_PIPETTE: string;
 declare const SVG_MICROSCOPE: string;
+declare const SVG_INCUBATOR: string;
 
 // Legacy: cell-culture2.svg artwork (fallback, will be removed)
 declare const CELL_CULTURE_PLATE_SVG: string;
@@ -60,15 +61,15 @@ function getHoodBackgroundSvg(): string {
 		<!-- Blue absorbent pad on work surface -->
 		<rect x="70" y="560" width="660" height="18" fill="url(#padGrad)" rx="2" />
 
-		<!-- Subtle shadow on pad for depth -->
-		<ellipse cx="400" cy="569" rx="320" ry="6" fill="#000000" opacity="0.1" />
+		<!-- pad detail line -->
+		<line x1="70" y1="578" x2="730" y2="578" stroke="#ccc" stroke-width="0.5" />
 
 		<!-- Side walls (3D effect) -->
 		<polygon points="0,100 50,50 50,550 0,550" fill="#666666" />
 		<polygon points="750,50 800,100 800,550 750,550" fill="#777777" />
 
-		<!-- Subtle shadow at bottom for depth -->
-		<rect x="40" y="545" width="720" height="8" fill="#000000" opacity="0.08" />
+		<!-- Bottom edge line -->
+		<line x1="40" y1="550" x2="760" y2="550" stroke="#ccc" stroke-width="1" />
 	</svg>`;
 }
 
@@ -134,6 +135,18 @@ function getWasteContainerSvg(): string {
 		createDynamicLabel("waste_container", "Waste", SVG_WASTE_CONTAINER),
 	];
 	return composeSvg(SVG_WASTE_CONTAINER, "waste_container", overlays);
+}
+
+// ============================================
+/**
+ * Gets the trypsin-EDTA bottle SVG (reuses media bottle base with different label/color)
+ */
+function getTrypsinBottleSvg(): string {
+	const overlays: string[] = [
+		createLiquidOverlay("media_bottle", 0.6, "buffer", SVG_MEDIA_BOTTLE),
+		createDynamicLabel("media_bottle", "Trypsin", SVG_MEDIA_BOTTLE),
+	];
+	return composeSvg(SVG_MEDIA_BOTTLE, "trypsin_bottle", overlays);
 }
 
 // ============================================
@@ -237,4 +250,12 @@ function getMultichannelPipetteSvg(): string {
  */
 function getMicroscopeSvg(): string {
 	return SVG_MICROSCOPE;
+}
+
+// ============================================
+/**
+ * Gets the incubator SVG (Hybrid C: base only, static)
+ */
+function getIncubatorSvg(): string {
+	return SVG_INCUBATOR;
 }

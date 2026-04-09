@@ -3,6 +3,9 @@ cell_culture_game.html
 cell-culture2-clean.svg
 _temp*.?*
 OTHER_REPOS/*/
+node_modules/
+package-lock.json
+test-results/
 
 # Python
 *.pyc

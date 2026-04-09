@@ -49,7 +49,7 @@ function renderMicroscopeScene(): void {
 		// Step 1: Viability check with trypan blue
 		html += '<h2>Microscope - Viability Check</h2>';
 		html += '<div class="microscope-view">';
-		html += '<svg id="microscope-svg" viewBox="0 0 400 300" width="400" height="300"></svg>';
+		html += '<svg id="microscope-svg" viewBox="0 0 400 430" width="400" height="430"></svg>';
 		html += '</div>';
 		html += '<div style="padding:16px;background:#f0f2f5;border-radius:8px;margin-bottom:16px;">';
 		html += '<p style="margin:0 0 8px 0;font-size:14px;color:#212121;">Observe the cells stained with trypan blue.</p>';
@@ -64,19 +64,23 @@ function renderMicroscopeScene(): void {
 	} else {
 		// Step 2: Cell counting via interactive quadrant selection
 		html += '<h2>Hemocytometer - Cell Count</h2>';
-		html += '<div class="microscope-view" style="position:relative;">';
-		html += '<svg id="microscope-svg" viewBox="0 0 400 300" width="400" height="300"></svg>';
-		// Overlay clickable quadrant buttons on top of the 4 corner squares
-		html += '<div id="quadrant-buttons" style="position:absolute;top:0;left:0;width:100%;height:100%;">';
+		html += '<div class="microscope-view">';
+		// Tight wrapper so buttons align exactly with SVG
+		html += '<div id="svg-wrapper" style="position:relative;display:inline-block;width:400px;height:430px;">';
+		html += '<svg id="microscope-svg" viewBox="0 0 400 430" style="display:block;width:100%;height:100%;"></svg>';
+		// Button container covers only the 400x400 grid, not the 30px label below
+		const gridPct = (400 / 430 * 100).toFixed(1);
+		html += '<div id="quadrant-buttons" style="position:absolute;top:0;left:0;width:100%;height:' + gridPct + '%;">';
 		html += renderQuadrantButtons();
 		html += '</div>';
 		html += '</div>';
+		html += '</div>';
 		html += '<div style="padding:12px;background:#f0f2f5;border-radius:8px;margin-bottom:12px;">';
-		html += '<p style="margin:0 0 6px 0;font-size:14px;color:#212121;">Click each corner square to count cells in that quadrant.</p>';
-		html += '<p style="margin:0;font-size:12px;color:#757575;">Select all 4 quadrants, then submit. The average is multiplied by 10,000 to get cells/mL.</p>';
+		html += '<p style="margin:0 0 6px 0;font-size:14px;color:#212121;">Click each corner square and enter your live cell count for that quadrant.</p>';
+		html += '<p style="margin:0;font-size:12px;color:#757575;">Count all 4 corners, then submit. Formula: (avg per square) &times; dilution (10) &times; 10,000 = cells/mL.</p>';
 		html += '</div>';
 		html += '<div style="display:flex;align-items:center;gap:12px;">';
-		html += '<span id="quadrant-status" style="font-size:13px;color:#757575;">0 of 4 quadrants selected</span>';
+		html += '<span id="quadrant-status" style="font-size:13px;color:#757575;">0 of 4 quadrants counted</span>';
 		html += '<button id="submit-cell-count" class="btn-primary" style="padding:10px 24px;" disabled>Submit Count</button>';
 		html += '</div>';
 	}
@@ -109,10 +113,17 @@ function renderMicroscopeScene(): void {
 		}
 	}
 
-	// Close button
+	// Close button with confirmation if step is incomplete
 	const closeBtn = modal.querySelector('.modal-close') as HTMLElement;
 	if (closeBtn) {
 		closeBtn.addEventListener('click', () => {
+			const viabilityDone = gameState.completedSteps.includes('microscope_check');
+			const countDone = gameState.completedSteps.includes('count_cells');
+			// Warn if closing with incomplete microscope work
+			if (!viabilityDone || !countDone) {
+				const confirmed = confirm('Cell counting is not finished. Are you sure you want to leave?');
+				if (!confirmed) return;
+			}
 			overlay.classList.remove('active');
 			switchScene('hood');
 		});
@@ -123,7 +134,7 @@ function renderMicroscopeScene(): void {
 function drawHemocytometerGrid(svg: SVGElement): void {
 	const ns = 'http://www.w3.org/2000/svg';
 	const w = 400;
-	const h = 300;
+	const h = 400;
 
 	// Background
 	const bg = document.createElementNS(ns, 'rect');
@@ -135,19 +146,19 @@ function drawHemocytometerGrid(svg: SVGElement): void {
 	// Highlight 4 corner squares
 	const corners = [
 		{ x: 0, y: 0 }, { x: 300, y: 0 },
-		{ x: 0, y: 225 }, { x: 300, y: 225 },
+		{ x: 0, y: 300 }, { x: 300, y: 300 },
 	];
 	corners.forEach((c) => {
 		const rect = document.createElementNS(ns, 'rect');
 		rect.setAttribute('x', String(c.x));
 		rect.setAttribute('y', String(c.y));
 		rect.setAttribute('width', '100');
-		rect.setAttribute('height', '75');
-		rect.setAttribute('fill', '#fff9e6');
-		rect.setAttribute('fill-opacity', '0.5');
-		rect.setAttribute('stroke', '#e6c200');
-		rect.setAttribute('stroke-width', '1.5');
-		rect.setAttribute('stroke-dasharray', '4,2');
+		rect.setAttribute('height', '100');
+		rect.setAttribute('fill', '#e8f5e9');
+		rect.setAttribute('fill-opacity', '0.4');
+		rect.setAttribute('stroke', '#4caf50');
+		rect.setAttribute('stroke-width', '2');
+		rect.setAttribute('rx', '3');
 		svg.appendChild(rect);
 	});
 
@@ -164,9 +175,9 @@ function drawHemocytometerGrid(svg: SVGElement): void {
 
 		const hLine = document.createElementNS(ns, 'line');
 		hLine.setAttribute('x1', '0');
-		hLine.setAttribute('y1', String(i * 75));
+		hLine.setAttribute('y1', String(i * 100));
 		hLine.setAttribute('x2', String(w));
-		hLine.setAttribute('y2', String(i * 75));
+		hLine.setAttribute('y2', String(i * 100));
 		hLine.setAttribute('stroke', '#999');
 		hLine.setAttribute('stroke-width', i === 0 || i === 4 ? '2' : '1');
 		svg.appendChild(hLine);
@@ -188,9 +199,9 @@ function drawHemocytometerGrid(svg: SVGElement): void {
 		if (i % 4 === 0) continue;
 		const hLine = document.createElementNS(ns, 'line');
 		hLine.setAttribute('x1', '0');
-		hLine.setAttribute('y1', String(i * 18.75));
+		hLine.setAttribute('y1', String(i * 25));
 		hLine.setAttribute('x2', String(w));
-		hLine.setAttribute('y2', String(i * 18.75));
+		hLine.setAttribute('y2', String(i * 25));
 		hLine.setAttribute('stroke', '#ddd');
 		hLine.setAttribute('stroke-width', '0.5');
 		svg.appendChild(hLine);
@@ -198,7 +209,7 @@ function drawHemocytometerGrid(svg: SVGElement): void {
 
 	const label = document.createElementNS(ns, 'text');
 	label.setAttribute('x', '200');
-	label.setAttribute('y', '295');
+	label.setAttribute('y', '418');
 	label.setAttribute('text-anchor', 'middle');
 	label.setAttribute('font-size', '10');
 	label.setAttribute('fill', '#999');
@@ -215,30 +226,35 @@ function drawCellsOnGrid(cellState: CellState): void {
 	cellState.positions.forEach((pos) => {
 		const circle = document.createElementNS(ns, 'circle');
 		circle.setAttribute('cx', String(pos.x * 400));
-		circle.setAttribute('cy', String(pos.y * 300));
-		circle.setAttribute('r', String(pos.radius * 300));
+		circle.setAttribute('cy', String(pos.y * 400));
+		circle.setAttribute('r', String(pos.radius * 400));
+		// Live cells appear clear/light, dead cells stain dark blue (trypan blue)
 		if (pos.alive) {
-			circle.setAttribute('fill', 'rgba(200,200,200,0.6)');
+			circle.setAttribute('fill', 'rgba(220,220,210,0.7)');
+			circle.setAttribute('stroke', '#888');
+			circle.setAttribute('stroke-width', '0.8');
 		} else {
-			circle.setAttribute('fill', 'rgba(50,100,200,0.7)');
+			circle.setAttribute('fill', 'rgba(30,70,180,0.8)');
+			circle.setAttribute('stroke', '#1a3a80');
+			circle.setAttribute('stroke-width', '1.0');
 		}
-		circle.setAttribute('stroke', '#333');
-		circle.setAttribute('stroke-width', '0.5');
 		svg.appendChild(circle);
 	});
 }
 
 // Track which quadrants are selected (indices 0-3 for TL, TR, BL, BR)
 let selectedQuadrants: boolean[] = [false, false, false, false];
+// User-entered cell counts per quadrant (null means not yet counted)
+let quadrantCounts: (number | null)[] = [null, null, null, null];
 
 // ============================================
 // Quadrant corner positions matching the SVG grid corners
-// Each quadrant covers a 100x75 region of the 400x300 SVG
+// Each quadrant covers a 100x100 region of the 400x400 SVG
 const QUADRANT_CORNERS = [
 	{ x: 0, y: 0, label: 'Top-Left (A1)' },
 	{ x: 300, y: 0, label: 'Top-Right (A4)' },
-	{ x: 0, y: 225, label: 'Bottom-Left (D1)' },
-	{ x: 300, y: 225, label: 'Bottom-Right (D4)' },
+	{ x: 0, y: 300, label: 'Bottom-Left (D1)' },
+	{ x: 300, y: 300, label: 'Bottom-Right (D4)' },
 ];
 
 // ============================================
@@ -250,16 +266,21 @@ function renderQuadrantButtons(): string {
 		const c = QUADRANT_CORNERS[i];
 		// Convert SVG coordinates to percentages
 		const leftPct = (c.x / 400) * 100;
-		const topPct = (c.y / 300) * 100;
+		const topPct = (c.y / 400) * 100;
 		const widthPct = (100 / 400) * 100;
-		const heightPct = (75 / 300) * 100;
+		const heightPct = (100 / 400) * 100;
 		html += '<div class="quadrant-btn" data-quadrant="' + i + '" ';
 		html += 'title="' + c.label + '" ';
 		html += 'style="position:absolute;';
 		html += 'left:' + leftPct + '%;top:' + topPct + '%;';
 		html += 'width:' + widthPct + '%;height:' + heightPct + '%;';
-		html += 'cursor:pointer;border:2px solid transparent;border-radius:2px;';
-		html += 'transition:all 0.2s ease;z-index:10;">';
+		html += 'cursor:pointer;border:2px solid transparent;border-radius:3px;';
+		html += 'transition:all 0.2s ease;z-index:10;';
+		html += 'display:flex;align-items:center;justify-content:center;">';
+		html += '<span class="quadrant-count-badge" data-badge="' + i + '" ';
+		html += "style='display:none;background:rgba(255,255,255,0.9);";
+		html += "border-radius:4px;padding:2px 8px;font-size:14px;font-weight:600;";
+		html += "color:#2e7d32;pointer-events:none;'></span>";
 		html += '</div>';
 	}
 	return html;
@@ -268,20 +289,36 @@ function renderQuadrantButtons(): string {
 // ============================================
 function setupQuadrantListeners(): void {
 	selectedQuadrants = [false, false, false, false];
+	quadrantCounts = [null, null, null, null];
 	const buttons = document.querySelectorAll('.quadrant-btn');
 	buttons.forEach((btn) => {
 		const el = btn as HTMLElement;
 		const idx = parseInt(el.getAttribute('data-quadrant') || '0');
+		const corner = QUADRANT_CORNERS[idx];
 
 		el.addEventListener('click', () => {
-			// Toggle selection
-			selectedQuadrants[idx] = !selectedQuadrants[idx];
-			if (selectedQuadrants[idx]) {
-				el.style.border = '3px solid #4caf50';
-				el.style.backgroundColor = 'rgba(76, 175, 80, 0.15)';
-			} else {
-				el.style.border = '2px solid transparent';
-				el.style.backgroundColor = 'transparent';
+			// Prompt user for their live cell count in this quadrant
+			const existing = quadrantCounts[idx];
+			const defaultVal = existing !== null ? String(existing) : '';
+			const input = prompt(
+				'How many LIVE cells do you count in ' + corner.label + '?',
+				defaultVal,
+			);
+			if (input === null) return;
+			const parsed = parseInt(input, 10);
+			if (isNaN(parsed) || parsed < 0) {
+				showNotification('Enter a non-negative whole number.', 'warning');
+				return;
+			}
+			quadrantCounts[idx] = parsed;
+			selectedQuadrants[idx] = true;
+			el.style.border = '3px solid #4caf50';
+			el.style.backgroundColor = 'rgba(76, 175, 80, 0.15)';
+			// Show count badge
+			const badge = el.querySelector('.quadrant-count-badge') as HTMLElement;
+			if (badge) {
+				badge.style.display = 'block';
+				badge.textContent = String(parsed);
 			}
 			updateQuadrantStatus();
 		});
@@ -308,7 +345,7 @@ function updateQuadrantStatus(): void {
 	}
 	const statusEl = document.getElementById('quadrant-status');
 	if (statusEl) {
-		statusEl.textContent = count + ' of 4 quadrants selected';
+		statusEl.textContent = count + ' of 4 quadrants counted';
 	}
 	// Enable submit only when all 4 are selected
 	const submitBtn = document.getElementById('submit-cell-count') as HTMLButtonElement;
@@ -319,38 +356,31 @@ function updateQuadrantStatus(): void {
 
 // ============================================
 function submitQuadrantCount(): void {
-	// Count how many are selected (should be 4)
+	// Count how many quadrants have been counted
 	let selectedCount = 0;
 	for (let i = 0; i < 4; i++) {
 		if (selectedQuadrants[i]) selectedCount++;
 	}
 	if (selectedCount < 4) {
-		showNotification('Please select all 4 corner quadrants.', 'warning');
+		showNotification('Please count cells in all 4 corner quadrants.', 'warning');
 		return;
 	}
 
-	// The cell count is derived from the cells visible on the grid
-	// Real hemocytometer: the grid has 4x4 = 16 large squares, player counts 4 corner squares
-	// Formula: cells/mL = (total in 4 squares / 4) * 10,000
-	// Since our visible cells represent a scaled sample, count ALL live cells
-	// and scale by (4 squares / 16 total squares) to simulate counting corners only
-	const cellState = getCellState();
-	let totalLiveCells = 0;
-	cellState.positions.forEach((pos) => {
-		if (pos.alive) totalLiveCells++;
-	});
-
-	// 4 corner squares out of 16 total = 25% of the grid area
-	// Average per corner square, then multiply by 10,000
-	const cellsInFourSquares = Math.round(totalLiveCells * 0.25);
-	const avgPerSquare = cellsInFourSquares / 4;
-	const estimatedCount = Math.round(avgPerSquare * 10000);
+	// Calculate cells/mL from user-entered counts
+	// Formula: (avg per square) x dilution_factor(10) x 10,000
+	let totalUserCount = 0;
+	for (let i = 0; i < 4; i++) {
+		totalUserCount += quadrantCounts[i] as number;
+	}
+	const avgPerSquare = totalUserCount / 4;
+	const estimatedCount = Math.round(avgPerSquare * 10 * 10000);
 	gameState.cellCount = estimatedCount;
 
+	// Compare against actual for feedback
 	const actual = gameState.actualCellCount;
 	const errorPercent = Math.abs(estimatedCount - actual) / actual * 100;
 
-	let feedback = 'Count: ~' + estimatedCount.toLocaleString() + ' cells/mL. ';
+	let feedback = 'Your count: ~' + estimatedCount.toLocaleString() + ' cells/mL. ';
 	if (errorPercent <= 10) {
 		feedback += 'Excellent -- very close to actual!';
 	} else if (errorPercent <= 25) {

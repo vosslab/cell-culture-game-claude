@@ -22,9 +22,17 @@ function getCellState(): CellState {
 
 // ============================================
 function generateCellPositions(totalCells: number, viability: number): CellPosition[] {
-	// Generate positions for visible cells in the hemocytometer grid
-	// We show a representative sample (not all 500k cells)
-	const visibleCellCount = 40 + Math.floor(Math.random() * 20);
+	// Simulate a 1:10 dilution with trypan blue before loading hemocytometer.
+	// Real formula: cells/mL = (avg per square) x dilution_factor x 10,000
+	// With 1:10 dilution and 500k cells/mL:
+	//   undiluted per corner = 500k / 10,000 = 50
+	//   diluted per corner = 50 / 10 = 5
+	//   total visible on grid = 5 * 16 = 80
+	// This gives a countable ~5-8 cells per corner quadrant.
+	const DILUTION_FACTOR = 10;
+	const targetVisible = Math.round(totalCells / (625 * DILUTION_FACTOR));
+	const variation = Math.floor(targetVisible * 0.15 * (Math.random() - 0.5));
+	const visibleCellCount = Math.max(20, targetVisible + variation);
 	const positions: CellPosition[] = [];
 
 	for (let i = 0; i < visibleCellCount; i++) {
@@ -34,10 +42,12 @@ function generateCellPositions(totalCells: number, viability: number): CellPosit
 		// Some cells clump together
 		const isClumped = Math.random() < 0.2;
 		const clumpOffset = isClumped ? (Math.random() - 0.5) * 0.03 : 0;
-		// Cell size varies slightly
-		const baseRadius = 0.012 + Math.random() * 0.006;
 		// Determine if alive or dead based on viability
 		const alive = Math.random() < viability;
+		// Cell radius; dead cells slightly bigger (swollen from trypan blue)
+		const baseRadius = alive
+			? 0.018 + Math.random() * 0.007
+			: 0.022 + Math.random() * 0.008;
 
 		positions.push({
 			x: Math.max(0.02, Math.min(0.98, x + clumpOffset)),

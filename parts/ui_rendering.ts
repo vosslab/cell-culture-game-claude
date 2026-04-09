@@ -17,8 +17,12 @@ const renderProtocolPanel = (): void => {
 
 		const li = document.createElement('li');
 		li.className = 'protocol-step';
-		if (isCurrent) {
+		if (isCompleted) {
+			li.classList.add('completed');
+		} else if (isCurrent) {
 			li.classList.add('current');
+		} else {
+			li.classList.add('future');
 		}
 
 		const checkbox = document.createElement('input');
@@ -101,14 +105,43 @@ renderWarningBanner = function(): void {
 		return;
 	}
 
-	// Show the latest warning with a count if multiple
-	const latestWarning = gameState.warnings[gameState.warnings.length - 1];
-	let displayText = latestWarning;
-	if (gameState.warnings.length > 1) {
-		displayText += ' (' + gameState.warnings.length + ' warnings total)';
+	// Show all warnings in a scrollable list (newest first)
+	let html = '';
+	// Show up to 5 most recent warnings, with expand option
+	const maxVisible = 5;
+	const warnings = gameState.warnings.slice().reverse();
+	const visibleWarnings = warnings.slice(0, maxVisible);
+
+	for (let i = 0; i < visibleWarnings.length; i++) {
+		html += '<div class="warning-item">' + visibleWarnings[i] + '</div>';
 	}
-	warningEl.textContent = displayText;
+	if (warnings.length > maxVisible) {
+		html += '<div class="warning-item" style="font-style:italic;opacity:0.7;">';
+		html += '...and ' + (warnings.length - maxVisible) + ' more warnings</div>';
+	}
+
+	warningEl.innerHTML = html;
 	warningEl.style.display = 'block';
+};
+
+// ============================================
+// buildWarningListHtml(): string
+// Build HTML for warning list, reusable in results screen
+// ============================================
+const buildWarningListHtml = (): string => {
+	if (gameState.warnings.length === 0) {
+		return '';
+	}
+	let html = '<div style="margin-top:16px;border-top:1px solid #eceff1;padding-top:16px;">';
+	html += '<div style="font-weight:600;color:#212121;margin-bottom:8px;">Warnings & Errors</div>';
+	html += '<div style="max-height:150px;overflow-y:auto;font-size:13px;">';
+	for (let i = 0; i < gameState.warnings.length; i++) {
+		html += '<div style="padding:6px 0;color:#e65100;border-bottom:1px solid #fff3e0;">';
+		html += (i + 1) + '. ' + gameState.warnings[i];
+		html += '</div>';
+	}
+	html += '</div></div>';
+	return html;
 };
 
 // ============================================
@@ -181,6 +214,7 @@ const renderResultsScreen = (scoreResult: ScoreResult): void => {
 			${message}
 		</div>
 		${categoryFeedback}
+		${buildWarningListHtml()}
 		<button id="play-again-btn" class="btn-primary" style="margin-top: 20px;">Play Again</button>
 	`;
 
@@ -197,48 +231,83 @@ const renderResultsScreen = (scoreResult: ScoreResult): void => {
 };
 
 // ============================================
-// showVolumeIndicator(volumeMl: number, targetMl: number): void
-// Display volume during pipetting with color-coding
+// showTransferHud(volumeMl, targetMl, operationLabel, onStop): void
+// Unified transfer HUD with progress bar, volume text, and stop button
 // ============================================
-const showVolumeIndicator = (volumeMl: number, targetMl: number): void => {
-	const volumeIndicator = document.getElementById('volume-indicator') as HTMLDivElement;
-	if (!volumeIndicator) return;
+const showTransferHud = (volumeMl: number, targetMl: number, operationLabel: string, onStop: (() => void) | null): void => {
+	let hud = document.getElementById('transfer-hud') as HTMLDivElement;
+	const hoodScene = document.getElementById('hood-scene');
+	if (!hoodScene) return;
 
-	volumeIndicator.style.display = 'block';
+	// Create HUD element if it does not exist yet
+	if (!hud) {
+		hud = document.createElement('div');
+		hud.id = 'transfer-hud';
+		hud.className = 'transfer-hud';
+		hoodScene.appendChild(hud);
+	}
 
-	const tolerance = targetMl * 0.1; // 10% tolerance
-	let fillColor = '#ef5350'; // red (far off)
+	hud.style.display = 'block';
 
+	// Determine fill color based on proximity to target
+	const tolerance = targetMl * 0.1;
+	let fillColor = '#ef5350';
 	if (Math.abs(volumeMl - targetMl) <= tolerance * 0.5) {
-		fillColor = '#4caf50'; // green (within tolerance)
+		fillColor = '#4caf50';
 	} else if (Math.abs(volumeMl - targetMl) <= tolerance) {
-		fillColor = '#ff9800'; // yellow (close)
+		fillColor = '#ff9800';
 	}
 
-	const fillPercent = targetMl > 0 ? (volumeMl / targetMl) * 100 : 0;
+	// Compute fill percentage (max at target, can exceed for overfill)
+	const maxDisplay = targetMl * 1.2;
+	const fillPercent = maxDisplay > 0 ? (volumeMl / maxDisplay) * 100 : 0;
 	const boundedPercent = Math.min(Math.max(fillPercent, 0), 100);
+	// Target marker position
+	const targetPercent = maxDisplay > 0 ? (targetMl / maxDisplay) * 100 : 0;
 
-	const volumeFill = volumeIndicator.querySelector('.volume-fill') as HTMLDivElement;
-	if (volumeFill) {
-		volumeFill.style.backgroundColor = fillColor;
-		volumeFill.style.width = `${boundedPercent}%`;
+	// Build HUD inner HTML
+	let html = '';
+	html += '<div class="transfer-hud-label">' + operationLabel + '</div>';
+	html += '<div class="transfer-hud-bar">';
+	html += '<div class="transfer-hud-fill" style="width:' + boundedPercent + '%;background-color:' + fillColor + ';"></div>';
+	html += '<div class="transfer-hud-target" style="left:' + targetPercent + '%;"></div>';
+	html += '</div>';
+	html += '<div class="transfer-hud-text">' + volumeMl.toFixed(1) + ' / ' + targetMl.toFixed(1) + ' mL</div>';
+	if (onStop) {
+		html += '<button class="transfer-hud-stop" id="transfer-hud-stop-btn">Stop</button>';
 	}
+	hud.innerHTML = html;
 
-	const volumeText = volumeIndicator.querySelector('.volume-text') as HTMLDivElement;
-	if (volumeText) {
-		volumeText.textContent = `${volumeMl.toFixed(1)} / ${targetMl.toFixed(1)} mL`;
+	// Wire stop button
+	if (onStop) {
+		const stopBtn = document.getElementById('transfer-hud-stop-btn');
+		if (stopBtn) {
+			stopBtn.addEventListener('click', onStop);
+		}
 	}
 };
 
 // ============================================
-// hideVolumeIndicator(): void
-// Hide the volume indicator
+// Backwards-compatible wrappers for showVolumeIndicator / hideVolumeIndicator
 // ============================================
-const hideVolumeIndicator = (): void => {
-	const volumeIndicator = document.getElementById('volume-indicator') as HTMLDivElement;
-	if (volumeIndicator) {
-		volumeIndicator.style.display = 'none';
+const showVolumeIndicator = (volumeMl: number, targetMl: number): void => {
+	// Delegates to showTransferHud with a generic label and no stop button
+	showTransferHud(volumeMl, targetMl, 'Volume', null);
+};
+
+// ============================================
+// hideTransferHud(): void
+// Hide the transfer HUD
+// ============================================
+const hideTransferHud = (): void => {
+	const hud = document.getElementById('transfer-hud');
+	if (hud) {
+		hud.style.display = 'none';
 	}
+};
+
+const hideVolumeIndicator = (): void => {
+	hideTransferHud();
 };
 
 // ============================================

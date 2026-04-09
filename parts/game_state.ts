@@ -28,6 +28,12 @@ interface GameState {
 	cleanlinessErrors: number;
 	// Real-time warning messages
 	warnings: string[];
+	// Trypsin digestion tracking
+	trypsinAdded: boolean;
+	trypsinIncubated: boolean;
+	trypsinNeutralized: boolean;
+	// Hemocytometer loading
+	hemocytometerLoaded: boolean;
 	// Protocol realism tracking
 	mediaWarmed: boolean;
 	startTime: number;
@@ -78,6 +84,10 @@ function createInitialGameState(): GameState {
 		mediaWastedMl: 0,
 		cleanlinessErrors: 0,
 		warnings: [],
+		trypsinAdded: false,
+		trypsinIncubated: false,
+		trypsinNeutralized: false,
+		hemocytometerLoaded: false,
 		mediaWarmed: false,
 		startTime: Date.now(),
 		endTime: null,
@@ -93,6 +103,11 @@ let gameState: GameState = createInitialGameState();
 
 // ============================================
 function resetGame(): void {
+	// Close all modal overlays before resetting
+	const overlays = document.querySelectorAll('.modal-overlay');
+	for (let i = 0; i < overlays.length; i++) {
+		overlays[i].classList.remove('active');
+	}
 	gameState = createInitialGameState();
 	renderGame();
 }

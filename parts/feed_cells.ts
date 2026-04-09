@@ -21,8 +21,14 @@ function startAspiration(): void {
 	// Show notification
 	showNotification('Aspirating old media...');
 
-	// Show volume indicator
-	showVolumeIndicator(gameState.flaskMediaMl, gameState.flaskMediaMl);
+	// Show transfer HUD with stop button for aspiration
+	showTransferHud(gameState.flaskMediaMl, gameState.flaskMediaMl, 'Aspirating...', () => {
+		if (aspirationInterval !== null) {
+			clearInterval(aspirationInterval as number);
+			aspirationInterval = null;
+			completeAspiration();
+		}
+	});
 
 	// Start aspirating animation
 	const startVolume = gameState.flaskMediaMl;
@@ -36,8 +42,14 @@ function startAspiration(): void {
 		// Gradually decrease media volume
 		gameState.flaskMediaMl = startVolume * (1 - progress);
 
-		// Update volume indicator
-		showVolumeIndicator(gameState.flaskMediaMl, startVolume);
+		// Update transfer HUD -- show remaining volume draining toward 0
+		showTransferHud(startVolume - gameState.flaskMediaMl, startVolume, 'Aspirating...', () => {
+			if (aspirationInterval !== null) {
+				clearInterval(aspirationInterval as number);
+				aspirationInterval = null;
+				completeAspiration();
+			}
+		});
 
 		// When complete, finish aspiration
 		if (progress >= 1) {
@@ -58,14 +70,23 @@ function completeAspiration(): void {
 		gameState.mediaWastedMl += gameState.flaskMediaMl;
 	}
 
+	// Track aspirated volume for feedback
+	const aspiratedMl = FLASK_STARTING_MEDIA_ML - gameState.flaskMediaMl;
+
 	// Set media to 0
 	gameState.flaskMediaMl = 0;
 
 	// Complete the step
 	completeStep('aspirate_old_media');
 
-	// Hide volume indicator
-	hideVolumeIndicator();
+	// Hide transfer HUD
+	hideTransferHud();
+
+	// Volume feedback
+	showNotification(
+		'Aspirated ' + aspiratedMl.toFixed(1) + ' mL of old media.',
+		'success',
+	);
 
 	// Trigger re-render
 	renderGame();
@@ -84,22 +105,27 @@ function startAddingMedia(): void {
 
 	// Check if media was warmed first (protocol realism)
 	if (!gameState.mediaWarmed) {
-		registerWarning('Cold media can shock cells! Warm media to 37&deg;C before adding.');
+		registerWarning('Cold media can shock cells! Warm media to 37\u00B0C before adding.');
 		// Still allow the player to continue, but record the error
-		recordCleanlinessError('Used cold media -- always warm to 37&deg;C before adding to cells.');
+		recordCleanlinessError('Used cold media -- always warm to 37\u00B0C before adding to cells.');
 	}
 
 	// Reset stop flag
 	stopMediaAddition = false;
 
 	// Show notification
-	showNotification('Adding fresh media. Click to stop when target is reached.');
+	showNotification('Adding fresh media. Click Stop when target is reached.');
 
-	// Show volume indicator with target
-	showVolumeIndicator(0, FRESH_MEDIA_TARGET_ML);
+	// Callback to stop media addition from the HUD stop button
+	const stopCallback = () => {
+		stopMediaAddition = true;
+	};
+
+	// Show transfer HUD with stop button
+	showTransferHud(0, FRESH_MEDIA_TARGET_ML, 'Adding media...', stopCallback);
 
 	// Start filling animation over 2 seconds
-	const additionDuration = 2000; // 2 seconds
+	const additionDuration = 2000;
 	const startTime = Date.now();
 	const startVolume = gameState.flaskMediaMl;
 
@@ -118,8 +144,8 @@ function startAddingMedia(): void {
 		// Gradually increase media volume to target
 		gameState.flaskMediaMl = startVolume + (FRESH_MEDIA_TARGET_ML - startVolume) * progress;
 
-		// Update volume indicator
-		showVolumeIndicator(gameState.flaskMediaMl, FRESH_MEDIA_TARGET_ML);
+		// Update transfer HUD
+		showTransferHud(gameState.flaskMediaMl, FRESH_MEDIA_TARGET_ML, 'Adding media...', stopCallback);
 
 		// When complete, finish adding media
 		if (progress >= 1) {
@@ -127,7 +153,7 @@ function startAddingMedia(): void {
 			mediaAdditionInterval = null;
 			stopAddingMedia();
 		}
-	}, 50); // Update every 50ms for smooth animation
+	}, 50);
 }
 
 // ============================================
@@ -145,11 +171,11 @@ function stopAddingMedia(): void {
 	// Set media age to fresh
 	gameState.flaskMediaAge = 'fresh';
 
-	// Complete the step
-	completeStep('add_fresh_media');
+	// Complete the neutralize_trypsin step (media addition neutralizes trypsin)
+	completeStep('neutralize_trypsin');
 
-	// Hide volume indicator
-	hideVolumeIndicator();
+	// Hide transfer HUD
+	hideTransferHud();
 
 	// Show notification about accuracy
 	const difference = (finalVolume - FRESH_MEDIA_TARGET_ML).toFixed(2);

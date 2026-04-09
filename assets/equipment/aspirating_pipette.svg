@@ -1,12 +1,5 @@
 <svg id="aspirating_pipette" viewBox="0 0 25 140" xmlns="http://www.w3.org/2000/svg">
 
-	<!-- BODY SHADOW: depth offset (3px right, 3px down) -->
-	<g id="body_shadow">
-		<!-- bulb shadow -->
-		<ellipse cx="15.5" cy="13" rx="7" ry="9" fill="#cccccc"/>
-		<!-- tube shadow -->
-		<rect x="13" y="22" width="7" height="97" rx="0.5" fill="#cccccc"/>
-	</g>
 
 	<!-- BODY: main aspirating pipette shape -->
 	<g id="body">

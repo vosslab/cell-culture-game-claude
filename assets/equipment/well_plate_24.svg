@@ -1,9 +1,5 @@
 <svg id="well_plate_24" viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
 
-	<!-- BODY SHADOW: depth offset (3px right, 3px down) -->
-	<g id="body_shadow">
-		<rect x="5" y="5" width="196" height="126" rx="6" fill="#cccccc"/>
-	</g>
 
 	<!-- BODY: 24-well plate frame and empty wells -->
 	<g id="body">

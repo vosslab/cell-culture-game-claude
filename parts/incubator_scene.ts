@@ -3,63 +3,89 @@
 // ============================================
 
 // ============================================
-function renderIncubatorScene(): void {
+// Generic incubation timer that drives the overlay progress bar
+// ============================================
+function runIncubationOverlay(
+	simulatedMinutes: number,
+	animationMs: number,
+	label: string,
+	onComplete: () => void,
+): void {
 	const overlay = document.getElementById('incubator-screen');
 	if (!overlay) return;
 
-	// Show the overlay
+	// Update the heading text
+	const heading = overlay.querySelector('h2');
+	if (heading) heading.textContent = label;
+
+	// Update the status label
+	const statusP = overlay.querySelector('.incubation-timer p');
+	if (statusP) statusP.textContent = label + '...';
+
+	// Inject incubator SVG into the view area
+	const incubatorView = overlay.querySelector('.incubator-view');
+	if (incubatorView) {
+		incubatorView.innerHTML = getIncubatorSvg();
+	}
+
 	overlay.classList.add('active');
 
-	// Start incubation timer animation
-	startIncubationTimer();
-}
-
-// ============================================
-function startIncubationTimer(): void {
 	const progressFill = document.querySelector('#incubator-screen .progress-fill') as HTMLElement;
 	const timerText = document.getElementById('timer-text');
 	if (!progressFill || !timerText) return;
 
-	// Simulate 24h incubation over 4 seconds
-	const duration = 4000;
+	// Reset progress bar
+	progressFill.style.width = '0%';
+
 	const startTime = Date.now();
+	// Format time remaining based on scale
+	const useHours = simulatedMinutes >= 60;
 
 	const interval = setInterval(() => {
 		const elapsed = Date.now() - startTime;
-		const progress = Math.min(elapsed / duration, 1);
-		const hoursRemaining = Math.round(24 * (1 - progress));
+		const progress = Math.min(elapsed / animationMs, 1);
+		const remaining = simulatedMinutes * (1 - progress);
 
 		progressFill.style.width = (progress * 100) + '%';
-		timerText.textContent = 'Time remaining: ' + hoursRemaining + 'h';
+		if (useHours) {
+			timerText.textContent = 'Time remaining: ' + Math.round(remaining / 60) + 'h';
+		} else {
+			timerText.textContent = 'Time remaining: ' + Math.ceil(remaining) + ' min';
+		}
 
 		if (progress >= 1) {
 			clearInterval(interval);
-			completeIncubation();
+			timerText.textContent = 'Complete!';
+			setTimeout(() => {
+				overlay.classList.remove('active');
+				onComplete();
+			}, 1000);
 		}
 	}, 50);
 }
 
 // ============================================
-function completeIncubation(): void {
-	// Apply cell growth and drug effects
-	applyIncubation();
-	gameState.incubated = true;
+// Trypsin incubation: 5 min simulated over 3 seconds
+// ============================================
+function renderTrypsinIncubation(): void {
+	runIncubationOverlay(5, 3000, 'Trypsin Incubation', () => {
+		gameState.trypsinIncubated = true;
+		completeStep('incubate_trypsin');
+		showNotification('Cells detached! Neutralize trypsin with fresh media.', 'success');
+		renderHoodScene();
+		renderProtocolPanel();
+		renderScoreDisplay();
+	});
+}
 
-	// Complete the step
-	completeStep('incubate');
-
-	// Brief pause then transition to microscope
-	const timerText = document.getElementById('timer-text');
-	if (timerText) {
-		timerText.textContent = 'Incubation complete! Checking cells...';
-	}
-
-	setTimeout(() => {
-		// Hide incubator overlay
-		const overlay = document.getElementById('incubator-screen');
-		if (overlay) overlay.classList.remove('active');
-
-		// Switch to plate reader
+// ============================================
+// Plate incubation: 24h simulated over 4 seconds
+// ============================================
+function renderIncubatorScene(): void {
+	runIncubationOverlay(1440, 4000, 'Incubator', () => {
+		applyIncubation();
+		gameState.incubated = true;
+		completeStep('incubate');
 		switchScene('plate_reader');
-	}, 1500);
+	});
 }

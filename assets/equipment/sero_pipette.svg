@@ -1,12 +1,5 @@
 <svg id="sero_pipette" viewBox="0 0 20 150" xmlns="http://www.w3.org/2000/svg">
 
-	<!-- BODY SHADOW: depth offset (3px right, 3px down) -->
-	<g id="body_shadow">
-		<!-- tube shadow -->
-		<rect x="9" y="18" width="9" height="105" rx="1" fill="#cccccc"/>
-		<!-- cotton plug shadow -->
-		<rect x="7" y="9" width="13" height="10" rx="1" fill="#cccccc"/>
-	</g>
 
 	<!-- BODY: main pipette shape -->
 	<g id="body">

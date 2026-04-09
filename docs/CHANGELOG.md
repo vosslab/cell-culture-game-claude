@@ -3,6 +3,29 @@
 ## 2026-04-08
 
 ### Additions and New Features
+- Added trypsin digestion steps to protocol: `add_trypsin`, `incubate_trypsin`, `neutralize_trypsin` between aspirate and microscope check, with trypsin bottle in hood scene (`parts/constants.ts`, `parts/hood_scene.ts`, `parts/game_state.ts`, `parts/svg_assets.ts`)
+- Added manual cell counting to hemocytometer: players click each corner quadrant and enter their live cell count, which is compared against actual for accuracy feedback (`ui/overlays.ts`, `parts/microscope_scene.ts`)
+- Added close confirmation on microscope overlay when quadrant counting is partially complete (`ui/overlays.ts`)
+- Added aspiration volume feedback notification after completing aspiration (`parts/feed_cells.ts`)
+
+### Behavior or Interface Changes
+- Changed hemocytometer grid from 400x300 (4:3) to 400x400 (square) to match real hemocytometer proportions; quadrants now 100x100 instead of 100x75 (`ui/overlays.ts`, `parts/microscope_scene.ts`, `parts/body.html`)
+- Increased cell radius on hemocytometer for better visibility; dead cells now slightly larger than live to reflect trypan blue swelling (`parts/cell_model.ts`)
+- Improved live/dead cell color contrast: live cells lighter gray with gray outline, dead cells darker blue with blue outline (`ui/overlays.ts`, `parts/microscope_scene.ts`)
+- Replaced subtle dashed cream quadrant highlights with solid green borders for better visibility (`ui/overlays.ts`, `parts/microscope_scene.ts`)
+- Moved hemocytometer instruction text below the grid to prevent overlap with bottom quadrants (`ui/overlays.ts`, `parts/microscope_scene.ts`)
+- Removed drop-shadow filter from hood scene SVGs, decorative shadow elements from SVG assets, box-shadow from hood toolbar, and set depth offsets to 0 (`parts/style.css`, `parts/svg_assets.ts`, `parts/hood_scene.ts`, `parts/style_constants.ts`)
+- Updated microscope gate message from "Add fresh media first" to "Complete trypsinization and media neutralization before microscopy" (`parts/hood_scene.ts`)
+- Replaced `add_fresh_media` protocol step with trypsin workflow: aspirate -> add trypsin -> incubate trypsin -> neutralize with media (`parts/constants.ts`, `parts/feed_cells.ts`)
+
+### Fixes and Maintenance
+- Fixed Play Again button not closing the results overlay; now removes `active` class from all modal overlays before resetting state (`parts/game_state.ts`)
+- Fixed incubator popup showing an empty gray box; now injects the incubator SVG into the overlay view area (`parts/incubator_scene.ts`)
+- Added incubator as a clickable hood item with SVG artwork; incubation now requires picking up the well plate and clicking the incubator instead of auto-transitioning (`parts/constants.ts`, `parts/hood_scene.ts`, `assets/equipment/incubator.svg`, `parts/svg_assets.ts`)
+- Created [docs/PLAYWRIGHT_USAGE.md](docs/PLAYWRIGHT_USAGE.md) covering install, script placement, common patterns, and troubleshooting
+
+### Decisions and Failures
+- Chose `prompt()` for per-quadrant cell count entry over inline input fields; simpler implementation, and the modal context makes prompt acceptable for an educational game
 - Added `getHealthBandMessage()` helper to `parts/microscope_scene.ts` and `ui/overlays.ts`: translates numeric viability and confluency into descriptive health bands (thriving/stable/stressed and dense/moderate/light) with contextual feedback messages shown alongside the viability percentage during the microscope viability check phase
 - Added `renderMeters()` function to `parts/ui_rendering.ts` and `ui/sidebar.ts`: renders 3 real-time gauge meters (Cell Health, Confluency, Contamination Risk) in the protocol panel sidebar with color-coded bars (green/yellow/red thresholds) and percentage readouts, called every render cycle from `parts/init.ts`
 - Added meters CSS to `parts/style.css`: `.meters-panel`, `.meter-item`, `.meter-bar`, `.meter-fill`, `.meter-label`, `.meter-value` classes styled to match the existing volume-indicator pattern with smooth transitions
@@ -23,7 +46,19 @@
 - Created `main.ts` as composition root: re-exports engine, scoring, and cell model for transition period
 - Created `tsconfig.json` (unified strict) and `tsconfig.core.json` (scoped to core/content) with strict, noUncheckedIndexedAccess, exactOptionalPropertyTypes, noImplicitOverride
 
+### Behavior or Interface Changes
+- Replaced small corner volume indicator with centered transfer HUD during aspiration and media addition: 44px progress bar with target marker, volume text at 18px, red Stop button, and operation label; anchored near flask for visibility (`parts/style.css`, `parts/ui_rendering.ts`, `parts/feed_cells.ts`)
+- Toolbar now shows context-sensitive next-action hints instead of static step labels: updates per sub-step (e.g. "Click the media bottle" after picking up pipette), uses existing `getAvailableActions()` which was previously unused (`parts/hood_scene.ts`)
+- Added visible text labels below each hood equipment item using `config.label` values from `HOOD_ITEMS` (`parts/hood_scene.ts`, `parts/style.css`)
+- Strengthened protocol panel step states: current step gets bold text with 4px green border, completed steps get green-tinted background and muted text, future steps are dimmed at 55% opacity (`parts/style.css`, `parts/ui_rendering.ts`)
+- Added selected-tool chip with red "Put down (Esc)" button in toolbar when holding a tool (`parts/hood_scene.ts`)
+- Added welcome/tutorial overlay on first load with game goal, interaction instructions, and Start button; uses `localStorage` to skip on repeat visits (`parts/body.html`, `parts/init.ts`)
+- Warning banner now shows up to 5 most recent warnings in a scrollable list instead of only the latest; warnings are also included in the results screen via shared `buildWarningListHtml()` (`parts/ui_rendering.ts`)
+- Microscope close button now prompts confirmation if viability check or cell counting is incomplete (`parts/microscope_scene.ts`)
+- Updated `devel/protocol_walkthrough.mjs` to dismiss welcome overlay before starting walkthrough
+
 ### Fixes and Maintenance
+- Fixed HTML entities (`&deg;`, `&micro;`) rendering as literal text in notifications: replaced with Unicode escapes (`\u00B0`) since `showNotification` uses `textContent` not `innerHTML` (`parts/feed_cells.ts`, `parts/hood_scene.ts`)
 - Removed dead `getExpectedCellCount()` function and undefined `CELLS_PER_SQUARE_FACTOR` reference from `parts/cell_model.ts`
 - Replaced stale 6-item hardcoded checklist in `parts/body.html` with empty container populated by JS from `PROTOCOL_STEPS`
 - Fixed `TypeError` in `tests/test_cell_culture_walkthrough.py`: wrapped `git_file_utils.get_repo_root()` string return in `pathlib.Path()`

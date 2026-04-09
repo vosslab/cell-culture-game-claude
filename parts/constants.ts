@@ -29,13 +29,34 @@ const PROTOCOL_STEPS: ProtocolStep[] = [
 		targetItems: ['aspirating_pipette', 'flask'],
 	},
 	{
-		id: 'add_fresh_media',
-		label: 'Add fresh media to flask',
+		id: 'add_trypsin',
+		label: 'Add trypsin to detach cells',
+		scene: 'hood',
+		requiredAction: 'pipette_trypsin',
+		targetItems: ['serological_pipette', 'trypsin_bottle', 'flask'],
+	},
+	{
+		id: 'incubate_trypsin',
+		label: 'Incubate with trypsin (3-5 min at 37C)',
+		scene: 'hood',
+		requiredAction: 'wait_trypsin',
+		targetItems: ['flask', 'incubator'],
+	},
+	{
+		id: 'neutralize_trypsin',
+		label: 'Neutralize trypsin with fresh media',
 		scene: 'hood',
 		requiredAction: 'pipette_media',
 		correctVolumeMl: 15,
 		toleranceMl: 1,
 		targetItems: ['serological_pipette', 'media_bottle', 'flask'],
+	},
+	{
+		id: 'load_hemocytometer',
+		label: 'Mix sample with trypan blue and load hemocytometer',
+		scene: 'hood',
+		requiredAction: 'load_hemocytometer',
+		targetItems: ['serological_pipette', 'flask', 'microscope'],
 	},
 	{
 		id: 'microscope_check',
@@ -70,7 +91,7 @@ const PROTOCOL_STEPS: ProtocolStep[] = [
 		label: 'Place plate in incubator',
 		scene: 'incubator',
 		requiredAction: 'place_in_incubator',
-		targetItems: ['well_plate'],
+		targetItems: ['well_plate', 'incubator'],
 	},
 	{
 		id: 'plate_read',
@@ -112,6 +133,7 @@ const HOOD_ITEMS: Record<string, HoodItemConfig> = {
 	flask: { x: 30, y: 22, width: 16, height: 28, label: 'T-75 Flask' },
 	well_plate: { x: 10, y: 52, width: 35, height: 18, label: '24-Well Plate' },
 	media_bottle: { x: 8, y: 15, width: 12, height: 26, label: 'DMEM Media' },
+	trypsin_bottle: { x: 20, y: 15, width: 10, height: 22, label: 'Trypsin-EDTA' },
 	aspirating_pipette: { x: 72, y: 10, width: 5, height: 32, label: 'Aspirating Pipette' },
 	serological_pipette: { x: 64, y: 10, width: 4, height: 32, label: 'Serological Pipette' },
 	waste_container: { x: 82, y: 42, width: 12, height: 18, label: 'Waste' },
@@ -119,6 +141,7 @@ const HOOD_ITEMS: Record<string, HoodItemConfig> = {
 	multichannel_pipette: { x: 78, y: 28, width: 10, height: 22, label: 'Multichannel Pipette' },
 	ethanol_bottle: { x: 88, y: 10, width: 8, height: 18, label: '70% Ethanol' },
 	microscope: { x: 82, y: 52, width: 12, height: 22, label: 'Microscope' },
+	incubator: { x: 52, y: 48, width: 14, height: 24, label: 'Incubator' },
 };
 
 // Type definitions (used across all modules)

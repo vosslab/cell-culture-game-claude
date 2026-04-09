@@ -1,12 +1,5 @@
 <svg id="multichannel_pipette" viewBox="0 0 60 120" xmlns="http://www.w3.org/2000/svg">
 
-	<!-- BODY SHADOW: depth offset (3px right, 3px down) -->
-	<g id="body_shadow">
-		<!-- handle shadow -->
-		<rect x="23" y="8" width="22" height="52" rx="4" fill="#cccccc"/>
-		<!-- plunger shadow -->
-		<rect x="27" y="5" width="14" height="9" rx="2" fill="#777777"/>
-	</g>
 
 	<!-- BODY: 4-channel multichannel pipette -->
 	<g id="body">

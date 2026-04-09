@@ -48,8 +48,8 @@ const RADIUS_LABELS = 1;  // text labels, tags
 
 // ============================================
 // Depth offset for 2.5D shadow (px)
-const DEPTH_OFFSET_X = 3;
-const DEPTH_OFFSET_Y = 3;
+const DEPTH_OFFSET_X = 0;
+const DEPTH_OFFSET_Y = 0;
 
 // ============================================
 // Perspective rule: top-face ellipse ratio

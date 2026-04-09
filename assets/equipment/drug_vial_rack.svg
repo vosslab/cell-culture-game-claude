@@ -1,9 +1,5 @@
 <svg id="drug_vial_rack" viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg">
 
-	<!-- BODY SHADOW: depth offset (3px right, 3px down) -->
-	<g id="body_shadow">
-		<rect x="5" y="18" width="116" height="45" rx="3" fill="#cccccc"/>
-	</g>
 
 	<!-- BODY: horizontal rack frame with 6 vial slots -->
 	<g id="body">

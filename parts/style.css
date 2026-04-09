@@ -63,7 +63,7 @@ body {
 #hood-scene svg {
 	max-width: 100%;
 	max-height: 100%;
-	filter: drop-shadow(0 2px 4px var(--color-shadow));
+	/* shadows removed per user feedback */
 }
 
 /* ===== Protocol Panel ===== */
@@ -138,10 +138,23 @@ body {
 	transform: translateX(2px);
 }
 
+/* Current step: bold with strong green accent */
 .protocol-step.current {
 	background-color: var(--color-light-blue);
-	border-left: 3px solid var(--color-accent-green);
-	padding-left: 9px;
+	border-left: 4px solid var(--color-accent-green);
+	padding-left: 8px;
+	font-weight: 600;
+}
+
+/* Completed step: subtle green tint */
+.protocol-step.completed {
+	background-color: #e8f5e9;
+	opacity: 0.85;
+}
+
+/* Future step: dimmed */
+.protocol-step.future {
+	opacity: 0.55;
 }
 
 .protocol-step input[type="checkbox"] {
@@ -164,9 +177,13 @@ body {
 	user-select: none;
 }
 
-.protocol-step input[type="checkbox"]:checked + label {
+.protocol-step.completed label {
 	color: var(--color-text-light);
 	text-decoration: line-through;
+}
+
+.protocol-step.future label {
+	color: var(--color-text-light);
 }
 
 /* ===== Modal Overlays ===== */
@@ -545,6 +562,20 @@ body {
 	color: var(--color-steel-gray);
 }
 
+/* ===== Hood Item Labels ===== */
+.hood-item-label {
+	position: absolute;
+	bottom: -16px;
+	left: 50%;
+	transform: translateX(-50%);
+	font-size: 10px;
+	font-weight: 600;
+	color: var(--color-text-dark);
+	white-space: nowrap;
+	pointer-events: none;
+	text-shadow: 0 0 3px var(--color-white), 0 0 3px var(--color-white);
+}
+
 /* ===== Target Highlighting ===== */
 .hood-item.is-active {
 	border: 2px solid rgba(76, 175, 80, 0.7) !important;
@@ -569,9 +600,8 @@ body {
 	background-color: rgba(33, 150, 243, 0.08);
 }
 
-/* ===== Warning Banner ===== */
+/* ===== Warning Log ===== */
 .warning-banner {
-	padding: 10px 14px;
 	background: linear-gradient(135deg, #fff8ea, #fff2d5);
 	border-left: 3px solid var(--color-warning-orange);
 	border-radius: 4px;
@@ -580,54 +610,112 @@ body {
 	color: #e65100;
 	line-height: 1.4;
 	animation: fadeIn 0.3s ease-out;
+	max-height: 160px;
+	overflow-y: auto;
 }
 
-/* ===== Volume Indicator ===== */
-.volume-indicator {
-	position: absolute;
-	bottom: 20px;
-	right: 20px;
-	background-color: var(--color-white);
-	border: 2px solid var(--color-steel-gray);
-	border-radius: 8px;
-	padding: 12px 16px;
-	min-width: 120px;
-	box-shadow: 0 2px 8px var(--color-shadow);
+.warning-banner .warning-item {
+	padding: 8px 14px;
+	border-bottom: 1px solid rgba(255, 152, 0, 0.15);
+}
+
+.warning-banner .warning-item:last-child {
+	border-bottom: none;
+}
+
+.warning-banner .warning-toggle {
+	padding: 6px 14px;
 	font-size: 12px;
+	color: #bf360c;
+	cursor: pointer;
+	font-weight: 600;
+	background: none;
+	border: none;
+	width: 100%;
+	text-align: left;
+}
+
+/* ===== Transfer HUD (volume indicator + stop button) ===== */
+.transfer-hud {
+	position: absolute;
+	bottom: 30%;
+	left: 50%;
+	transform: translateX(-50%);
+	background-color: rgba(255, 255, 255, 0.95);
+	border: 2px solid var(--color-steel-gray);
+	border-radius: 12px;
+	padding: 16px 24px;
+	min-width: 320px;
+	box-shadow: 0 4px 16px var(--color-shadow-dark);
 	font-weight: 600;
 	color: var(--color-text-dark);
 	z-index: 500;
+	text-align: center;
 }
 
-.volume-label {
+.transfer-hud-label {
+	font-size: 14px;
 	text-transform: uppercase;
 	letter-spacing: 0.5px;
-	margin-bottom: 8px;
+	margin-bottom: 10px;
 	color: var(--color-steel-gray);
 }
 
-.volume-bar {
+.transfer-hud-bar {
+	position: relative;
 	width: 100%;
-	height: 24px;
+	height: 44px;
 	background-color: var(--color-bg);
-	border-radius: 4px;
+	border-radius: 6px;
 	overflow: hidden;
-	margin-bottom: 8px;
+	margin-bottom: 10px;
 	border: 1px solid var(--color-border);
 }
 
-.volume-fill {
+.transfer-hud-fill {
 	height: 100%;
-	background: linear-gradient(90deg, var(--color-accent-green), var(--color-success));
 	width: 0%;
-	transition: width 0.2s ease;
-	border-radius: 4px;
+	transition: width 0.15s ease;
+	border-radius: 6px;
 }
 
-.volume-text {
+.transfer-hud-target {
+	position: absolute;
+	top: 0;
+	height: 100%;
+	width: 3px;
+	background-color: var(--color-text-dark);
+	opacity: 0.5;
+	z-index: 1;
+}
+
+.transfer-hud-text {
 	text-align: center;
-	font-size: 13px;
+	font-size: 18px;
 	color: var(--color-text-dark);
+	margin-bottom: 12px;
+}
+
+.transfer-hud-stop {
+	padding: 10px 28px;
+	background-color: var(--color-error);
+	color: var(--color-white);
+	border: none;
+	border-radius: 6px;
+	font-size: 15px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.transfer-hud-stop:hover {
+	background-color: #d32f2f;
+	box-shadow: 0 2px 8px rgba(239, 83, 80, 0.4);
+}
+
+/* Legacy volume-indicator kept as alias */
+.volume-indicator {
+	display: none;
 }
 
 /* ===== Real-time Meters ===== */

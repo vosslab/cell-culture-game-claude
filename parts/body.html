@@ -1,4 +1,18 @@
 <body>
+<!-- Welcome overlay (shown once on first visit) -->
+<div id="welcome-overlay" class="modal-overlay active">
+	<div class="modal-content" style="padding:40px 30px 30px;max-width:500px;text-align:center;">
+		<h2 style="margin:0 0 16px 0;">Cell Culture Simulation</h2>
+		<p style="font-size:14px;color:#757575;line-height:1.6;margin:0 0 12px 0;">
+			Complete a cell culture protocol: feed cells, check viability, count on a hemocytometer, plate cells, add drugs, incubate, and read results.
+		</p>
+		<p style="font-size:13px;color:#757575;line-height:1.6;margin:0 0 20px 0;">
+			<strong>How to play:</strong> Click equipment to pick it up, then click a target to use it. Follow the protocol checklist on the right. Right-click or press Esc to put down a tool.
+		</p>
+		<button id="welcome-start-btn" class="btn-primary" style="padding:12px 32px;">Start</button>
+	</div>
+</div>
+
 <div id="game-container">
 	<!-- Main hood scene (left/center area) -->
 	<div id="hood-scene"></div>
@@ -26,7 +40,7 @@
 			<h2>Microscope View</h2>
 			<div class="microscope-view">
 				<!-- SVG microscope view will be injected here -->
-				<svg id="microscope-svg" viewBox="0 0 400 300" width="400" height="300"></svg>
+				<svg id="microscope-svg" viewBox="0 0 400 430" width="400" height="430"></svg>
 			</div>
 			<!-- Cell counting is handled by interactive quadrant selection in microscope_scene.ts -->
 		</div>
@@ -76,12 +90,5 @@
 	<!-- Notifications area (toast notifications) -->
 	<div id="notification-area"></div>
 
-	<!-- Volume indicator (pipette volume) -->
-	<div id="volume-indicator" class="volume-indicator" style="display: none;">
-		<div class="volume-label">Volume</div>
-		<div class="volume-bar">
-			<div class="volume-fill"></div>
-		</div>
-		<div class="volume-text">0 µL</div>
-	</div>
+	<!-- Transfer HUD created dynamically by showTransferHud() in ui_rendering.ts -->
 </div>

@@ -62,6 +62,26 @@ document.addEventListener('DOMContentLoaded', () => {
 		throw new Error('Protocol validation failed:\n' + protocolErrors.join('\n'));
 	}
 	gameState = createInitialGameState();
-	renderGame();
-	showNotification('Welcome! Follow the protocol steps on the right.', 'info');
+
+	// Check if welcome overlay should be shown (skip for repeat visitors)
+	const welcomeOverlay = document.getElementById('welcome-overlay');
+	const hasSeenWelcome = localStorage.getItem('cellCultureGameWelcomeSeen');
+
+	if (welcomeOverlay && !hasSeenWelcome) {
+		// Show welcome overlay, wait for Start click
+		const startBtn = document.getElementById('welcome-start-btn');
+		if (startBtn) {
+			startBtn.addEventListener('click', () => {
+				welcomeOverlay.classList.remove('active');
+				localStorage.setItem('cellCultureGameWelcomeSeen', 'true');
+				renderGame();
+			});
+		}
+	} else {
+		// Hide welcome overlay and start immediately
+		if (welcomeOverlay) {
+			welcomeOverlay.classList.remove('active');
+		}
+		renderGame();
+	}
 });
