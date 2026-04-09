@@ -1,63 +1,43 @@
-<svg id="multichannel_pipette" viewBox="0 0 60 120" xmlns="http://www.w3.org/2000/svg">
+<svg xmlns="http://www.w3.org/2000/svg" id="multichannel_pipette" viewBox="0 0 24 116.5">
 
 
 	<!-- BODY: 4-channel multichannel pipette -->
 	<g id="body">
 		<!-- plunger button at top -->
-		<rect x="24" y="2" width="12" height="8" rx="2"
-			fill="#b0b0b0" stroke="#333333" stroke-width="1.5"/>
+		<rect x="6" y="2" width="12" height="8" rx="2" fill="#b0b0b0" stroke="#333333" stroke-width="1.5"/>
 		<!-- main handle body -->
-		<rect x="20" y="5" width="20" height="50" rx="4"
-			fill="#4a90d9" stroke="#333333" stroke-width="1.5"/>
+		<rect x="2" y="5" width="20" height="50" rx="4" fill="#4a90d9" stroke="#333333" stroke-width="1.5"/>
 		<!-- handle inner body (depth) -->
-		<rect x="22" y="8" width="16" height="44" rx="3"
-			fill="#4a7ab0" stroke="none"/>
+		<rect x="4" y="8" width="16" height="44" rx="3" fill="#4a7ab0" stroke="none"/>
 		<!-- handle shine -->
-		<ellipse cx="22" cy="28" rx="2" ry="14"
-			fill="#ffffff" opacity="0.2"/>
+		<ellipse cx="4" cy="28" rx="2" ry="14" fill="#ffffff" opacity="0.2"/>
 		<!-- shaft connecting to tip assembly -->
-		<rect x="22" y="55" width="16" height="30" rx="2"
-			fill="#cccccc" stroke="#333333" stroke-width="1"/>
+		<rect x="4" y="55" width="16" height="30" rx="2" fill="#cccccc" stroke="#333333" stroke-width="1"/>
 		<!-- 4 tip channels -->
-		<line x1="25" y1="85" x2="25" y2="112"
-			stroke="#dddddd" stroke-width="2.5"/>
-		<line x1="29" y1="85" x2="29" y2="112"
-			stroke="#dddddd" stroke-width="2.5"/>
-		<line x1="33" y1="85" x2="33" y2="112"
-			stroke="#dddddd" stroke-width="2.5"/>
-		<line x1="37" y1="85" x2="37" y2="112"
-			stroke="#dddddd" stroke-width="2.5"/>
+		<line x1="7" y1="85" x2="7" y2="112" stroke="#dddddd" stroke-width="2.5"/>
+		<line x1="11" y1="85" x2="11" y2="112" stroke="#dddddd" stroke-width="2.5"/>
+		<line x1="15" y1="85" x2="15" y2="112" stroke="#dddddd" stroke-width="2.5"/>
+		<line x1="19" y1="85" x2="19" y2="112" stroke="#dddddd" stroke-width="2.5"/>
 		<!-- tip end circles -->
-		<circle cx="25" cy="113" r="1.5"
-			fill="#eeeeee" stroke="#cccccc" stroke-width="0.5"/>
-		<circle cx="29" cy="113" r="1.5"
-			fill="#eeeeee" stroke="#cccccc" stroke-width="0.5"/>
-		<circle cx="33" cy="113" r="1.5"
-			fill="#eeeeee" stroke="#cccccc" stroke-width="0.5"/>
-		<circle cx="37" cy="113" r="1.5"
-			fill="#eeeeee" stroke="#cccccc" stroke-width="0.5"/>
+		<circle cx="7" cy="113" r="1.5" fill="#eeeeee" stroke="#cccccc" stroke-width="0.5"/>
+		<circle cx="11" cy="113" r="1.5" fill="#eeeeee" stroke="#cccccc" stroke-width="0.5"/>
+		<circle cx="15" cy="113" r="1.5" fill="#eeeeee" stroke="#cccccc" stroke-width="0.5"/>
+		<circle cx="19" cy="113" r="1.5" fill="#eeeeee" stroke="#cccccc" stroke-width="0.5"/>
 	</g>
 
 	<!-- CONTROLS: display and buttons -->
 	<g id="controls">
 		<!-- display window -->
-		<rect x="23" y="22" width="14" height="8" rx="1"
-			fill="#1a3a6a" stroke="#333333" stroke-width="0.5"/>
-		<text x="30" y="28" font-family="Arial,sans-serif" font-size="4"
-			fill="#4a90d9" text-anchor="middle">200</text>
+		<rect x="5" y="22" width="14" height="8" rx="1" fill="#1a3a6a" stroke="#333333" stroke-width="0.5"/>
+		<text x="12" y="28" font-family="Arial,sans-serif" font-size="4" fill="#4a90d9" text-anchor="middle">200</text>
 		<!-- ejector button -->
-		<circle cx="30" cy="62" r="2"
-			fill="#cccccc" stroke="#999999" stroke-width="0.4"/>
+		<circle cx="12" cy="62" r="2" fill="#cccccc" stroke="#999999" stroke-width="0.4"/>
 	</g>
 
 	<!-- OVERLAY_ROOT: engine injects dynamic overlays here -->
 	<g id="overlay_root"/>
 
 	<!-- ANCHORS: invisible positioning elements -->
-	<rect id="anchor_highlight"
-		x="18" y="0" width="24" height="118"
-		fill="none" stroke="none" display="none"/>
-	<rect id="anchor_error"
-		x="42" y="3" width="14" height="14"
-		fill="none" stroke="none" display="none"/>
+	<rect id="anchor_highlight" x="0" y="0" width="24" height="118" fill="none" stroke="none" display="none"/>
+	<rect id="anchor_error" x="24" y="3" width="14" height="14" fill="none" stroke="none" display="none"/>
 </svg>

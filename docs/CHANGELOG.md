@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-04-09
+
+### Additions and New Features
+- Created [docs/ROADMAP.md](docs/ROADMAP.md) with planned hood setup phase where students arrange equipment themselves
+- Created `normalize_svg.py` script to normalize SVG viewBoxes to 0,0 origin by computing content bounding box, shifting all coordinates, and cropping whitespace; supports rect, circle, ellipse, line, path (absolute commands), text; exits on unsupported features (transforms, relative paths, gradients, use/symbol)
+
+### Behavior or Interface Changes
+- Changed held item highlight from 3px solid green to 4px solid blue border with blue box-shadow; target items now use 4px dashed green border instead of 2px solid green, making holding vs clickable states visually distinct (`parts/hood_scene.ts`, `parts/style.css`)
+- Normalized all 11 SVG assets to tight viewBoxes with 2px padding, eliminating excess whitespace so selection borders hug artwork closely (`assets/equipment/*.svg`)
+- Updated `run_web_server.sh` to clean previous build artifacts before rebuilding
+- Removed `height` from `HoodItemConfig`; hood-item div height is now computed automatically from SVG viewBox aspect ratio at render time, so swapping SVG assets auto-sizes correctly (`parts/hood_scene.ts`, `parts/constants.ts`)
+- Reorganized hood item layout to mimic a real biosafety hood: reagent bottles at back, flask and drug vials in middle working area, pipettes standing on right side, well plate and waste in front, incubator and microscope outside hood (`parts/constants.ts`)
+
 ## 2026-04-08
 
 ### Additions and New Features

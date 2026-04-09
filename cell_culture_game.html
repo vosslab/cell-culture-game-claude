@@ -73,6 +73,13 @@ body {
 	/* shadows removed per user feedback */
 }
 
+/* Align SVGs to top of their container so empty space falls below */
+.hood-item {
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+}
+
 /* ===== Protocol Panel ===== */
 #protocol-panel {
 	width: 25%;
@@ -585,7 +592,7 @@ body {
 
 /* ===== Target Highlighting ===== */
 .hood-item.is-active {
-	border: 2px solid rgba(76, 175, 80, 0.7) !important;
+	border: 4px dashed rgba(76, 175, 80, 0.8) !important;
 	border-radius: 6px;
 	box-shadow: 0 0 12px rgba(76, 175, 80, 0.4);
 	animation: targetPulse 2s ease-in-out infinite;
@@ -1006,97 +1013,72 @@ body {
 <script>
 "use strict";
 const SVG_ASPIRATING_PIPETTE = `
-<svg id="aspirating_pipette__aspirating_pipette" viewBox="0 0 25 140" xmlns="http://www.w3.org/2000/svg">
+<svg xmlns="http://www.w3.org/2000/svg" id="aspirating_pipette__aspirating_pipette" viewBox="0 0 16 139">
 
 
 	<!-- BODY: main aspirating pipette shape -->
 	<g id="aspirating_pipette__body">
 		<!-- rubber bulb (gray plastic/silicone) -->
-		<ellipse cx="12.5" cy="12" rx="6" ry="9"
-			fill="#b0b0b0" stroke="#333333" stroke-width="1.5"/>
+		<ellipse cx="8" cy="11" rx="6" ry="9" fill="#b0b0b0" stroke="#333333" stroke-width="1.5"/>
 		<!-- bulb highlight -->
-		<ellipse cx="10.5" cy="8" rx="2.5" ry="3.5"
-			fill="#cccccc" opacity="0.4"/>
+		<ellipse cx="6" cy="7" rx="2.5" ry="3.5" fill="#cccccc" opacity="0.4"/>
 		<!-- tubing connection collar -->
-		<rect x="10" y="18" width="5" height="5" rx="1"
-			fill="#888888" stroke="#333333" stroke-width="1"/>
+		<rect x="5.5" y="17" width="5" height="5" rx="1" fill="#888888" stroke="#333333" stroke-width="1"/>
 		<!-- glass tube body -->
-		<rect x="10" y="22" width="5" height="96" rx="0.5"
-			fill="#f0f0f0" stroke="#999999" stroke-width="0.8"/>
+		<rect x="5.5" y="21" width="5" height="96" rx="0.5" fill="#f0f0f0" stroke="#999999" stroke-width="0.8"/>
 		<!-- inner tube glass tint -->
-		<rect x="11" y="24" width="3" height="92" rx="0.5"
-			fill="#f8f8f8" stroke="none"/>
+		<rect x="6.5" y="23" width="3" height="92" rx="0.5" fill="#f8f8f8" stroke="none"/>
 		<!-- glass shine -->
-		<line x1="11.5" y1="27" x2="11.5" y2="112"
-			stroke="#ffffff" stroke-width="0.4" opacity="0.6"/>
+		<line x1="7" y1="26" x2="7" y2="111" stroke="#ffffff" stroke-width="0.4" opacity="0.6"/>
 		<!-- narrow tapered tip -->
-		<path d="M 10 118 L 12.5 138 L 15 118 Z"
-			fill="#cccccc" stroke="#999999" stroke-width="0.4"/>
+		<path d="M 5.5 117 L 8 137 L 10.5 117 Z" fill="#cccccc" stroke="#999999" stroke-width="0.4"/>
 	</g>
 
 	<!-- OVERLAY_ROOT: engine injects dynamic overlays here -->
 	<g id="aspirating_pipette__overlay_root"/>
 
 	<!-- ANCHORS: invisible positioning elements -->
-	<rect id="aspirating_pipette__anchor_highlight"
-		x="4" y="1" width="18" height="140"
-		fill="none" stroke="none" display="none"/>
-	<rect id="aspirating_pipette__anchor_error"
-		x="15" y="1" width="12" height="12"
-		fill="none" stroke="none" display="none"/>
+	<rect id="aspirating_pipette__anchor_highlight" x="-0.5" y="0" width="18" height="140" fill="none" stroke="none" display="none"/>
+	<rect id="aspirating_pipette__anchor_error" x="10.5" y="0" width="12" height="12" fill="none" stroke="none" display="none"/>
 </svg>
 `;
 const SVG_DRUG_VIAL_RACK = `
-<svg id="drug_vial_rack__drug_vial_rack" viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg">
+<svg xmlns="http://www.w3.org/2000/svg" id="drug_vial_rack__drug_vial_rack" viewBox="0 0 120 59">
 
 
 	<!-- BODY: horizontal rack frame with 6 vial slots -->
 	<g id="drug_vial_rack__body">
 		<!-- rack outer frame -->
-		<rect x="2" y="15" width="116" height="43" rx="3"
-			fill="#e8e8e8" stroke="#333333" stroke-width="1.5"/>
+		<rect x="2" y="14" width="116" height="43" rx="3" fill="#e8e8e8" stroke="#333333" stroke-width="1.5"/>
 		<!-- rack inner surface -->
-		<rect x="5" y="18" width="110" height="37" rx="2"
-			fill="#dddddd" stroke="none"/>
+		<rect x="5" y="17" width="110" height="37" rx="2" fill="#dddddd" stroke="none"/>
 		<!-- rack front bar -->
-		<rect x="2" y="50" width="116" height="6" rx="1"
-			fill="#cccccc" stroke="#333333" stroke-width="0.8"/>
+		<rect x="2" y="49" width="116" height="6" rx="1" fill="#cccccc" stroke="#333333" stroke-width="0.8"/>
 		<!-- 6 vial hole openings at top of rack -->
-		<ellipse cx="12" cy="18" rx="5" ry="2"
-			fill="#aaaaaa" stroke="#999999" stroke-width="0.5"/>
-		<ellipse cx="30" cy="18" rx="5" ry="2"
-			fill="#aaaaaa" stroke="#999999" stroke-width="0.5"/>
-		<ellipse cx="48" cy="18" rx="5" ry="2"
-			fill="#aaaaaa" stroke="#999999" stroke-width="0.5"/>
-		<ellipse cx="66" cy="18" rx="5" ry="2"
-			fill="#aaaaaa" stroke="#999999" stroke-width="0.5"/>
-		<ellipse cx="84" cy="18" rx="5" ry="2"
-			fill="#aaaaaa" stroke="#999999" stroke-width="0.5"/>
-		<ellipse cx="102" cy="18" rx="5" ry="2"
-			fill="#aaaaaa" stroke="#999999" stroke-width="0.5"/>
+		<ellipse cx="12" cy="17" rx="5" ry="2" fill="#aaaaaa" stroke="#999999" stroke-width="0.5"/>
+		<ellipse cx="30" cy="17" rx="5" ry="2" fill="#aaaaaa" stroke="#999999" stroke-width="0.5"/>
+		<ellipse cx="48" cy="17" rx="5" ry="2" fill="#aaaaaa" stroke="#999999" stroke-width="0.5"/>
+		<ellipse cx="66" cy="17" rx="5" ry="2" fill="#aaaaaa" stroke="#999999" stroke-width="0.5"/>
+		<ellipse cx="84" cy="17" rx="5" ry="2" fill="#aaaaaa" stroke="#999999" stroke-width="0.5"/>
+		<ellipse cx="102" cy="17" rx="5" ry="2" fill="#aaaaaa" stroke="#999999" stroke-width="0.5"/>
 		<!-- rack title label -->
-		<text x="60" y="9" font-family="Arial,sans-serif" font-size="6"
-			fill="#555555" text-anchor="middle">Drug Stock</text>
+		<text x="60" y="8" font-family="Arial,sans-serif" font-size="6" fill="#555555" text-anchor="middle">Drug Stock</text>
 	</g>
 
 	<!-- OVERLAY_ROOT: engine injects per-vial color overlays here -->
 	<g id="drug_vial_rack__overlay_root"/>
 
 	<!-- ANCHORS: invisible positioning elements -->
-	<rect id="drug_vial_rack__anchor_highlight"
-		x="0" y="0" width="120" height="60"
-		fill="none" stroke="none" display="none"/>
-	<rect id="drug_vial_rack__anchor_error"
-		x="104" y="1" width="14" height="14"
-		fill="none" stroke="none" display="none"/>
+	<rect id="drug_vial_rack__anchor_highlight" x="0" y="-1" width="120" height="60" fill="none" stroke="none" display="none"/>
+	<rect id="drug_vial_rack__anchor_error" x="104" y="0" width="14" height="14" fill="none" stroke="none" display="none"/>
 </svg>
 `;
 const SVG_ETHANOL_SPRAY = `
-<svg id="ethanol_spray__ethanol_spray" viewBox="0 0 40 80" xmlns="http://www.w3.org/2000/svg">
+<svg xmlns="http://www.w3.org/2000/svg" id="ethanol_spray__ethanol_spray" viewBox="0 0 25 73">
 	<defs>
 		<!-- Liquid clip: inner bottle wall rectangle -->
 		<clipPath id="ethanol_spray__anchor_liquid_clip">
-			<rect x="13" y="16" width="15" height="52" rx="1"/>
+			<rect x="8" y="15" width="15" height="52" rx="1"/>
 		</clipPath>
 	</defs>
 
@@ -1104,114 +1086,82 @@ const SVG_ETHANOL_SPRAY = `
 	<!-- BODY: spray bottle with trigger -->
 	<g id="ethanol_spray__body">
 		<!-- spray nozzle head -->
-		<rect x="16" y="5" width="8" height="5" rx="0.5"
-			fill="#666666" stroke="#333333" stroke-width="1"/>
-		<circle cx="20" cy="5" r="2"
-			fill="#444444" stroke="#333333" stroke-width="0.5"/>
+		<rect x="11" y="4" width="8" height="5" rx="0.5" fill="#666666" stroke="#333333" stroke-width="1"/>
+		<circle cx="15" cy="4" r="2" fill="#444444" stroke="#333333" stroke-width="0.5"/>
 		<!-- pump tube (inner, shown as line) -->
-		<line x1="20" y1="9" x2="20" y2="52"
-			stroke="#888888" stroke-width="0.8" opacity="0.5"/>
+		<line x1="15" y1="8" x2="15" y2="51" stroke="#888888" stroke-width="0.8" opacity="0.5"/>
 		<!-- trigger -->
-		<path d="M 14 20 L 8 34 Q 7 40 12 43 L 14 36 Z"
-			fill="#b0b0b0" stroke="#333333" stroke-width="1"/>
+		<path d="M 9 19 L 3 33 Q 2 39 7 42 L 9 35 Z" fill="#b0b0b0" stroke="#333333" stroke-width="1"/>
 		<!-- main bottle body -->
-		<path d="M 12 14 L 12 62 Q 12 70 18 72 L 22 72 Q 28 70 28 62 L 28 14 Z"
-			fill="#f0f0f0" stroke="#333333" stroke-width="1.5"/>
+		<path d="M 7 13 L 7 61 Q 7 69 13 71 L 17 71 Q 23 69 23 61 L 23 13 Z" fill="#f0f0f0" stroke="#333333" stroke-width="1.5"/>
 		<!-- inner bottle face -->
-		<path d="M 14 17 L 14 61 Q 14 67 19 69 L 21 69 Q 26 67 26 61 L 26 17 Z"
-			fill="#f8f8f8" stroke="none"/>
+		<path d="M 9 16 L 9 60 Q 9 66 14 68 L 16 68 Q 21 66 21 60 L 21 16 Z" fill="#f8f8f8" stroke="none"/>
 		<!-- bottle shine -->
-		<ellipse cx="16" cy="38" rx="2" ry="16"
-			fill="#ffffff" opacity="0.5"/>
+		<ellipse cx="11" cy="37" rx="2" ry="16" fill="#ffffff" opacity="0.5"/>
 	</g>
 
 	<!-- LABEL_FRAME: static label background -->
 	<g id="ethanol_spray__label_frame">
-		<rect x="13" y="50" width="15" height="13" rx="1"
-			fill="#ffffff" opacity="0.85" stroke="#999999" stroke-width="0.8"/>
+		<rect x="8" y="49" width="15" height="13" rx="1" fill="#ffffff" opacity="0.85" stroke="#999999" stroke-width="0.8"/>
 	</g>
 
 	<!-- OVERLAY_ROOT: engine injects dynamic overlays here -->
 	<g id="ethanol_spray__overlay_root"/>
 
 	<!-- ANCHORS: invisible positioning elements -->
-	<rect id="ethanol_spray__anchor_liquid_bounds"
-		x="13" y="16" width="15" height="52"
-		fill="none" stroke="none" display="none"/>
-	<rect id="ethanol_spray__anchor_highlight"
-		x="6" y="3" width="24" height="72"
-		fill="none" stroke="none" display="none"/>
-	<rect id="ethanol_spray__anchor_label"
-		x="13" y="50" width="15" height="13"
-		fill="none" stroke="none" display="none"/>
-	<rect id="ethanol_spray__anchor_error"
-		x="26" y="4" width="12" height="12"
-		fill="none" stroke="none" display="none"/>
+	<rect id="ethanol_spray__anchor_liquid_bounds" x="8" y="15" width="15" height="52" fill="none" stroke="none" display="none"/>
+	<rect id="ethanol_spray__anchor_highlight" x="1" y="2" width="24" height="72" fill="none" stroke="none" display="none"/>
+	<rect id="ethanol_spray__anchor_label" x="8" y="49" width="15" height="13" fill="none" stroke="none" display="none"/>
+	<rect id="ethanol_spray__anchor_error" x="21" y="3" width="12" height="12" fill="none" stroke="none" display="none"/>
 </svg>
 `;
 const SVG_INCUBATOR = `
-<svg id="incubator__incubator" viewBox="0 0 120 160" xmlns="http://www.w3.org/2000/svg">
+<svg xmlns="http://www.w3.org/2000/svg" id="incubator__incubator" viewBox="0 0 104 132">
 
 	<!-- BODY: main incubator shape -->
 	<g id="incubator__body">
 		<!-- Main cabinet body -->
-		<rect x="10" y="20" width="100" height="120" rx="4"
-			fill="#b0b0b0" stroke="#888888" stroke-width="1.5"/>
+		<rect x="2" y="2" width="100" height="120" rx="4" fill="#b0b0b0" stroke="#888888" stroke-width="1.5"/>
 		<!-- Door panel -->
-		<rect x="15" y="25" width="90" height="90" rx="2"
-			fill="#cccccc" stroke="#999999" stroke-width="1"/>
+		<rect x="7" y="7" width="90" height="90" rx="2" fill="#cccccc" stroke="#999999" stroke-width="1"/>
 		<!-- Door window -->
-		<rect x="30" y="35" width="60" height="50" rx="2"
-			fill="#e8e8e8" stroke="#aaaaaa" stroke-width="0.8"/>
+		<rect x="22" y="17" width="60" height="50" rx="2" fill="#e8e8e8" stroke="#aaaaaa" stroke-width="0.8"/>
 		<!-- Window glass tint -->
-		<rect x="32" y="37" width="56" height="46" rx="1"
-			fill="#f5f5f5" stroke="none"/>
+		<rect x="24" y="19" width="56" height="46" rx="1" fill="#f5f5f5" stroke="none"/>
 		<!-- Glass reflection -->
-		<line x1="35" y1="40" x2="35" y2="78"
-			stroke="#ffffff" stroke-width="1" opacity="0.6"/>
+		<line x1="27" y1="22" x2="27" y2="60" stroke="#ffffff" stroke-width="1" opacity="0.6"/>
 		<!-- Door handle -->
-		<rect x="88" y="55" width="12" height="6" rx="2"
-			fill="#888888" stroke="#666666" stroke-width="0.8"/>
+		<rect x="80" y="37" width="12" height="6" rx="2" fill="#888888" stroke="#666666" stroke-width="0.8"/>
 		<!-- Temperature display -->
-		<rect x="30" y="92" width="40" height="16" rx="2"
-			fill="#1a1a2e" stroke="#333333" stroke-width="0.8"/>
-		<text x="50" y="104" text-anchor="middle"
-			font-size="10" font-family="monospace" fill="#44dd66">37.0</text>
+		<rect x="22" y="74" width="40" height="16" rx="2" fill="#1a1a2e" stroke="#333333" stroke-width="0.8"/>
+		<text x="42" y="86" text-anchor="middle" font-size="10" font-family="monospace" fill="#44dd66">37.0</text>
 		<!-- CO2 indicator -->
-		<rect x="74" y="92" width="24" height="16" rx="2"
-			fill="#1a1a2e" stroke="#333333" stroke-width="0.8"/>
-		<text x="86" y="104" text-anchor="middle"
-			font-size="8" font-family="monospace" fill="#44dd66">5%</text>
+		<rect x="66" y="74" width="24" height="16" rx="2" fill="#1a1a2e" stroke="#333333" stroke-width="0.8"/>
+		<text x="78" y="86" text-anchor="middle" font-size="8" font-family="monospace" fill="#44dd66">5%</text>
 		<!-- Base/feet -->
-		<rect x="12" y="140" width="96" height="8" rx="2"
-			fill="#999999" stroke="#777777" stroke-width="1"/>
+		<rect x="4" y="122" width="96" height="8" rx="2" fill="#999999" stroke="#777777" stroke-width="1"/>
 		<!-- Top vent -->
-		<rect x="35" y="20" width="50" height="4" rx="1"
-			fill="#999999" stroke="#888888" stroke-width="0.5"/>
-		<line x1="45" y1="21" x2="45" y2="23" stroke="#aaaaaa" stroke-width="0.5"/>
-		<line x1="55" y1="21" x2="55" y2="23" stroke="#aaaaaa" stroke-width="0.5"/>
-		<line x1="65" y1="21" x2="65" y2="23" stroke="#aaaaaa" stroke-width="0.5"/>
-		<line x1="75" y1="21" x2="75" y2="23" stroke="#aaaaaa" stroke-width="0.5"/>
+		<rect x="27" y="2" width="50" height="4" rx="1" fill="#999999" stroke="#888888" stroke-width="0.5"/>
+		<line x1="37" y1="3" x2="37" y2="5" stroke="#aaaaaa" stroke-width="0.5"/>
+		<line x1="47" y1="3" x2="47" y2="5" stroke="#aaaaaa" stroke-width="0.5"/>
+		<line x1="57" y1="3" x2="57" y2="5" stroke="#aaaaaa" stroke-width="0.5"/>
+		<line x1="67" y1="3" x2="67" y2="5" stroke="#aaaaaa" stroke-width="0.5"/>
 	</g>
 
 	<!-- OVERLAY_ROOT: engine injects dynamic overlays here -->
 	<g id="incubator__overlay_root"/>
 
 	<!-- ANCHORS: invisible positioning elements -->
-	<rect id="incubator__anchor_highlight"
-		x="8" y="18" width="104" height="132"
-		fill="none" stroke="none" display="none"/>
-	<rect id="incubator__anchor_error"
-		x="80" y="18" width="12" height="12"
-		fill="none" stroke="none" display="none"/>
+	<rect id="incubator__anchor_highlight" x="0" y="0" width="104" height="132" fill="none" stroke="none" display="none"/>
+	<rect id="incubator__anchor_error" x="72" y="0" width="12" height="12" fill="none" stroke="none" display="none"/>
 </svg>
 `;
 const SVG_MEDIA_BOTTLE = `
-<svg id="media_bottle__media_bottle" viewBox="0 0 80 120" xmlns="http://www.w3.org/2000/svg">
+<svg xmlns="http://www.w3.org/2000/svg" id="media_bottle__media_bottle" viewBox="0 0 54 110.5">
 	<defs>
 		<!-- Liquid clip: inner bottle wall rectangle -->
 		<clipPath id="media_bottle__anchor_liquid_clip">
-			<rect x="19" y="31" width="42" height="72" rx="2"/>
+			<rect x="6" y="32.5" width="42" height="72" rx="2"/>
 		</clipPath>
 	</defs>
 
@@ -1219,252 +1169,182 @@ const SVG_MEDIA_BOTTLE = `
 	<!-- BODY: main bottle shape -->
 	<g id="media_bottle__body">
 		<!-- main bottle body (flat polystyrene rectangle) -->
-		<rect x="15" y="27" width="50" height="80" rx="4"
-			fill="#f0f0f0" stroke="#333333" stroke-width="1.5"/>
+		<rect x="2" y="28.5" width="50" height="80" rx="4" fill="#f0f0f0" stroke="#333333" stroke-width="1.5"/>
 		<!-- inner face (slightly lighter for depth) -->
-		<rect x="19" y="31" width="42" height="72" rx="3"
-			fill="#f8f8f8" stroke="none"/>
+		<rect x="6" y="32.5" width="42" height="72" rx="3" fill="#f8f8f8" stroke="none"/>
 		<!-- left side shine -->
-		<rect x="20" y="35" width="4" height="60" rx="1"
-			fill="#ffffff" opacity="0.5"/>
+		<rect x="7" y="36.5" width="4" height="60" rx="1" fill="#ffffff" opacity="0.5"/>
 		<!-- bottom edge highlight -->
-		<line x1="19" y1="104" x2="61" y2="104"
-			stroke="#dddddd" stroke-width="0.8"/>
+		<line x1="6" y1="105.5" x2="48" y2="105.5" stroke="#dddddd" stroke-width="0.8"/>
 	</g>
 
 	<!-- NECK: connecting to cap -->
 	<g id="media_bottle__neck">
-		<path d="M 30 17 L 27 27 L 53 27 L 50 17 Z"
-			fill="#f0f0f0" stroke="#333333" stroke-width="1.5"/>
-		<path d="M 33 19 L 30 25 L 50 25 L 47 19 Z"
-			fill="#f8f8f8" stroke="none"/>
-		<line x1="32" y1="22" x2="48" y2="22"
-			stroke="#999999" stroke-width="0.4"/>
+		<path d="M 17 18.5 L 14 28.5 L 40 28.5 L 37 18.5 Z" fill="#f0f0f0" stroke="#333333" stroke-width="1.5"/>
+		<path d="M 20 20.5 L 17 26.5 L 37 26.5 L 34 20.5 Z" fill="#f8f8f8" stroke="none"/>
+		<line x1="19" y1="23.5" x2="35" y2="23.5" stroke="#999999" stroke-width="0.4"/>
 	</g>
 
 	<!-- CAP: screw cap -->
 	<g id="media_bottle__cap">
-		<rect x="28" y="3" width="24" height="16" rx="2"
-			fill="#888888" stroke="#333333" stroke-width="1.5"/>
-		<ellipse cx="40" cy="3" rx="12" ry="2.5"
-			fill="#999999" stroke="#333333" stroke-width="1"/>
-		<line x1="32" y1="9" x2="52" y2="9"
-			stroke="#666666" stroke-width="0.4"/>
-		<line x1="32" y1="12" x2="52" y2="12"
-			stroke="#666666" stroke-width="0.4"/>
-		<line x1="32" y1="15" x2="52" y2="15"
-			stroke="#666666" stroke-width="0.4"/>
+		<rect x="15" y="4.5" width="24" height="16" rx="2" fill="#888888" stroke="#333333" stroke-width="1.5"/>
+		<ellipse cx="27" cy="4.5" rx="12" ry="2.5" fill="#999999" stroke="#333333" stroke-width="1"/>
+		<line x1="19" y1="10.5" x2="39" y2="10.5" stroke="#666666" stroke-width="0.4"/>
+		<line x1="19" y1="13.5" x2="39" y2="13.5" stroke="#666666" stroke-width="0.4"/>
+		<line x1="19" y1="16.5" x2="39" y2="16.5" stroke="#666666" stroke-width="0.4"/>
 	</g>
 
 	<!-- LABEL_FRAME: static label background -->
 	<g id="media_bottle__label_frame">
-		<rect x="20" y="60" width="40" height="28" rx="1"
-			fill="#ffffff" opacity="0.85" stroke="#999999" stroke-width="0.8"/>
+		<rect x="7" y="61.5" width="40" height="28" rx="1" fill="#ffffff" opacity="0.85" stroke="#999999" stroke-width="0.8"/>
 	</g>
 
 	<!-- OVERLAY_ROOT: engine injects dynamic overlays here -->
 	<g id="media_bottle__overlay_root"/>
 
 	<!-- ANCHORS: invisible positioning elements -->
-	<rect id="media_bottle__anchor_liquid_bounds"
-		x="19" y="31" width="42" height="72"
-		fill="none" stroke="none" display="none"/>
-	<rect id="media_bottle__anchor_highlight"
-		x="13" y="1" width="56" height="110"
-		fill="none" stroke="none" display="none"/>
-	<rect id="media_bottle__anchor_label"
-		x="20" y="60" width="40" height="28"
-		fill="none" stroke="none" display="none"/>
-	<rect id="media_bottle__anchor_error"
-		x="60" y="24" width="16" height="16"
-		fill="none" stroke="none" display="none"/>
+	<rect id="media_bottle__anchor_liquid_bounds" x="6" y="32.5" width="42" height="72" fill="none" stroke="none" display="none"/>
+	<rect id="media_bottle__anchor_highlight" x="0" y="2.5" width="56" height="110" fill="none" stroke="none" display="none"/>
+	<rect id="media_bottle__anchor_label" x="7" y="61.5" width="40" height="28" fill="none" stroke="none" display="none"/>
+	<rect id="media_bottle__anchor_error" x="47" y="25.5" width="16" height="16" fill="none" stroke="none" display="none"/>
 </svg>
 `;
 const SVG_MICROSCOPE = `
-<svg id="microscope__microscope" viewBox="0 0 80 120" xmlns="http://www.w3.org/2000/svg">
+<svg xmlns="http://www.w3.org/2000/svg" id="microscope__microscope" viewBox="0 0 64 115">
 
 
 	<!-- BODY: main microscope structure -->
 	<g id="microscope__body">
 		<!-- base (heavy stand) -->
-		<rect x="10" y="100" width="60" height="12" rx="3"
-			fill="#333333" stroke="#222222" stroke-width="1.5"/>
-		<rect x="12" y="101" width="56" height="5" rx="2"
-			fill="#444444" stroke="none"/>
+		<rect x="2" y="101" width="60" height="12" rx="3" fill="#333333" stroke="#222222" stroke-width="1.5"/>
+		<rect x="4" y="102" width="56" height="5" rx="2" fill="#444444" stroke="none"/>
 		<!-- vertical arm -->
-		<rect x="55" y="30" width="10" height="72" rx="2"
-			fill="#444444" stroke="#333333" stroke-width="1"/>
+		<rect x="47" y="31" width="10" height="72" rx="2" fill="#444444" stroke="#333333" stroke-width="1"/>
 		<!-- arm curve to head (thick path for depth) -->
-		<path d="M 55 34 Q 55 17 40 12"
-			stroke="#444444" stroke-width="10" fill="none" stroke-linecap="round"/>
-		<path d="M 56 34 Q 56 18 41 13"
-			stroke="#555555" stroke-width="5" fill="none" stroke-linecap="round"/>
+		<path d="M 47 35 Q 47 18 32 13" stroke="#444444" stroke-width="10" fill="none" stroke-linecap="round"/>
+		<path d="M 48 35 Q 48 19 33 14" stroke="#555555" stroke-width="5" fill="none" stroke-linecap="round"/>
 		<!-- eyepiece tube -->
-		<rect x="32" y="4" width="16" height="14" rx="2"
-			fill="#555555" stroke="#333333" stroke-width="1"/>
-		<ellipse cx="40" cy="4" rx="10" ry="3"
-			fill="#666666" stroke="#333333" stroke-width="1"/>
+		<rect x="24" y="5" width="16" height="14" rx="2" fill="#555555" stroke="#333333" stroke-width="1"/>
+		<ellipse cx="32" cy="5" rx="10" ry="3" fill="#666666" stroke="#333333" stroke-width="1"/>
 		<!-- eyepiece lens ring -->
-		<ellipse cx="40" cy="4" rx="6" ry="2"
-			fill="#222222" stroke="none"/>
+		<ellipse cx="32" cy="5" rx="6" ry="2" fill="#222222" stroke="none"/>
 		<!-- stage (sample platform) -->
-		<rect x="20" y="83" width="40" height="8" rx="1"
-			fill="#555555" stroke="#333333" stroke-width="0.8"/>
+		<rect x="12" y="84" width="40" height="8" rx="1" fill="#555555" stroke="#333333" stroke-width="0.8"/>
 		<!-- stage surface highlight -->
-		<rect x="22" y="84" width="36" height="3" rx="0.5"
-			fill="#666666" stroke="none"/>
+		<rect x="14" y="85" width="36" height="3" rx="0.5" fill="#666666" stroke="none"/>
 		<!-- stage clips -->
-		<rect x="22" y="80" width="5" height="5" rx="0.5"
-			fill="#888888" stroke="#666666" stroke-width="0.4"/>
-		<rect x="53" y="80" width="5" height="5" rx="0.5"
-			fill="#888888" stroke="#666666" stroke-width="0.4"/>
+		<rect x="14" y="81" width="5" height="5" rx="0.5" fill="#888888" stroke="#666666" stroke-width="0.4"/>
+		<rect x="45" y="81" width="5" height="5" rx="0.5" fill="#888888" stroke="#666666" stroke-width="0.4"/>
 		<!-- objective turret -->
-		<circle cx="40" cy="76" r="6"
-			fill="#666666" stroke="#333333" stroke-width="0.8"/>
+		<circle cx="32" cy="77" r="6" fill="#666666" stroke="#333333" stroke-width="0.8"/>
 		<!-- objective lenses (3) pointing down -->
-		<rect x="35" y="76" width="3" height="9" rx="1" fill="#777777"/>
-		<rect x="39" y="78" width="3" height="7" rx="1" fill="#888888"/>
-		<rect x="43" y="77" width="3" height="8" rx="1" fill="#777777"/>
+		<rect x="27" y="77" width="3" height="9" rx="1" fill="#777777"/>
+		<rect x="31" y="79" width="3" height="7" rx="1" fill="#888888"/>
+		<rect x="35" y="78" width="3" height="8" rx="1" fill="#777777"/>
 		<!-- coarse focus knob -->
-		<circle cx="65" cy="64" r="5"
-			fill="#666666" stroke="#555555" stroke-width="0.5"/>
-		<circle cx="65" cy="64" r="2" fill="#777777"/>
+		<circle cx="57" cy="65" r="5" fill="#666666" stroke="#555555" stroke-width="0.5"/>
+		<circle cx="57" cy="65" r="2" fill="#777777"/>
 		<!-- fine focus knob -->
-		<circle cx="65" cy="74" r="4"
-			fill="#777777" stroke="#555555" stroke-width="0.5"/>
+		<circle cx="57" cy="75" r="4" fill="#777777" stroke="#555555" stroke-width="0.5"/>
 	</g>
 
 	<!-- OVERLAY_ROOT: engine injects dynamic overlays here -->
 	<g id="microscope__overlay_root"/>
 
 	<!-- ANCHORS: invisible positioning elements -->
-	<rect id="microscope__anchor_highlight"
-		x="8" y="1" width="64" height="115"
-		fill="none" stroke="none" display="none"/>
-	<rect id="microscope__anchor_error"
-		x="62" y="3" width="14" height="14"
-		fill="none" stroke="none" display="none"/>
+	<rect id="microscope__anchor_highlight" x="0" y="2" width="64" height="115" fill="none" stroke="none" display="none"/>
+	<rect id="microscope__anchor_error" x="54" y="4" width="14" height="14" fill="none" stroke="none" display="none"/>
 </svg>
 `;
 const SVG_MULTICHANNEL_PIPETTE = `
-<svg id="multichannel_pipette__multichannel_pipette" viewBox="0 0 60 120" xmlns="http://www.w3.org/2000/svg">
+<svg xmlns="http://www.w3.org/2000/svg" id="multichannel_pipette__multichannel_pipette" viewBox="0 0 24 116.5">
 
 
 	<!-- BODY: 4-channel multichannel pipette -->
 	<g id="multichannel_pipette__body">
 		<!-- plunger button at top -->
-		<rect x="24" y="2" width="12" height="8" rx="2"
-			fill="#b0b0b0" stroke="#333333" stroke-width="1.5"/>
+		<rect x="6" y="2" width="12" height="8" rx="2" fill="#b0b0b0" stroke="#333333" stroke-width="1.5"/>
 		<!-- main handle body -->
-		<rect x="20" y="5" width="20" height="50" rx="4"
-			fill="#4a90d9" stroke="#333333" stroke-width="1.5"/>
+		<rect x="2" y="5" width="20" height="50" rx="4" fill="#4a90d9" stroke="#333333" stroke-width="1.5"/>
 		<!-- handle inner body (depth) -->
-		<rect x="22" y="8" width="16" height="44" rx="3"
-			fill="#4a7ab0" stroke="none"/>
+		<rect x="4" y="8" width="16" height="44" rx="3" fill="#4a7ab0" stroke="none"/>
 		<!-- handle shine -->
-		<ellipse cx="22" cy="28" rx="2" ry="14"
-			fill="#ffffff" opacity="0.2"/>
+		<ellipse cx="4" cy="28" rx="2" ry="14" fill="#ffffff" opacity="0.2"/>
 		<!-- shaft connecting to tip assembly -->
-		<rect x="22" y="55" width="16" height="30" rx="2"
-			fill="#cccccc" stroke="#333333" stroke-width="1"/>
+		<rect x="4" y="55" width="16" height="30" rx="2" fill="#cccccc" stroke="#333333" stroke-width="1"/>
 		<!-- 4 tip channels -->
-		<line x1="25" y1="85" x2="25" y2="112"
-			stroke="#dddddd" stroke-width="2.5"/>
-		<line x1="29" y1="85" x2="29" y2="112"
-			stroke="#dddddd" stroke-width="2.5"/>
-		<line x1="33" y1="85" x2="33" y2="112"
-			stroke="#dddddd" stroke-width="2.5"/>
-		<line x1="37" y1="85" x2="37" y2="112"
-			stroke="#dddddd" stroke-width="2.5"/>
+		<line x1="7" y1="85" x2="7" y2="112" stroke="#dddddd" stroke-width="2.5"/>
+		<line x1="11" y1="85" x2="11" y2="112" stroke="#dddddd" stroke-width="2.5"/>
+		<line x1="15" y1="85" x2="15" y2="112" stroke="#dddddd" stroke-width="2.5"/>
+		<line x1="19" y1="85" x2="19" y2="112" stroke="#dddddd" stroke-width="2.5"/>
 		<!-- tip end circles -->
-		<circle cx="25" cy="113" r="1.5"
-			fill="#eeeeee" stroke="#cccccc" stroke-width="0.5"/>
-		<circle cx="29" cy="113" r="1.5"
-			fill="#eeeeee" stroke="#cccccc" stroke-width="0.5"/>
-		<circle cx="33" cy="113" r="1.5"
-			fill="#eeeeee" stroke="#cccccc" stroke-width="0.5"/>
-		<circle cx="37" cy="113" r="1.5"
-			fill="#eeeeee" stroke="#cccccc" stroke-width="0.5"/>
+		<circle cx="7" cy="113" r="1.5" fill="#eeeeee" stroke="#cccccc" stroke-width="0.5"/>
+		<circle cx="11" cy="113" r="1.5" fill="#eeeeee" stroke="#cccccc" stroke-width="0.5"/>
+		<circle cx="15" cy="113" r="1.5" fill="#eeeeee" stroke="#cccccc" stroke-width="0.5"/>
+		<circle cx="19" cy="113" r="1.5" fill="#eeeeee" stroke="#cccccc" stroke-width="0.5"/>
 	</g>
 
 	<!-- CONTROLS: display and buttons -->
 	<g id="multichannel_pipette__controls">
 		<!-- display window -->
-		<rect x="23" y="22" width="14" height="8" rx="1"
-			fill="#1a3a6a" stroke="#333333" stroke-width="0.5"/>
-		<text x="30" y="28" font-family="Arial,sans-serif" font-size="4"
-			fill="#4a90d9" text-anchor="middle">200</text>
+		<rect x="5" y="22" width="14" height="8" rx="1" fill="#1a3a6a" stroke="#333333" stroke-width="0.5"/>
+		<text x="12" y="28" font-family="Arial,sans-serif" font-size="4" fill="#4a90d9" text-anchor="middle">200</text>
 		<!-- ejector button -->
-		<circle cx="30" cy="62" r="2"
-			fill="#cccccc" stroke="#999999" stroke-width="0.4"/>
+		<circle cx="12" cy="62" r="2" fill="#cccccc" stroke="#999999" stroke-width="0.4"/>
 	</g>
 
 	<!-- OVERLAY_ROOT: engine injects dynamic overlays here -->
 	<g id="multichannel_pipette__overlay_root"/>
 
 	<!-- ANCHORS: invisible positioning elements -->
-	<rect id="multichannel_pipette__anchor_highlight"
-		x="18" y="0" width="24" height="118"
-		fill="none" stroke="none" display="none"/>
-	<rect id="multichannel_pipette__anchor_error"
-		x="42" y="3" width="14" height="14"
-		fill="none" stroke="none" display="none"/>
+	<rect id="multichannel_pipette__anchor_highlight" x="0" y="0" width="24" height="118" fill="none" stroke="none" display="none"/>
+	<rect id="multichannel_pipette__anchor_error" x="24" y="3" width="14" height="14" fill="none" stroke="none" display="none"/>
 </svg>
 `;
 const SVG_SERO_PIPETTE = `
-<svg id="sero_pipette__sero_pipette" viewBox="0 0 20 150" xmlns="http://www.w3.org/2000/svg">
+<svg xmlns="http://www.w3.org/2000/svg" id="sero_pipette__sero_pipette" viewBox="0 0 16 142">
 
 
 	<!-- BODY: main pipette shape -->
 	<g id="sero_pipette__body">
 		<!-- cotton plug at top -->
-		<rect x="4" y="6" width="12" height="10" rx="1"
-			fill="#e8d4c0" stroke="#cccccc" stroke-width="0.8"/>
-		<ellipse cx="10" cy="6" rx="5" ry="2"
-			fill="#ddccb0" opacity="0.7"/>
+		<rect x="2" y="4" width="12" height="10" rx="1" fill="#e8d4c0" stroke="#cccccc" stroke-width="0.8"/>
+		<ellipse cx="8" cy="4" rx="5" ry="2" fill="#ddccb0" opacity="0.7"/>
 		<!-- graduated glass tube -->
-		<rect x="6" y="15" width="8" height="105" rx="1"
-			fill="#f0f0f0" stroke="#999999" stroke-width="0.8"/>
+		<rect x="4" y="13" width="8" height="105" rx="1" fill="#f0f0f0" stroke="#999999" stroke-width="0.8"/>
 		<!-- inner tube glass tint -->
-		<rect x="7.5" y="17" width="5" height="101" rx="0.5"
-			fill="#f8f8f8" stroke="none"/>
+		<rect x="5.5" y="15" width="5" height="101" rx="0.5" fill="#f8f8f8" stroke="none"/>
 		<!-- glass shine -->
-		<rect x="8" y="20" width="1.5" height="95"
-			fill="#ffffff" opacity="0.5"/>
+		<rect x="6" y="18" width="1.5" height="95" fill="#ffffff" opacity="0.5"/>
 		<!-- major graduation marks -->
-		<line x1="4" y1="30" x2="16" y2="30" stroke="#999999" stroke-width="0.5"/>
-		<line x1="4" y1="50" x2="16" y2="50" stroke="#999999" stroke-width="0.5"/>
-		<line x1="4" y1="70" x2="16" y2="70" stroke="#999999" stroke-width="0.5"/>
-		<line x1="4" y1="90" x2="16" y2="90" stroke="#999999" stroke-width="0.5"/>
-		<line x1="4" y1="110" x2="16" y2="110" stroke="#999999" stroke-width="0.5"/>
+		<line x1="2" y1="28" x2="14" y2="28" stroke="#999999" stroke-width="0.5"/>
+		<line x1="2" y1="48" x2="14" y2="48" stroke="#999999" stroke-width="0.5"/>
+		<line x1="2" y1="68" x2="14" y2="68" stroke="#999999" stroke-width="0.5"/>
+		<line x1="2" y1="88" x2="14" y2="88" stroke="#999999" stroke-width="0.5"/>
+		<line x1="2" y1="108" x2="14" y2="108" stroke="#999999" stroke-width="0.5"/>
 		<!-- minor graduation marks -->
-		<line x1="6" y1="40" x2="14" y2="40" stroke="#cccccc" stroke-width="0.3"/>
-		<line x1="6" y1="60" x2="14" y2="60" stroke="#cccccc" stroke-width="0.3"/>
-		<line x1="6" y1="80" x2="14" y2="80" stroke="#cccccc" stroke-width="0.3"/>
-		<line x1="6" y1="100" x2="14" y2="100" stroke="#cccccc" stroke-width="0.3"/>
+		<line x1="4" y1="38" x2="12" y2="38" stroke="#cccccc" stroke-width="0.3"/>
+		<line x1="4" y1="58" x2="12" y2="58" stroke="#cccccc" stroke-width="0.3"/>
+		<line x1="4" y1="78" x2="12" y2="78" stroke="#cccccc" stroke-width="0.3"/>
+		<line x1="4" y1="98" x2="12" y2="98" stroke="#cccccc" stroke-width="0.3"/>
 		<!-- pointed tip at bottom -->
-		<path d="M 6 120 L 10 142 L 14 120 Z"
-			fill="#cccccc" stroke="#999999" stroke-width="0.4"/>
+		<path d="M 4 118 L 8 140 L 12 118 Z" fill="#cccccc" stroke="#999999" stroke-width="0.4"/>
 	</g>
 
 	<!-- OVERLAY_ROOT: engine injects dynamic overlays here -->
 	<g id="sero_pipette__overlay_root"/>
 
 	<!-- ANCHORS: invisible positioning elements -->
-	<rect id="sero_pipette__anchor_highlight"
-		x="3" y="4" width="15" height="144"
-		fill="none" stroke="none" display="none"/>
-	<rect id="sero_pipette__anchor_error"
-		x="11" y="5" width="12" height="12"
-		fill="none" stroke="none" display="none"/>
+	<rect id="sero_pipette__anchor_highlight" x="1" y="2" width="15" height="144" fill="none" stroke="none" display="none"/>
+	<rect id="sero_pipette__anchor_error" x="9" y="3" width="12" height="12" fill="none" stroke="none" display="none"/>
 </svg>
 `;
 const SVG_T75_FLASK = `
-<svg id="t75_flask__t75_flask" viewBox="0 0 120 180" xmlns="http://www.w3.org/2000/svg">
+<svg xmlns="http://www.w3.org/2000/svg" id="t75_flask__t75_flask" viewBox="0 0 102 166">
 	<defs>
 		<!-- Liquid clipping region: follows flask interior silhouette -->
 		<clipPath id="t75_flask__anchor_liquid_clip">
-			<path d="M 16 55 L 16 155 Q 16 160 20 162 L 100 162 Q 104 160 104 155 L 104 55 Z"/>
+			<path d="M 3 57 L 3 157 Q 3 162 7 164 L 87 164 Q 91 162 91 157 L 91 57 Z"/>
 		</clipPath>
 	</defs>
 
@@ -1472,89 +1352,62 @@ const SVG_T75_FLASK = `
 	<!-- BODY: main flask shape (flat rectangular T-75) -->
 	<g id="t75_flask__body">
 		<!-- Main flask body (flat polystyrene rectangle) -->
-		<rect x="15" y="50" width="88" height="112" rx="4"
-			fill="#f0f0f0" stroke="#333333" stroke-width="1.5"/>
+		<rect x="2" y="52" width="88" height="112" rx="4" fill="#f0f0f0" stroke="#333333" stroke-width="1.5"/>
 		<!-- Inner face (slightly lighter for depth) -->
-		<rect x="19" y="54" width="80" height="104" rx="3"
-			fill="#f8f8f8" stroke="none"/>
+		<rect x="6" y="56" width="80" height="104" rx="3" fill="#f8f8f8" stroke="none"/>
 		<!-- Top face ellipse (3D opening effect) -->
-		<ellipse cx="59" cy="50" rx="44" ry="5"
-			fill="#fafafa" stroke="#333333" stroke-width="1.5"/>
+		<ellipse cx="46" cy="52" rx="44" ry="5" fill="#fafafa" stroke="#333333" stroke-width="1.5"/>
 		<!-- Bottom edge highlight -->
-		<line x1="19" y1="158" x2="99" y2="158"
-			stroke="#dddddd" stroke-width="0.8"/>
+		<line x1="6" y1="160" x2="86" y2="160" stroke="#dddddd" stroke-width="0.8"/>
 		<!-- Glass shine on left side -->
-		<rect x="20" y="58" width="4" height="90" rx="1"
-			fill="#ffffff" opacity="0.5"/>
+		<rect x="7" y="60" width="4" height="90" rx="1" fill="#ffffff" opacity="0.5"/>
 	</g>
 
 	<!-- NECK: angled neck connecting body to cap -->
 	<g id="t75_flask__neck">
 		<!-- Neck walls -->
-		<path d="M 40 15 L 35 50 L 83 50 L 78 15 Z"
-			fill="#f0f0f0" stroke="#333333" stroke-width="1.5"/>
+		<path d="M 27 17 L 22 52 L 70 52 L 65 17 Z" fill="#f0f0f0" stroke="#333333" stroke-width="1.5"/>
 		<!-- Neck interior (glass tint) -->
-		<path d="M 44 18 L 39 48 L 79 48 L 74 18 Z"
-			fill="#f8f8f8" stroke="none"/>
+		<path d="M 31 20 L 26 50 L 66 50 L 61 20 Z" fill="#f8f8f8" stroke="none"/>
 		<!-- Thread lines on neck -->
-		<line x1="42" y1="22" x2="76" y2="22"
-			stroke="#999999" stroke-width="0.4"/>
-		<line x1="41" y1="30" x2="77" y2="30"
-			stroke="#999999" stroke-width="0.4"/>
+		<line x1="29" y1="24" x2="63" y2="24" stroke="#999999" stroke-width="0.4"/>
+		<line x1="28" y1="32" x2="64" y2="32" stroke="#999999" stroke-width="0.4"/>
 	</g>
 
 	<!-- CAP: screw cap -->
 	<g id="t75_flask__cap">
 		<!-- Cap body -->
-		<rect x="40" y="3" width="38" height="14" rx="2"
-			fill="#888888" stroke="#333333" stroke-width="1.5"/>
+		<rect x="27" y="5" width="38" height="14" rx="2" fill="#888888" stroke="#333333" stroke-width="1.5"/>
 		<!-- Cap top face -->
-		<ellipse cx="59" cy="3" rx="19" ry="3"
-			fill="#999999" stroke="#333333" stroke-width="1"/>
+		<ellipse cx="46" cy="5" rx="19" ry="3" fill="#999999" stroke="#333333" stroke-width="1"/>
 		<!-- Cap grip ridges -->
-		<line x1="44" y1="8" x2="74" y2="8"
-			stroke="#666666" stroke-width="0.4"/>
-		<line x1="44" y1="11" x2="74" y2="11"
-			stroke="#666666" stroke-width="0.4"/>
-		<line x1="44" y1="14" x2="74" y2="14"
-			stroke="#666666" stroke-width="0.4"/>
+		<line x1="31" y1="10" x2="61" y2="10" stroke="#666666" stroke-width="0.4"/>
+		<line x1="31" y1="13" x2="61" y2="13" stroke="#666666" stroke-width="0.4"/>
+		<line x1="31" y1="16" x2="61" y2="16" stroke="#666666" stroke-width="0.4"/>
 	</g>
 
 	<!-- GRADUATION: volume marks on flask wall -->
 	<g id="t75_flask__graduation">
 		<!-- Major marks (every 25 mL equivalent) -->
-		<line x1="95" y1="70" x2="105" y2="70"
-			stroke="#666666" stroke-width="0.8"/>
-		<line x1="95" y1="90" x2="105" y2="90"
-			stroke="#666666" stroke-width="0.8"/>
-		<line x1="95" y1="110" x2="105" y2="110"
-			stroke="#666666" stroke-width="0.8"/>
-		<line x1="95" y1="130" x2="105" y2="130"
-			stroke="#666666" stroke-width="0.8"/>
-		<line x1="95" y1="150" x2="105" y2="150"
-			stroke="#666666" stroke-width="0.8"/>
+		<line x1="82" y1="72" x2="92" y2="72" stroke="#666666" stroke-width="0.8"/>
+		<line x1="82" y1="92" x2="92" y2="92" stroke="#666666" stroke-width="0.8"/>
+		<line x1="82" y1="112" x2="92" y2="112" stroke="#666666" stroke-width="0.8"/>
+		<line x1="82" y1="132" x2="92" y2="132" stroke="#666666" stroke-width="0.8"/>
+		<line x1="82" y1="152" x2="92" y2="152" stroke="#666666" stroke-width="0.8"/>
 		<!-- Volume labels -->
-		<text x="107" y="72" font-family="Arial,sans-serif" font-size="5"
-			fill="#666666">75</text>
-		<text x="107" y="92" font-family="Arial,sans-serif" font-size="5"
-			fill="#666666">50</text>
-		<text x="107" y="112" font-family="Arial,sans-serif" font-size="5"
-			fill="#666666">25</text>
+		<text x="94" y="74" font-family="Arial,sans-serif" font-size="5" fill="#666666">75</text>
+		<text x="94" y="94" font-family="Arial,sans-serif" font-size="5" fill="#666666">50</text>
+		<text x="94" y="114" font-family="Arial,sans-serif" font-size="5" fill="#666666">25</text>
 		<!-- Minor marks -->
-		<line x1="97" y1="80" x2="103" y2="80"
-			stroke="#999999" stroke-width="0.4"/>
-		<line x1="97" y1="100" x2="103" y2="100"
-			stroke="#999999" stroke-width="0.4"/>
-		<line x1="97" y1="120" x2="103" y2="120"
-			stroke="#999999" stroke-width="0.4"/>
-		<line x1="97" y1="140" x2="103" y2="140"
-			stroke="#999999" stroke-width="0.4"/>
+		<line x1="84" y1="82" x2="90" y2="82" stroke="#999999" stroke-width="0.4"/>
+		<line x1="84" y1="102" x2="90" y2="102" stroke="#999999" stroke-width="0.4"/>
+		<line x1="84" y1="122" x2="90" y2="122" stroke="#999999" stroke-width="0.4"/>
+		<line x1="84" y1="142" x2="90" y2="142" stroke="#999999" stroke-width="0.4"/>
 	</g>
 
 	<!-- LABEL_FRAME: static label background (text is dynamic) -->
 	<g id="t75_flask__label_frame">
-		<rect x="25" y="95" width="52" height="30" rx="1"
-			fill="#ffffff" opacity="0.85" stroke="#999999" stroke-width="0.8"/>
+		<rect x="12" y="97" width="52" height="30" rx="1" fill="#ffffff" opacity="0.85" stroke="#999999" stroke-width="0.8"/>
 	</g>
 
 	<!-- OVERLAY_ROOT: engine injects dynamic overlays here -->
@@ -1562,29 +1415,21 @@ const SVG_T75_FLASK = `
 
 	<!-- ANCHORS: invisible positioning elements for the engine -->
 	<!-- Liquid fill region bounds -->
-	<rect id="t75_flask__anchor_liquid_bounds"
-		x="16" y="55" width="88" height="107"
-		fill="none" stroke="none" display="none"/>
+	<rect id="t75_flask__anchor_liquid_bounds" x="3" y="57" width="88" height="107" fill="none" stroke="none" display="none"/>
 	<!-- Highlight border bounds (slightly outside body) -->
-	<rect id="t75_flask__anchor_highlight"
-		x="13" y="1" width="96" height="165"
-		fill="none" stroke="none" display="none"/>
+	<rect id="t75_flask__anchor_highlight" x="0" y="3" width="96" height="165" fill="none" stroke="none" display="none"/>
 	<!-- Dynamic label position (inside label_frame) -->
-	<rect id="t75_flask__anchor_label"
-		x="25" y="95" width="52" height="30"
-		fill="none" stroke="none" display="none"/>
+	<rect id="t75_flask__anchor_label" x="12" y="97" width="52" height="30" fill="none" stroke="none" display="none"/>
 	<!-- Error indicator position (top-right corner) -->
-	<rect id="t75_flask__anchor_error"
-		x="90" y="45" width="16" height="16"
-		fill="none" stroke="none" display="none"/>
+	<rect id="t75_flask__anchor_error" x="77" y="47" width="16" height="16" fill="none" stroke="none" display="none"/>
 </svg>
 `;
 const SVG_WASTE_CONTAINER = `
-<svg id="waste_container__waste_container" viewBox="0 0 70 90" xmlns="http://www.w3.org/2000/svg">
+<svg xmlns="http://www.w3.org/2000/svg" id="waste_container__waste_container" viewBox="0 0 44 73">
 	<defs>
 		<!-- Liquid clip: inner Erlenmeyer body silhouette -->
 		<clipPath id="waste_container__anchor_liquid_clip">
-			<path d="M 22 32 L 18 57 Q 18 67 23 70 L 47 70 Q 52 67 52 57 L 48 32 Z"/>
+			<path d="M 9 33 L 5 58 Q 5 68 10 71 L 34 71 Q 39 68 39 58 L 35 33 Z"/>
 		</clipPath>
 	</defs>
 
@@ -1592,58 +1437,40 @@ const SVG_WASTE_CONTAINER = `
 	<!-- BODY: Erlenmeyer-style waste bottle -->
 	<g id="waste_container__body">
 		<!-- flask body (wide at bottom, tapers at neck junction) -->
-		<path d="M 20 15 L 18 30 L 15 57 Q 15 67 20 70 L 50 70 Q 55 67 55 57 L 52 30 L 50 15 Z"
-			fill="#f0f0f0" stroke="#333333" stroke-width="1.5"/>
+		<path d="M 7 16 L 5 31 L 2 58 Q 2 68 7 71 L 37 71 Q 42 68 42 58 L 39 31 L 37 16 Z" fill="#f0f0f0" stroke="#333333" stroke-width="1.5"/>
 		<!-- inner face -->
-		<path d="M 23 18 L 21 30 L 18 57 Q 18 64 22 67 L 48 67 Q 52 64 52 57 L 49 30 L 47 18 Z"
-			fill="#f8f8f8" stroke="none"/>
+		<path d="M 10 19 L 8 31 L 5 58 Q 5 65 9 68 L 35 68 Q 39 65 39 58 L 36 31 L 34 19 Z" fill="#f8f8f8" stroke="none"/>
 		<!-- glass shine -->
-		<ellipse cx="26" cy="42" rx="3" ry="14"
-			fill="#ffffff" opacity="0.5"/>
+		<ellipse cx="13" cy="43" rx="3" ry="14" fill="#ffffff" opacity="0.5"/>
 	</g>
 
 	<!-- NECK: narrow connecting section -->
 	<g id="waste_container__neck">
-		<rect x="27" y="8" width="16" height="9" rx="1"
-			fill="#f0f0f0" stroke="#333333" stroke-width="1.5"/>
-		<rect x="29" y="10" width="12" height="5" rx="0.5"
-			fill="#f8f8f8" stroke="none"/>
-		<line x1="29" y1="12" x2="41" y2="12"
-			stroke="#999999" stroke-width="0.4"/>
+		<rect x="14" y="9" width="16" height="9" rx="1" fill="#f0f0f0" stroke="#333333" stroke-width="1.5"/>
+		<rect x="16" y="11" width="12" height="5" rx="0.5" fill="#f8f8f8" stroke="none"/>
+		<line x1="16" y1="13" x2="28" y2="13" stroke="#999999" stroke-width="0.4"/>
 	</g>
 
 	<!-- CAP: screw cap -->
 	<g id="waste_container__cap">
-		<rect x="27" y="3" width="16" height="7" rx="1"
-			fill="#888888" stroke="#333333" stroke-width="1.5"/>
-		<ellipse cx="35" cy="3" rx="8" ry="2"
-			fill="#999999" stroke="#333333" stroke-width="1"/>
-		<line x1="30" y1="6" x2="40" y2="6"
-			stroke="#666666" stroke-width="0.4"/>
+		<rect x="14" y="4" width="16" height="7" rx="1" fill="#888888" stroke="#333333" stroke-width="1.5"/>
+		<ellipse cx="22" cy="4" rx="8" ry="2" fill="#999999" stroke="#333333" stroke-width="1"/>
+		<line x1="17" y1="7" x2="27" y2="7" stroke="#666666" stroke-width="0.4"/>
 	</g>
 
 	<!-- LABEL_FRAME: static label background -->
 	<g id="waste_container__label_frame">
-		<rect x="22" y="50" width="26" height="14" rx="1"
-			fill="#ffffff" opacity="0.85" stroke="#999999" stroke-width="0.8"/>
+		<rect x="9" y="51" width="26" height="14" rx="1" fill="#ffffff" opacity="0.85" stroke="#999999" stroke-width="0.8"/>
 	</g>
 
 	<!-- OVERLAY_ROOT: engine injects dynamic overlays here -->
 	<g id="waste_container__overlay_root"/>
 
 	<!-- ANCHORS: invisible positioning elements -->
-	<rect id="waste_container__anchor_liquid_bounds"
-		x="17" y="30" width="36" height="40"
-		fill="none" stroke="none" display="none"/>
-	<rect id="waste_container__anchor_highlight"
-		x="13" y="1" width="44" height="72"
-		fill="none" stroke="none" display="none"/>
-	<rect id="waste_container__anchor_label"
-		x="22" y="50" width="26" height="14"
-		fill="none" stroke="none" display="none"/>
-	<rect id="waste_container__anchor_error"
-		x="53" y="14" width="14" height="14"
-		fill="none" stroke="none" display="none"/>
+	<rect id="waste_container__anchor_liquid_bounds" x="4" y="31" width="36" height="40" fill="none" stroke="none" display="none"/>
+	<rect id="waste_container__anchor_highlight" x="0" y="2" width="44" height="72" fill="none" stroke="none" display="none"/>
+	<rect id="waste_container__anchor_label" x="9" y="51" width="26" height="14" fill="none" stroke="none" display="none"/>
+	<rect id="waste_container__anchor_error" x="40" y="15" width="14" height="14" fill="none" stroke="none" display="none"/>
 </svg>
 `;
 const SVG_WELL_PLATE_24 = `
@@ -1712,7 +1539,1016 @@ const SVG_WELL_PLATE_24 = `
 		fill="none" stroke="none" display="none"/>
 </svg>
 `;
-const CELL_CULTURE_PLATE_SVG = "";
+const CELL_CULTURE_PLATE_SVG = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+    xmlns="http://www.w3.org/2000/svg"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    id="svg6209"
+    viewBox="0 0 211.05 96.69"
+    version="1.1"
+  >
+  <g
+      id="layer1"
+      transform="translate(-215.53 -372.44)"
+    >
+    <g
+        id="g9218"
+      >
+      <g
+          id="g6815"
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 363.66 435.84)"
+        >
+        <path
+            id="path6817"
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+        />
+        <path
+            id="path6819"
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+        />
+        <path
+            id="path6821"
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+        />
+      </g
+      >
+      <g
+          id="g6735"
+          transform="translate(85.512 448.46)"
+        >
+        <path
+            id="path6737"
+            d="m274.42-7.536c-2.4734 0.50328-4.6389 2.0438-6.5783 3.5758-1.3313 1.3006-1.5781 3.2896-1.1223 5.0139 0.25236 1.5163-0.21236 3.0139-0.92796 4.3289-0.50158 1.2091-0.16781 2.8783 1.1903 3.2503 1.7055 0.59268 3.758 0.10192 5.2748 1.2875 2.0898 1.2202 3.9813 3.3515 6.5895 3.226 2.2348-1.1206 4.4176-3.5023 3.809-6.1751-0.55025-1.2689-1.4628-2.5534-1.0251-4.0131 0.30078-1.6269 0.65682-3.5372-0.62188-4.8682-1.475-1.5345-3.2464-2.7813-4.7904-4.2657-0.58475-0.45765-1.1426-1.077-1.7976-1.3604z"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.15547;fill:#aa1212"
+        />
+        <path
+            id="path6739"
+            d="m273.86-6.5725c-1.9968 0.17659-4.0729 1.8683-5.8221 3.4771-1.0578 1.3253-0.84995 3.1261-0.53443 4.6641 0.14488 1.5881-0.56869 3.0447-1.1563 4.46-0.22568 0.85736 0.3248 2.0217 1.3231 2.0948 1.7898 0.36811 3.6619 0.094676 5.1581 1.3061 1.8793 1.0996 3.5206 2.9793 5.8447 2.9879 1.8763-0.98981 3.7974-2.9827 3.2795-5.2811-0.74342-1.4276-1.5172-3.0424-0.92311-4.6738 0.19916-1.3242 0.48402-3.1656-0.79192-4.1491-1.8472-1.6361-2.6456-2.5536-3.6429-3.42-1.46-0.98365-1.1648-1.5954-2.7346-1.466z"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.15547;fill:#ececec"
+        />
+        <path
+            id="path6741"
+            d="m273.59-3.1227c-0.88425 0.33719-0.95754 1.0997-2.1631 1.6904-1.24 0.60757-0.92077 2.5044-0.0737 3.863 0.57609 2.036 2.5575 3.6684 4.7156 2.6819 1.542-0.63655 1.32-1.6093 2.7396-3.2732 0.96656-1.1328-0.24835-2.5704-1.5308-3.401-0.70739-0.47916-2.8074-1.6109-3.6878-1.5611z"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.16530;fill:#cccccc"
+        />
+      </g
+      >
+      <g
+          id="g6647"
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 328.59 415.28)"
+        >
+        <path
+            id="path6649"
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+        />
+        <path
+            id="path6651"
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+        />
+        <path
+            id="path6653"
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+        />
+      </g
+      >
+      <g
+          id="g6607"
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 353.2 416.7)"
+        >
+        <path
+            id="path6609"
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+        />
+        <path
+            id="path6611"
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+        />
+        <path
+            id="path6613"
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+        />
+      </g
+      >
+      <g
+          id="g6663"
+          transform="matrix(.92892 0 0 .92892 -311.05 192.51)"
+        >
+        <path
+            id="path6665"
+            style="stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.16737;fill:#aa1212"
+            d="m746.66 250.77c-2.6626 0.54179-4.9938 2.2002-7.0817 3.8494-1.4332 1.4002-1.6989 3.5414-1.2082 5.3976 0.27167 1.6323-0.22861 3.2446-0.99897 4.6601-0.53996 1.3016-0.18065 3.0985 1.2814 3.499 1.836 0.63803 4.0455 0.10972 5.6784 1.386 2.2497 1.3135 4.286 3.608 7.0937 3.4728 2.4058-1.2064 4.7556-3.7702 4.1005-6.6476-0.59235-1.366-1.5747-2.7488-1.1036-4.3202 0.32379-1.7514 0.70708-3.8079-0.66946-5.2406-1.5878-1.6519-3.4949-2.9941-5.157-4.5921-0.62949-0.49267-1.23-1.1594-1.9352-1.4644z"
+        />
+        <path
+            id="path6667"
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.16737;fill:#ececec"
+            d="m746.05 251.8c-2.1496 0.1901-4.3846 2.0113-6.2676 3.7431-1.1387 1.4267-0.91498 3.3653-0.57532 5.021 0.15596 1.7097-0.61221 3.2776-1.2448 4.8013-0.24295 0.92296 0.34965 2.1764 1.4243 2.2551 1.9267 0.39628 3.9421 0.10192 5.5528 1.4061 2.0231 1.1838 3.79 3.2073 6.2919 3.2166 2.0198-1.0656 4.088-3.211 3.5304-5.6852-0.8003-1.5368-1.6332-3.2752-0.99374-5.0314 0.2144-1.4256 0.52106-3.4078-0.85252-4.4666-1.9885-1.7613-2.848-2.749-3.9216-3.6817-1.5717-1.0589-1.254-1.7175-2.9438-1.5782z"
+        />
+        <path
+            id="path6669"
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.17795;fill:#cccccc"
+            d="m745.76 255.52c-0.95191 0.36299-1.0308 1.1838-2.3286 1.8197-1.3348 0.65406-0.99123 2.696-0.0793 4.1586 0.62017 2.1918 2.7532 3.9491 5.0765 2.8871 1.66-0.68526 1.421-1.7325 2.9492-3.5236 1.0405-1.2195-0.26735-2.767-1.6479-3.6613-0.76152-0.51582-3.0222-1.7342-3.97-1.6806z"
+        />
+      </g
+      >
+      <g
+          id="g4998"
+          transform="matrix(.92892 0 0 .92892 -334.49 197.7)"
+        >
+        <path
+            id="path5000"
+            d="m746.66 250.77c-2.6626 0.54179-4.9938 2.2002-7.0817 3.8494-1.4332 1.4002-1.6989 3.5414-1.2082 5.3976 0.27167 1.6323-0.22861 3.2446-0.99897 4.6601-0.53996 1.3016-0.18065 3.0985 1.2814 3.499 1.836 0.63803 4.0455 0.10972 5.6784 1.386 2.2497 1.3135 4.286 3.608 7.0937 3.4728 2.4058-1.2064 4.7556-3.7702 4.1005-6.6476-0.59235-1.366-1.5747-2.7488-1.1036-4.3202 0.32379-1.7514 0.70708-3.8079-0.66946-5.2406-1.5878-1.6519-3.4949-2.9941-5.157-4.5921-0.62949-0.49267-1.23-1.1594-1.9352-1.4644z"
+            style="stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.16737;fill:#aa1212"
+        />
+        <path
+            id="path5002"
+            d="m746.05 251.8c-2.1496 0.1901-4.3846 2.0113-6.2676 3.7431-1.1387 1.4267-0.91498 3.3653-0.57532 5.021 0.15596 1.7097-0.61221 3.2776-1.2448 4.8013-0.24295 0.92296 0.34965 2.1764 1.4243 2.2551 1.9267 0.39628 3.9421 0.10192 5.5528 1.4061 2.0231 1.1838 3.79 3.2073 6.2919 3.2166 2.0198-1.0656 4.088-3.211 3.5304-5.6852-0.8003-1.5368-1.6332-3.2752-0.99374-5.0314 0.2144-1.4256 0.52106-3.4078-0.85252-4.4666-1.9885-1.7613-2.848-2.749-3.9216-3.6817-1.5717-1.0589-1.254-1.7175-2.9438-1.5782z"
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.16737;fill:#ececec"
+        />
+        <path
+            id="path5004"
+            d="m745.76 255.52c-0.95191 0.36299-1.0308 1.1838-2.3286 1.8197-1.3348 0.65406-0.99123 2.696-0.0793 4.1586 0.62017 2.1918 2.7532 3.9491 5.0765 2.8871 1.66-0.68526 1.421-1.7325 2.9492-3.5236 1.0405-1.2195-0.26735-2.767-1.6479-3.6613-0.76152-0.51582-3.0222-1.7342-3.97-1.6806z"
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.17795;fill:#cccccc"
+        />
+      </g
+      >
+      <g
+          id="g4906"
+          transform="matrix(.92892 0 0 .92892 -291.04 201.4)"
+        >
+        <path
+            id="path4908"
+            d="m746.66 250.77c-2.6626 0.54179-4.9938 2.2002-7.0817 3.8494-1.4332 1.4002-1.6989 3.5414-1.2082 5.3976 0.27167 1.6323-0.22861 3.2446-0.99897 4.6601-0.53996 1.3016-0.18065 3.0985 1.2814 3.499 1.836 0.63803 4.0455 0.10972 5.6784 1.386 2.2497 1.3135 4.286 3.608 7.0937 3.4728 2.4058-1.2064 4.7556-3.7702 4.1005-6.6476-0.59235-1.366-1.5747-2.7488-1.1036-4.3202 0.32379-1.7514 0.70708-3.8079-0.66946-5.2406-1.5878-1.6519-3.4949-2.9941-5.157-4.5921-0.62949-0.49267-1.23-1.1594-1.9352-1.4644z"
+            style="stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.16737;fill:#aa1212"
+        />
+        <path
+            id="path4910"
+            d="m746.05 251.8c-2.1496 0.1901-4.3846 2.0113-6.2676 3.7431-1.1387 1.4267-0.91498 3.3653-0.57532 5.021 0.15596 1.7097-0.61221 3.2776-1.2448 4.8013-0.24295 0.92296 0.34965 2.1764 1.4243 2.2551 1.9267 0.39628 3.9421 0.10192 5.5528 1.4061 2.0231 1.1838 3.79 3.2073 6.2919 3.2166 2.0198-1.0656 4.088-3.211 3.5304-5.6852-0.8003-1.5368-1.6332-3.2752-0.99374-5.0314 0.2144-1.4256 0.52106-3.4078-0.85252-4.4666-1.9885-1.7613-2.848-2.749-3.9216-3.6817-1.5717-1.0589-1.254-1.7175-2.9438-1.5782z"
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.16737;fill:#ececec"
+        />
+        <path
+            id="path4912"
+            d="m745.76 255.52c-0.95191 0.36299-1.0308 1.1838-2.3286 1.8197-1.3348 0.65406-0.99123 2.696-0.0793 4.1586 0.62017 2.1918 2.7532 3.9491 5.0765 2.8871 1.66-0.68526 1.421-1.7325 2.9492-3.5236 1.0405-1.2195-0.26735-2.767-1.6479-3.6613-0.76152-0.51582-3.0222-1.7342-3.97-1.6806z"
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.17795;fill:#cccccc"
+        />
+      </g
+      >
+      <g
+          id="g34242"
+          transform="matrix(.92892 0 0 .92892 -312.38 168.14)"
+        >
+        <path
+            id="path34244"
+            d="m746.66 250.77c-2.6626 0.54179-4.9938 2.2002-7.0817 3.8494-1.4332 1.4002-1.6989 3.5414-1.2082 5.3976 0.27167 1.6323-0.22861 3.2446-0.99897 4.6601-0.53996 1.3016-0.18065 3.0985 1.2814 3.499 1.836 0.63803 4.0455 0.10972 5.6784 1.386 2.2497 1.3135 4.286 3.608 7.0937 3.4728 2.4058-1.2064 4.7556-3.7702 4.1005-6.6476-0.59235-1.366-1.5747-2.7488-1.1036-4.3202 0.32379-1.7514 0.70708-3.8079-0.66946-5.2406-1.5878-1.6519-3.4949-2.9941-5.157-4.5921-0.62949-0.49267-1.23-1.1594-1.9352-1.4644z"
+            style="stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.16737;fill:#aa1212"
+        />
+        <path
+            id="path34246"
+            d="m746.05 251.8c-2.1496 0.1901-4.3846 2.0113-6.2676 3.7431-1.1387 1.4267-0.91498 3.3653-0.57532 5.021 0.15596 1.7097-0.61221 3.2776-1.2448 4.8013-0.24295 0.92296 0.34965 2.1764 1.4243 2.2551 1.9267 0.39628 3.9421 0.10192 5.5528 1.4061 2.0231 1.1838 3.79 3.2073 6.2919 3.2166 2.0198-1.0656 4.088-3.211 3.5304-5.6852-0.8003-1.5368-1.6332-3.2752-0.99374-5.0314 0.2144-1.4256 0.52106-3.4078-0.85252-4.4666-1.9885-1.7613-2.848-2.749-3.9216-3.6817-1.5717-1.0589-1.254-1.7175-2.9438-1.5782z"
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.16737;fill:#ececec"
+        />
+        <path
+            id="path34248"
+            d="m745.76 255.52c-0.95191 0.36299-1.0308 1.1838-2.3286 1.8197-1.3348 0.65406-0.99123 2.696-0.0793 4.1586 0.62017 2.1918 2.7532 3.9491 5.0765 2.8871 1.66-0.68526 1.421-1.7325 2.9492-3.5236 1.0405-1.2195-0.26735-2.767-1.6479-3.6613-0.76152-0.51582-3.0222-1.7342-3.97-1.6806z"
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.17795;fill:#cccccc"
+        />
+      </g
+      >
+      <g
+          id="g5088"
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 276.4 407.03)"
+        >
+        <path
+            id="path5090"
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+        />
+        <path
+            id="path5092"
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+        />
+        <path
+            id="path5094"
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+        />
+      </g
+      >
+      <g
+          id="g4982"
+          transform="matrix(.92892 0 0 .92892 -366.85 176.88)"
+        >
+        <path
+            id="path4984"
+            d="m746.66 250.77c-2.6626 0.54179-4.9938 2.2002-7.0817 3.8494-1.4332 1.4002-1.6989 3.5414-1.2082 5.3976 0.27167 1.6323-0.22861 3.2446-0.99897 4.6601-0.53996 1.3016-0.18065 3.0985 1.2814 3.499 1.836 0.63803 4.0455 0.10972 5.6784 1.386 2.2497 1.3135 4.286 3.608 7.0937 3.4728 2.4058-1.2064 4.7556-3.7702 4.1005-6.6476-0.59235-1.366-1.5747-2.7488-1.1036-4.3202 0.32379-1.7514 0.70708-3.8079-0.66946-5.2406-1.5878-1.6519-3.4949-2.9941-5.157-4.5921-0.62949-0.49267-1.23-1.1594-1.9352-1.4644z"
+            style="stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.16737;fill:#aa1212"
+        />
+        <path
+            id="path4986"
+            d="m746.05 251.8c-2.1496 0.1901-4.3846 2.0113-6.2676 3.7431-1.1387 1.4267-0.91498 3.3653-0.57532 5.021 0.15596 1.7097-0.61221 3.2776-1.2448 4.8013-0.24295 0.92296 0.34965 2.1764 1.4243 2.2551 1.9267 0.39628 3.9421 0.10192 5.5528 1.4061 2.0231 1.1838 3.79 3.2073 6.2919 3.2166 2.0198-1.0656 4.088-3.211 3.5304-5.6852-0.8003-1.5368-1.6332-3.2752-0.99374-5.0314 0.2144-1.4256 0.52106-3.4078-0.85252-4.4666-1.9885-1.7613-2.848-2.749-3.9216-3.6817-1.5717-1.0589-1.254-1.7175-2.9438-1.5782z"
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.16737;fill:#ececec"
+        />
+        <path
+            id="path4988"
+            d="m745.76 255.52c-0.95191 0.36299-1.0308 1.1838-2.3286 1.8197-1.3348 0.65406-0.99123 2.696-0.0793 4.1586 0.62017 2.1918 2.7532 3.9491 5.0765 2.8871 1.66-0.68526 1.421-1.7325 2.9492-3.5236 1.0405-1.2195-0.26735-2.767-1.6479-3.6613-0.76152-0.51582-3.0222-1.7342-3.97-1.6806z"
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.17795;fill:#cccccc"
+        />
+      </g
+      >
+      <g
+          id="g5014"
+          transform="matrix(.92892 0 0 .92892 -372.83 191.93)"
+        >
+        <path
+            id="path5016"
+            style="stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.16737;fill:#aa1212"
+            d="m746.66 250.77c-2.6626 0.54179-4.9938 2.2002-7.0817 3.8494-1.4332 1.4002-1.6989 3.5414-1.2082 5.3976 0.27167 1.6323-0.22861 3.2446-0.99897 4.6601-0.53996 1.3016-0.18065 3.0985 1.2814 3.499 1.836 0.63803 4.0455 0.10972 5.6784 1.386 2.2497 1.3135 4.286 3.608 7.0937 3.4728 2.4058-1.2064 4.7556-3.7702 4.1005-6.6476-0.59235-1.366-1.5747-2.7488-1.1036-4.3202 0.32379-1.7514 0.70708-3.8079-0.66946-5.2406-1.5878-1.6519-3.4949-2.9941-5.157-4.5921-0.62949-0.49267-1.23-1.1594-1.9352-1.4644z"
+        />
+        <path
+            id="path5018"
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.16737;fill:#ececec"
+            d="m746.05 251.8c-2.1496 0.1901-4.3846 2.0113-6.2676 3.7431-1.1387 1.4267-0.91498 3.3653-0.57532 5.021 0.15596 1.7097-0.61221 3.2776-1.2448 4.8013-0.24295 0.92296 0.34965 2.1764 1.4243 2.2551 1.9267 0.39628 3.9421 0.10192 5.5528 1.4061 2.0231 1.1838 3.79 3.2073 6.2919 3.2166 2.0198-1.0656 4.088-3.211 3.5304-5.6852-0.8003-1.5368-1.6332-3.2752-0.99374-5.0314 0.2144-1.4256 0.52106-3.4078-0.85252-4.4666-1.9885-1.7613-2.848-2.749-3.9216-3.6817-1.5717-1.0589-1.254-1.7175-2.9438-1.5782z"
+        />
+        <path
+            id="path5020"
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.17795;fill:#cccccc"
+            d="m745.76 255.52c-0.95191 0.36299-1.0308 1.1838-2.3286 1.8197-1.3348 0.65406-0.99123 2.696-0.0793 4.1586 0.62017 2.1918 2.7532 3.9491 5.0765 2.8871 1.66-0.68526 1.421-1.7325 2.9492-3.5236 1.0405-1.2195-0.26735-2.767-1.6479-3.6613-0.76152-0.51582-3.0222-1.7342-3.97-1.6806z"
+        />
+      </g
+      >
+      <g
+          id="g4922"
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 323.85 433.8)"
+        >
+        <path
+            id="path4924"
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+        />
+        <path
+            id="path4926"
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+        />
+        <path
+            id="path4928"
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+        />
+      </g
+      >
+      <g
+          id="g4930"
+          transform="matrix(.92892 0 0 .92892 -388.62 206.44)"
+        >
+        <path
+            id="path4932"
+            style="stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.16737;fill:#aa1212"
+            d="m746.66 250.77c-2.6626 0.54179-4.9938 2.2002-7.0817 3.8494-1.4332 1.4002-1.6989 3.5414-1.2082 5.3976 0.27167 1.6323-0.22861 3.2446-0.99897 4.6601-0.53996 1.3016-0.18065 3.0985 1.2814 3.499 1.836 0.63803 4.0455 0.10972 5.6784 1.386 2.2497 1.3135 4.286 3.608 7.0937 3.4728 2.4058-1.2064 4.7556-3.7702 4.1005-6.6476-0.59235-1.366-1.5747-2.7488-1.1036-4.3202 0.32379-1.7514 0.70708-3.8079-0.66946-5.2406-1.5878-1.6519-3.4949-2.9941-5.157-4.5921-0.62949-0.49267-1.23-1.1594-1.9352-1.4644z"
+        />
+        <path
+            id="path4934"
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.16737;fill:#ececec"
+            d="m746.05 251.8c-2.1496 0.1901-4.3846 2.0113-6.2676 3.7431-1.1387 1.4267-0.91498 3.3653-0.57532 5.021 0.15596 1.7097-0.61221 3.2776-1.2448 4.8013-0.24295 0.92296 0.34965 2.1764 1.4243 2.2551 1.9267 0.39628 3.9421 0.10192 5.5528 1.4061 2.0231 1.1838 3.79 3.2073 6.2919 3.2166 2.0198-1.0656 4.088-3.211 3.5304-5.6852-0.8003-1.5368-1.6332-3.2752-0.99374-5.0314 0.2144-1.4256 0.52106-3.4078-0.85252-4.4666-1.9885-1.7613-2.848-2.749-3.9216-3.6817-1.5717-1.0589-1.254-1.7175-2.9438-1.5782z"
+        />
+        <path
+            id="path4936"
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.17795;fill:#cccccc"
+            d="m745.76 255.52c-0.95191 0.36299-1.0308 1.1838-2.3286 1.8197-1.3348 0.65406-0.99123 2.696-0.0793 4.1586 0.62017 2.1918 2.7532 3.9491 5.0765 2.8871 1.66-0.68526 1.421-1.7325 2.9492-3.5236 1.0405-1.2195-0.26735-2.767-1.6479-3.6613-0.76152-0.51582-3.0222-1.7342-3.97-1.6806z"
+        />
+      </g
+      >
+      <g
+          id="g4938"
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 306.65 434.56)"
+        >
+        <path
+            id="path4940"
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+        />
+        <path
+            id="path4942"
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+        />
+        <path
+            id="path4944"
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+        />
+      </g
+      >
+      <g
+          id="g4946"
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 273.24 433.83)"
+        >
+        <path
+            id="path4948"
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+        />
+        <path
+            id="path4950"
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+        />
+        <path
+            id="path4952"
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+        />
+      </g
+      >
+      <g
+          id="g4882"
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 243.38 427.49)"
+        >
+        <path
+            id="path4884"
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+        />
+        <path
+            id="path4886"
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+        />
+        <path
+            id="path4888"
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+        />
+      </g
+      >
+      <g
+          id="g4962"
+          transform="matrix(.92892 0 0 .92892 -393.12 171.62)"
+        >
+        <path
+            id="path4964"
+            style="stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.16737;fill:#aa1212"
+            d="m746.66 250.77c-2.6626 0.54179-4.9938 2.2002-7.0817 3.8494-1.4332 1.4002-1.6989 3.5414-1.2082 5.3976 0.27167 1.6323-0.22861 3.2446-0.99897 4.6601-0.53996 1.3016-0.18065 3.0985 1.2814 3.499 1.836 0.63803 4.0455 0.10972 5.6784 1.386 2.2497 1.3135 4.286 3.608 7.0937 3.4728 2.4058-1.2064 4.7556-3.7702 4.1005-6.6476-0.59235-1.366-1.5747-2.7488-1.1036-4.3202 0.32379-1.7514 0.70708-3.8079-0.66946-5.2406-1.5878-1.6519-3.4949-2.9941-5.157-4.5921-0.62949-0.49267-1.23-1.1594-1.9352-1.4644z"
+        />
+        <path
+            id="path4966"
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.16737;fill:#ececec"
+            d="m746.05 251.8c-2.1496 0.1901-4.3846 2.0113-6.2676 3.7431-1.1387 1.4267-0.91498 3.3653-0.57532 5.021 0.15596 1.7097-0.61221 3.2776-1.2448 4.8013-0.24295 0.92296 0.34965 2.1764 1.4243 2.2551 1.9267 0.39628 3.9421 0.10192 5.5528 1.4061 2.0231 1.1838 3.79 3.2073 6.2919 3.2166 2.0198-1.0656 4.088-3.211 3.5304-5.6852-0.8003-1.5368-1.6332-3.2752-0.99374-5.0314 0.2144-1.4256 0.52106-3.4078-0.85252-4.4666-1.9885-1.7613-2.848-2.749-3.9216-3.6817-1.5717-1.0589-1.254-1.7175-2.9438-1.5782z"
+        />
+        <path
+            id="path4968"
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.17795;fill:#cccccc"
+            d="m745.76 255.52c-0.95191 0.36299-1.0308 1.1838-2.3286 1.8197-1.3348 0.65406-0.99123 2.696-0.0793 4.1586 0.62017 2.1918 2.7532 3.9491 5.0765 2.8871 1.66-0.68526 1.421-1.7325 2.9492-3.5236 1.0405-1.2195-0.26735-2.767-1.6479-3.6613-0.76152-0.51582-3.0222-1.7342-3.97-1.6806z"
+        />
+      </g
+      >
+      <g
+          id="g5040"
+          transform="translate(.97523 223.33)"
+        >
+        <path
+            id="path5042"
+            style="stroke-dashoffset:42;stroke:#1d1d1d;stroke-width:.16091;fill:#d71212"
+            d="m278.1 177.01c-2.5598 0.52088-4.801 2.1152-6.8083 3.7008-1.3779 1.3461-1.6333 3.4046-1.1615 5.1892 0.26119 1.5693-0.21978 3.1193-0.96041 4.4802-0.51911 1.2513-0.17367 2.9789 1.2319 3.3639 1.7651 0.61339 3.8894 0.10548 5.4592 1.3325 2.1629 1.2628 4.1205 3.4687 6.8198 3.3387 2.3129-1.1598 4.572-3.6247 3.9422-6.391-0.56949-1.3133-1.5139-2.6426-1.061-4.1534 0.31129-1.6838 0.67978-3.6609-0.64362-5.0383-1.5266-1.5881-3.3599-2.8785-4.9579-4.4148-0.60519-0.47365-1.1826-1.1146-1.8605-1.4079z"
+        />
+        <path
+            id="path5044"
+            style="stroke-dashoffset:42;stroke:#7b7b7b;stroke-width:.16091;fill:#f15757"
+            d="m277.51 178.01c-2.0666 0.18277-4.2153 1.9336-6.0257 3.5986-1.0948 1.3717-0.87966 3.2354-0.55311 4.8272 0.14994 1.6437-0.58858 3.1511-1.1967 4.616-0.23357 0.88733 0.33616 2.0923 1.3693 2.168 1.8524 0.38098 3.7899 0.098 5.3384 1.3518 1.945 1.1381 3.6437 3.0835 6.049 3.0924 1.9419-1.0244 3.9302-3.087 3.3941-5.4657-0.7694-1.4775-1.5702-3.1488-0.95537-4.8372 0.20613-1.3705 0.50094-3.2763-0.81961-4.2942-1.9118-1.6933-2.738-2.6428-3.7702-3.5396-1.511-1.018-1.2056-1.6512-2.8302-1.5173z"
+        />
+        <path
+            id="path5046"
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:.17108;fill:#ee3030"
+            d="m277.23 181.58c-0.91516 0.34898-0.991 1.1381-2.2387 1.7495-1.2833 0.6288-0.95297 2.5919-0.0762 3.9981 0.59623 2.1072 2.6469 3.7966 4.8805 2.7757 1.5959-0.6588 1.3662-1.6656 2.8354-3.3876 1.0004-1.1724-0.25703-2.6602-1.5843-3.5199-0.73212-0.49591-2.9055-1.6673-3.8167-1.6157z"
+        />
+      </g
+      >
+      <g
+          id="g4898"
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 301.8 395.69)"
+        >
+        <path
+            id="path4900"
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+        />
+        <path
+            id="path4902"
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+        />
+        <path
+            id="path4904"
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+        />
+      </g
+      >
+      <g
+          id="g5048"
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 244.36 410.9)"
+        >
+        <path
+            id="path5050"
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+        />
+        <path
+            id="path5052"
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+        />
+        <path
+            id="path5054"
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+        />
+      </g
+      >
+      <g
+          id="g4954"
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 265.22 414.99)"
+        >
+        <path
+            id="path4956"
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+        />
+        <path
+            id="path4958"
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+        />
+        <path
+            id="path4960"
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+        />
+      </g
+      >
+      <g
+          id="g34274"
+          transform="matrix(.92892 0 0 .92892 -365.27 176)"
+        >
+        <path
+            id="path34276"
+            style="stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.16737;fill:#aa1212"
+            d="m746.66 250.77c-2.6626 0.54179-4.9938 2.2002-7.0817 3.8494-1.4332 1.4002-1.6989 3.5414-1.2082 5.3976 0.27167 1.6323-0.22861 3.2446-0.99897 4.6601-0.53996 1.3016-0.18065 3.0985 1.2814 3.499 1.836 0.63803 4.0455 0.10972 5.6784 1.386 2.2497 1.3135 4.286 3.608 7.0937 3.4728 2.4058-1.2064 4.7556-3.7702 4.1005-6.6476-0.59235-1.366-1.5747-2.7488-1.1036-4.3202 0.32379-1.7514 0.70708-3.8079-0.66946-5.2406-1.5878-1.6519-3.4949-2.9941-5.157-4.5921-0.62949-0.49267-1.23-1.1594-1.9352-1.4644z"
+        />
+        <path
+            id="path34278"
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.16737;fill:#ececec"
+            d="m746.05 251.8c-2.1496 0.1901-4.3846 2.0113-6.2676 3.7431-1.1387 1.4267-0.91498 3.3653-0.57532 5.021 0.15596 1.7097-0.61221 3.2776-1.2448 4.8013-0.24295 0.92296 0.34965 2.1764 1.4243 2.2551 1.9267 0.39628 3.9421 0.10192 5.5528 1.4061 2.0231 1.1838 3.79 3.2073 6.2919 3.2166 2.0198-1.0656 4.088-3.211 3.5304-5.6852-0.8003-1.5368-1.6332-3.2752-0.99374-5.0314 0.2144-1.4256 0.52106-3.4078-0.85252-4.4666-1.9885-1.7613-2.848-2.749-3.9216-3.6817-1.5717-1.0589-1.254-1.7175-2.9438-1.5782z"
+        />
+        <path
+            id="path34280"
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.17795;fill:#cccccc"
+            d="m745.76 255.52c-0.95191 0.36299-1.0308 1.1838-2.3286 1.8197-1.3348 0.65406-0.99123 2.696-0.0793 4.1586 0.62017 2.1918 2.7532 3.9491 5.0765 2.8871 1.66-0.68526 1.421-1.7325 2.9492-3.5236 1.0405-1.2195-0.26735-2.767-1.6479-3.6613-0.76152-0.51582-3.0222-1.7342-3.97-1.6806z"
+        />
+      </g
+      >
+      <g
+          id="g4974"
+          transform="matrix(.92892 0 0 .92892 -455.1 190.99)"
+        >
+        <path
+            id="path4976"
+            d="m746.66 250.77c-2.6626 0.54179-4.9938 2.2002-7.0817 3.8494-1.4332 1.4002-1.6989 3.5414-1.2082 5.3976 0.27167 1.6323-0.22861 3.2446-0.99897 4.6601-0.53996 1.3016-0.18065 3.0985 1.2814 3.499 1.836 0.63803 4.0455 0.10972 5.6784 1.386 2.2497 1.3135 4.286 3.608 7.0937 3.4728 2.4058-1.2064 4.7556-3.7702 4.1005-6.6476-0.59235-1.366-1.5747-2.7488-1.1036-4.3202 0.32379-1.7514 0.70708-3.8079-0.66946-5.2406-1.5878-1.6519-3.4949-2.9941-5.157-4.5921-0.62949-0.49267-1.23-1.1594-1.9352-1.4644z"
+            style="stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.16737;fill:#aa1212"
+        />
+        <path
+            id="path4978"
+            d="m746.05 251.8c-2.1496 0.1901-4.3846 2.0113-6.2676 3.7431-1.1387 1.4267-0.91498 3.3653-0.57532 5.021 0.15596 1.7097-0.61221 3.2776-1.2448 4.8013-0.24295 0.92296 0.34965 2.1764 1.4243 2.2551 1.9267 0.39628 3.9421 0.10192 5.5528 1.4061 2.0231 1.1838 3.79 3.2073 6.2919 3.2166 2.0198-1.0656 4.088-3.211 3.5304-5.6852-0.8003-1.5368-1.6332-3.2752-0.99374-5.0314 0.2144-1.4256 0.52106-3.4078-0.85252-4.4666-1.9885-1.7613-2.848-2.749-3.9216-3.6817-1.5717-1.0589-1.254-1.7175-2.9438-1.5782z"
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.16737;fill:#ececec"
+        />
+        <path
+            id="path4980"
+            d="m745.76 255.52c-0.95191 0.36299-1.0308 1.1838-2.3286 1.8197-1.3348 0.65406-0.99123 2.696-0.0793 4.1586 0.62017 2.1918 2.7532 3.9491 5.0765 2.8871 1.66-0.68526 1.421-1.7325 2.9492-3.5236 1.0405-1.2195-0.26735-2.767-1.6479-3.6613-0.76152-0.51582-3.0222-1.7342-3.97-1.6806z"
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.17795;fill:#cccccc"
+        />
+      </g
+      >
+      <g
+          id="g4990"
+          transform="matrix(.92892 0 0 .92892 -384.99 183.94)"
+        >
+        <path
+            id="path4992"
+            style="stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.16737;fill:#aa1212"
+            d="m746.66 250.77c-2.6626 0.54179-4.9938 2.2002-7.0817 3.8494-1.4332 1.4002-1.6989 3.5414-1.2082 5.3976 0.27167 1.6323-0.22861 3.2446-0.99897 4.6601-0.53996 1.3016-0.18065 3.0985 1.2814 3.499 1.836 0.63803 4.0455 0.10972 5.6784 1.386 2.2497 1.3135 4.286 3.608 7.0937 3.4728 2.4058-1.2064 4.7556-3.7702 4.1005-6.6476-0.59235-1.366-1.5747-2.7488-1.1036-4.3202 0.32379-1.7514 0.70708-3.8079-0.66946-5.2406-1.5878-1.6519-3.4949-2.9941-5.157-4.5921-0.62949-0.49267-1.23-1.1594-1.9352-1.4644z"
+        />
+        <path
+            id="path4994"
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.16737;fill:#ececec"
+            d="m746.05 251.8c-2.1496 0.1901-4.3846 2.0113-6.2676 3.7431-1.1387 1.4267-0.91498 3.3653-0.57532 5.021 0.15596 1.7097-0.61221 3.2776-1.2448 4.8013-0.24295 0.92296 0.34965 2.1764 1.4243 2.2551 1.9267 0.39628 3.9421 0.10192 5.5528 1.4061 2.0231 1.1838 3.79 3.2073 6.2919 3.2166 2.0198-1.0656 4.088-3.211 3.5304-5.6852-0.8003-1.5368-1.6332-3.2752-0.99374-5.0314 0.2144-1.4256 0.52106-3.4078-0.85252-4.4666-1.9885-1.7613-2.848-2.749-3.9216-3.6817-1.5717-1.0589-1.254-1.7175-2.9438-1.5782z"
+        />
+        <path
+            id="path4996"
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.17795;fill:#cccccc"
+            d="m745.76 255.52c-0.95191 0.36299-1.0308 1.1838-2.3286 1.8197-1.3348 0.65406-0.99123 2.696-0.0793 4.1586 0.62017 2.1918 2.7532 3.9491 5.0765 2.8871 1.66-0.68526 1.421-1.7325 2.9492-3.5236 1.0405-1.2195-0.26735-2.767-1.6479-3.6613-0.76152-0.51582-3.0222-1.7342-3.97-1.6806z"
+        />
+      </g
+      >
+      <g
+          id="g5064"
+          transform="matrix(.92892 0 0 .92892 -422.27 196.8)"
+        >
+        <path
+            id="path5066"
+            style="stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.16737;fill:#aa1212"
+            d="m746.66 250.77c-2.6626 0.54179-4.9938 2.2002-7.0817 3.8494-1.4332 1.4002-1.6989 3.5414-1.2082 5.3976 0.27167 1.6323-0.22861 3.2446-0.99897 4.6601-0.53996 1.3016-0.18065 3.0985 1.2814 3.499 1.836 0.63803 4.0455 0.10972 5.6784 1.386 2.2497 1.3135 4.286 3.608 7.0937 3.4728 2.4058-1.2064 4.7556-3.7702 4.1005-6.6476-0.59235-1.366-1.5747-2.7488-1.1036-4.3202 0.32379-1.7514 0.70708-3.8079-0.66946-5.2406-1.5878-1.6519-3.4949-2.9941-5.157-4.5921-0.62949-0.49267-1.23-1.1594-1.9352-1.4644z"
+        />
+        <path
+            id="path5068"
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.16737;fill:#ececec"
+            d="m746.05 251.8c-2.1496 0.1901-4.3846 2.0113-6.2676 3.7431-1.1387 1.4267-0.91498 3.3653-0.57532 5.021 0.15596 1.7097-0.61221 3.2776-1.2448 4.8013-0.24295 0.92296 0.34965 2.1764 1.4243 2.2551 1.9267 0.39628 3.9421 0.10192 5.5528 1.4061 2.0231 1.1838 3.79 3.2073 6.2919 3.2166 2.0198-1.0656 4.088-3.211 3.5304-5.6852-0.8003-1.5368-1.6332-3.2752-0.99374-5.0314 0.2144-1.4256 0.52106-3.4078-0.85252-4.4666-1.9885-1.7613-2.848-2.749-3.9216-3.6817-1.5717-1.0589-1.254-1.7175-2.9438-1.5782z"
+        />
+        <path
+            id="path5070"
+            style="fill-opacity:.94142;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.17795;fill:#cccccc"
+            d="m745.76 255.52c-0.95191 0.36299-1.0308 1.1838-2.3286 1.8197-1.3348 0.65406-0.99123 2.696-0.0793 4.1586 0.62017 2.1918 2.7532 3.9491 5.0765 2.8871 1.66-0.68526 1.421-1.7325 2.9492-3.5236 1.0405-1.2195-0.26735-2.767-1.6479-3.6613-0.76152-0.51582-3.0222-1.7342-3.97-1.6806z"
+        />
+      </g
+      >
+      <g
+          id="g5006"
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 308.19 414.95)"
+        >
+        <path
+            id="path5008"
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+        />
+        <path
+            id="path5010"
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+        />
+        <path
+            id="path5012"
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+        />
+      </g
+      >
+      <g
+          id="g6743"
+          transform="translate(21.256 432.29)"
+        >
+        <path
+            id="path6745"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.15547;fill:#aa1212"
+            d="m274.42-7.536c-2.4734 0.50328-4.6389 2.0438-6.5783 3.5758-1.3313 1.3006-1.5781 3.2896-1.1223 5.0139 0.25236 1.5163-0.21236 3.0139-0.92796 4.3289-0.50158 1.2091-0.16781 2.8783 1.1903 3.2503 1.7055 0.59268 3.758 0.10192 5.2748 1.2875 2.0898 1.2202 3.9813 3.3515 6.5895 3.226 2.2348-1.1206 4.4176-3.5023 3.809-6.1751-0.55025-1.2689-1.4628-2.5534-1.0251-4.0131 0.30078-1.6269 0.65682-3.5372-0.62188-4.8682-1.475-1.5345-3.2464-2.7813-4.7904-4.2657-0.58475-0.45765-1.1426-1.077-1.7976-1.3604z"
+        />
+        <path
+            id="path6747"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.15547;fill:#ececec"
+            d="m273.86-6.5725c-1.9968 0.17659-4.0729 1.8683-5.8221 3.4771-1.0578 1.3253-0.84995 3.1261-0.53443 4.6641 0.14488 1.5881-0.56869 3.0447-1.1563 4.46-0.22568 0.85736 0.3248 2.0217 1.3231 2.0948 1.7898 0.36811 3.6619 0.094676 5.1581 1.3061 1.8793 1.0996 3.5206 2.9793 5.8447 2.9879 1.8763-0.98981 3.7974-2.9827 3.2795-5.2811-0.74342-1.4276-1.5172-3.0424-0.92311-4.6738 0.19916-1.3242 0.48402-3.1656-0.79192-4.1491-1.8472-1.6361-2.6456-2.5536-3.6429-3.42-1.46-0.98365-1.1648-1.5954-2.7346-1.466z"
+        />
+        <path
+            id="path6749"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.16530;fill:#cccccc"
+            d="m273.59-3.1227c-0.88425 0.33719-0.95754 1.0997-2.1631 1.6904-1.24 0.60757-0.92077 2.5044-0.0737 3.863 0.57609 2.036 2.5575 3.6684 4.7156 2.6819 1.542-0.63655 1.32-1.6093 2.7396-3.2732 0.96656-1.1328-0.24835-2.5704-1.5308-3.401-0.70739-0.47916-2.8074-1.6109-3.6878-1.5611z"
+        />
+      </g
+      >
+      <g
+          id="g6799"
+          transform="translate(127.21 423.78)"
+        >
+        <path
+            id="path6801"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.15547;fill:#aa1212"
+            d="m274.42-7.536c-2.4734 0.50328-4.6389 2.0438-6.5783 3.5758-1.3313 1.3006-1.5781 3.2896-1.1223 5.0139 0.25236 1.5163-0.21236 3.0139-0.92796 4.3289-0.50158 1.2091-0.16781 2.8783 1.1903 3.2503 1.7055 0.59268 3.758 0.10192 5.2748 1.2875 2.0898 1.2202 3.9813 3.3515 6.5895 3.226 2.2348-1.1206 4.4176-3.5023 3.809-6.1751-0.55025-1.2689-1.4628-2.5534-1.0251-4.0131 0.30078-1.6269 0.65682-3.5372-0.62188-4.8682-1.475-1.5345-3.2464-2.7813-4.7904-4.2657-0.58475-0.45765-1.1426-1.077-1.7976-1.3604z"
+        />
+        <path
+            id="path6803"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.15547;fill:#ececec"
+            d="m273.86-6.5725c-1.9968 0.17659-4.0729 1.8683-5.8221 3.4771-1.0578 1.3253-0.84995 3.1261-0.53443 4.6641 0.14488 1.5881-0.56869 3.0447-1.1563 4.46-0.22568 0.85736 0.3248 2.0217 1.3231 2.0948 1.7898 0.36811 3.6619 0.094676 5.1581 1.3061 1.8793 1.0996 3.5206 2.9793 5.8447 2.9879 1.8763-0.98981 3.7974-2.9827 3.2795-5.2811-0.74342-1.4276-1.5172-3.0424-0.92311-4.6738 0.19916-1.3242 0.48402-3.1656-0.79192-4.1491-1.8472-1.6361-2.6456-2.5536-3.6429-3.42-1.46-0.98365-1.1648-1.5954-2.7346-1.466z"
+        />
+        <path
+            id="path6805"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.16530;fill:#cccccc"
+            d="m273.59-3.1227c-0.88425 0.33719-0.95754 1.0997-2.1631 1.6904-1.24 0.60757-0.92077 2.5044-0.0737 3.863 0.57609 2.036 2.5575 3.6684 4.7156 2.6819 1.542-0.63655 1.32-1.6093 2.7396-3.2732 0.96656-1.1328-0.24835-2.5704-1.5308-3.401-0.70739-0.47916-2.8074-1.6109-3.6878-1.5611z"
+        />
+      </g
+      >
+      <g
+          id="g5072"
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 341.24 409.51)"
+        >
+        <path
+            id="path5074"
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+        />
+        <path
+            id="path5076"
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+        />
+        <path
+            id="path5078"
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+        />
+      </g
+      >
+      <g
+          id="g6591"
+          transform="translate(124.24 300.38)"
+        >
+        <path
+            id="path4880"
+            style="stroke-dashoffset:42;stroke:#000000;stroke-width:1.784;fill:none"
+            d="m441.38 383.33c0 45.389-52.233 82.184-116.67 82.184-64.433 0-116.67-36.795-116.67-82.184s52.233-82.184 116.67-82.184c64.433 0 116.67 36.795 116.67 82.184z"
+            transform="matrix(.89760 0 0 .35004 -94.648 5.3032)"
+        />
+        <path
+            id="path4972"
+            d="m196.34 91.503c-55.688 0-101.23 11.93-104.53 27-0.11927 0.34785-0.21875 0.70445-0.21875 1.0938v20.406 2.2188c0 1.2672 0.69688 2.3826 1.7188 2.9688 8.8889 13.413 51.642 23.562 103.03 23.562 51.39 0 94.111-10.15 103-23.562 1.0219-0.58619 1.7188-1.7016 1.7188-2.9688v-2.2188-20.406c0-0.3893-0.0995-0.7459-0.21875-1.0938-3.3043-15.07-48.812-27-104.5-27z"
+            style="fill-opacity:.54902;fill:#f27373"
+        />
+        <path
+            id="path5022"
+            style="fill-opacity:.54902;stroke:#ff8080;stroke-width:1.784;fill:#ffe2e2"
+            d="m441.38 383.33c0 45.389-52.233 82.184-116.67 82.184-64.433 0-116.67-36.795-116.67-82.184s52.233-82.184 116.67-82.184c64.433 0 116.67 36.795 116.67 82.184z"
+            transform="matrix(.89760 0 0 .35004 -94.648 -13.411)"
+        />
+        <g
+            id="g6587"
+          >
+          <path
+              id="path4970"
+              style="stroke:#000000;fill:none"
+              d="m196.82 72.559c-57.835 0-104.72 12.883-104.72 28.771 0 0.24824 0.009 0.49685 0.0313 0.74359v36.666c-0.0228 0.24674-0.0313 0.49534-0.0313 0.74359 0 15.888 46.889 28.771 104.72 28.771 57.835 0 104.72-12.883 104.72-28.771 0-0.24825-0.009-0.49685-0.0313-0.74359v-36.666c0.0228-0.24674 0.0313-0.49535 0.0313-0.74359 0-15.888-46.889-28.771-104.72-28.771z"
+          />
+          <path
+              id="path5096"
+              style="stroke:#000000;stroke-width:1.784;fill:none"
+              d="m441.38 383.33c0 45.389-52.233 82.184-116.67 82.184-64.433 0-116.67-36.795-116.67-82.184s52.233-82.184 116.67-82.184c64.433 0 116.67 36.795 116.67 82.184z"
+              transform="matrix(.89760 0 0 .35004 -94.648 -32.855)"
+          />
+        </g
+        >
+      </g
+      >
+      <g
+          id="g6751"
+          transform="translate(-8.9564 412.85)"
+        >
+        <path
+            id="path6753"
+            d="m274.42-7.536c-2.4734 0.50328-4.6389 2.0438-6.5783 3.5758-1.3313 1.3006-1.5781 3.2896-1.1223 5.0139 0.25236 1.5163-0.21236 3.0139-0.92796 4.3289-0.50158 1.2091-0.16781 2.8783 1.1903 3.2503 1.7055 0.59268 3.758 0.10192 5.2748 1.2875 2.0898 1.2202 3.9813 3.3515 6.5895 3.226 2.2348-1.1206 4.4176-3.5023 3.809-6.1751-0.55025-1.2689-1.4628-2.5534-1.0251-4.0131 0.30078-1.6269 0.65682-3.5372-0.62188-4.8682-1.475-1.5345-3.2464-2.7813-4.7904-4.2657-0.58475-0.45765-1.1426-1.077-1.7976-1.3604z"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.15547;fill:#aa1212"
+        />
+        <path
+            id="path6755"
+            d="m273.86-6.5725c-1.9968 0.17659-4.0729 1.8683-5.8221 3.4771-1.0578 1.3253-0.84995 3.1261-0.53443 4.6641 0.14488 1.5881-0.56869 3.0447-1.1563 4.46-0.22568 0.85736 0.3248 2.0217 1.3231 2.0948 1.7898 0.36811 3.6619 0.094676 5.1581 1.3061 1.8793 1.0996 3.5206 2.9793 5.8447 2.9879 1.8763-0.98981 3.7974-2.9827 3.2795-5.2811-0.74342-1.4276-1.5172-3.0424-0.92311-4.6738 0.19916-1.3242 0.48402-3.1656-0.79192-4.1491-1.8472-1.6361-2.6456-2.5536-3.6429-3.42-1.46-0.98365-1.1648-1.5954-2.7346-1.466z"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.15547;fill:#ececec"
+        />
+        <path
+            id="path6757"
+            d="m273.59-3.1227c-0.88425 0.33719-0.95754 1.0997-2.1631 1.6904-1.24 0.60757-0.92077 2.5044-0.0737 3.863 0.57609 2.036 2.5575 3.6684 4.7156 2.6819 1.542-0.63655 1.32-1.6093 2.7396-3.2732 0.96656-1.1328-0.24835-2.5704-1.5308-3.401-0.70739-0.47916-2.8074-1.6109-3.6878-1.5611z"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.16530;fill:#cccccc"
+        />
+      </g
+      >
+      <g
+          id="g6714"
+          transform="translate(20.405 412.29)"
+        >
+        <path
+            id="path5058"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.15547;fill:#aa1212"
+            d="m274.42-7.536c-2.4734 0.50328-4.6389 2.0438-6.5783 3.5758-1.3313 1.3006-1.5781 3.2896-1.1223 5.0139 0.25236 1.5163-0.21236 3.0139-0.92796 4.3289-0.50158 1.2091-0.16781 2.8783 1.1903 3.2503 1.7055 0.59268 3.758 0.10192 5.2748 1.2875 2.0898 1.2202 3.9813 3.3515 6.5895 3.226 2.2348-1.1206 4.4176-3.5023 3.809-6.1751-0.55025-1.2689-1.4628-2.5534-1.0251-4.0131 0.30078-1.6269 0.65682-3.5372-0.62188-4.8682-1.475-1.5345-3.2464-2.7813-4.7904-4.2657-0.58475-0.45765-1.1426-1.077-1.7976-1.3604z"
+        />
+        <path
+            id="path5060"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.15547;fill:#ececec"
+            d="m273.86-6.5725c-1.9968 0.17659-4.0729 1.8683-5.8221 3.4771-1.0578 1.3253-0.84995 3.1261-0.53443 4.6641 0.14488 1.5881-0.56869 3.0447-1.1563 4.46-0.22568 0.85736 0.3248 2.0217 1.3231 2.0948 1.7898 0.36811 3.6619 0.094676 5.1581 1.3061 1.8793 1.0996 3.5206 2.9793 5.8447 2.9879 1.8763-0.98981 3.7974-2.9827 3.2795-5.2811-0.74342-1.4276-1.5172-3.0424-0.92311-4.6738 0.19916-1.3242 0.48402-3.1656-0.79192-4.1491-1.8472-1.6361-2.6456-2.5536-3.6429-3.42-1.46-0.98365-1.1648-1.5954-2.7346-1.466z"
+        />
+        <path
+            id="path5062"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.16530;fill:#cccccc"
+            d="m273.59-3.1227c-0.88425 0.33719-0.95754 1.0997-2.1631 1.6904-1.24 0.60757-0.92077 2.5044-0.0737 3.863 0.57609 2.036 2.5575 3.6684 4.7156 2.6819 1.542-0.63655 1.32-1.6093 2.7396-3.2732 0.96656-1.1328-0.24835-2.5704-1.5308-3.401-0.70739-0.47916-2.8074-1.6109-3.6878-1.5611z"
+        />
+      </g
+      >
+      <g
+          id="g5080"
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 328.75 397.52)"
+        >
+        <path
+            id="path5082"
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+        />
+        <path
+            id="path5084"
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+        />
+        <path
+            id="path5086"
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+        />
+      </g
+      >
+      <g
+          id="g5032"
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 293.7 389.38)"
+        >
+        <path
+            id="path5034"
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+        />
+        <path
+            id="path5036"
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+        />
+        <path
+            id="path5038"
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+        />
+      </g
+      >
+      <g
+          id="g5024"
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 234.68 396.87)"
+        >
+        <path
+            id="path5026"
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+        />
+        <path
+            id="path5028"
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+        />
+        <path
+            id="path5030"
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+        />
+      </g
+      >
+      <g
+          id="g6775"
+          transform="translate(108.06 405.06)"
+        >
+        <path
+            id="path6777"
+            d="m274.42-7.536c-2.4734 0.50328-4.6389 2.0438-6.5783 3.5758-1.3313 1.3006-1.5781 3.2896-1.1223 5.0139 0.25236 1.5163-0.21236 3.0139-0.92796 4.3289-0.50158 1.2091-0.16781 2.8783 1.1903 3.2503 1.7055 0.59268 3.758 0.10192 5.2748 1.2875 2.0898 1.2202 3.9813 3.3515 6.5895 3.226 2.2348-1.1206 4.4176-3.5023 3.809-6.1751-0.55025-1.2689-1.4628-2.5534-1.0251-4.0131 0.30078-1.6269 0.65682-3.5372-0.62188-4.8682-1.475-1.5345-3.2464-2.7813-4.7904-4.2657-0.58475-0.45765-1.1426-1.077-1.7976-1.3604z"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.15547;fill:#aa1212"
+        />
+        <path
+            id="path6779"
+            d="m273.86-6.5725c-1.9968 0.17659-4.0729 1.8683-5.8221 3.4771-1.0578 1.3253-0.84995 3.1261-0.53443 4.6641 0.14488 1.5881-0.56869 3.0447-1.1563 4.46-0.22568 0.85736 0.3248 2.0217 1.3231 2.0948 1.7898 0.36811 3.6619 0.094676 5.1581 1.3061 1.8793 1.0996 3.5206 2.9793 5.8447 2.9879 1.8763-0.98981 3.7974-2.9827 3.2795-5.2811-0.74342-1.4276-1.5172-3.0424-0.92311-4.6738 0.19916-1.3242 0.48402-3.1656-0.79192-4.1491-1.8472-1.6361-2.6456-2.5536-3.6429-3.42-1.46-0.98365-1.1648-1.5954-2.7346-1.466z"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.15547;fill:#ececec"
+        />
+        <path
+            id="path6781"
+            d="m273.59-3.1227c-0.88425 0.33719-0.95754 1.0997-2.1631 1.6904-1.24 0.60757-0.92077 2.5044-0.0737 3.863 0.57609 2.036 2.5575 3.6684 4.7156 2.6819 1.542-0.63655 1.32-1.6093 2.7396-3.2732 0.96656-1.1328-0.24835-2.5704-1.5308-3.401-0.70739-0.47916-2.8074-1.6109-3.6878-1.5611z"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.16530;fill:#cccccc"
+        />
+      </g
+      >
+      <g
+          id="g34258"
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 373.24 395.45)"
+        >
+        <path
+            id="path34260"
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+        />
+        <path
+            id="path34262"
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+        />
+        <path
+            id="path34264"
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+        />
+      </g
+      >
+      <g
+          id="g6631"
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 264.12 396.46)"
+        >
+        <path
+            id="path6633"
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+        />
+        <path
+            id="path6635"
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+        />
+        <path
+            id="path6637"
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+        />
+      </g
+      >
+      <g
+          id="g6671"
+          style="fill:none"
+          transform="matrix(.16091 0 0 .16091 300.36 404.4)"
+        >
+        <path
+            id="path6673"
+            d="m90.219 31.25c-15.909 3.2372-29.838 13.146-42.312 23-8.5632 8.3658-10.151 21.159-7.2188 32.25 1.6233 9.7531-1.3659 19.386-5.9688 27.844-3.2262 7.7767-1.0793 18.513 7.6562 20.906 10.97 3.8121 24.172 0.65556 33.928 8.2815 13.442 7.8483 25.608 21.557 42.384 20.75 14.374-7.208 28.414-22.527 24.5-39.719-3.5393-8.1619-9.4088-16.424-6.5938-25.812 1.9346-10.465 4.2247-22.752-4-31.312-9.48-9.87-20.88-17.889-30.81-27.437-3.76-2.944-7.348-6.927-11.561-8.75z"
+            style="stroke-dashoffset:42;stroke:#1d1d1d;fill:#d71212"
+        />
+        <path
+            id="path6675"
+            d="m86.574 37.448c-12.844 1.135-26.198 12.017-37.449 22.364-6.8038 8.5246-5.467 20.108-3.4375 30 0.93183 10.215-3.6579 19.584-7.4375 28.688-1.4516 5.5146 2.0891 13.004 8.5101 13.474 11.512 2.3678 23.554 0.60899 33.177 8.4012 12.088 7.0731 22.645 19.163 37.594 19.219 12.068-6.3666 24.425-19.185 21.094-33.969-4.7817-9.1822-9.7584-19.569-5.9375-30.062 1.281-8.5176 3.1133-20.362-5.0938-26.688-11.88-10.524-17.01-16.425-23.43-21.998-9.388-6.327-7.49-10.262-17.586-9.429z"
+            style="stroke-dashoffset:42;stroke:#7b7b7b;fill:#f15757"
+        />
+        <path
+            id="path6677"
+            d="m84.832 59.637c-5.6876 2.1688-6.1589 7.0732-13.913 10.873-7.9756 3.9079-5.9226 16.109-0.47371 24.847 3.7055 13.096 16.45 23.595 30.332 17.25 9.9182-4.0944 8.4904-10.351 17.622-21.053 6.217-7.2865-1.5974-16.533-9.8462-21.876-4.55-3.082-18.055-10.362-23.718-10.041z"
+            style="stroke-dashoffset:42;stroke:#5f5f5f;stroke-width:1.0632;fill:#ee3030"
+        />
+      </g
+      >
+      <g
+          id="g6719"
+          transform="translate(87.649 414.21)"
+        >
+        <path
+            id="path6721"
+            d="m274.42-7.536c-2.4734 0.50328-4.6389 2.0438-6.5783 3.5758-1.3313 1.3006-1.5781 3.2896-1.1223 5.0139 0.25236 1.5163-0.21236 3.0139-0.92796 4.3289-0.50158 1.2091-0.16781 2.8783 1.1903 3.2503 1.7055 0.59268 3.758 0.10192 5.2748 1.2875 2.0898 1.2202 3.9813 3.3515 6.5895 3.226 2.2348-1.1206 4.4176-3.5023 3.809-6.1751-0.55025-1.2689-1.4628-2.5534-1.0251-4.0131 0.30078-1.6269 0.65682-3.5372-0.62188-4.8682-1.475-1.5345-3.2464-2.7813-4.7904-4.2657-0.58475-0.45765-1.1426-1.077-1.7976-1.3604z"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.15547;fill:#aa1212"
+        />
+        <path
+            id="path6723"
+            d="m273.86-6.5725c-1.9968 0.17659-4.0729 1.8683-5.8221 3.4771-1.0578 1.3253-0.84995 3.1261-0.53443 4.6641 0.14488 1.5881-0.56869 3.0447-1.1563 4.46-0.22568 0.85736 0.3248 2.0217 1.3231 2.0948 1.7898 0.36811 3.6619 0.094676 5.1581 1.3061 1.8793 1.0996 3.5206 2.9793 5.8447 2.9879 1.8763-0.98981 3.7974-2.9827 3.2795-5.2811-0.74342-1.4276-1.5172-3.0424-0.92311-4.6738 0.19916-1.3242 0.48402-3.1656-0.79192-4.1491-1.8472-1.6361-2.6456-2.5536-3.6429-3.42-1.46-0.98365-1.1648-1.5954-2.7346-1.466z"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.15547;fill:#ececec"
+        />
+        <path
+            id="path6725"
+            d="m273.59-3.1227c-0.88425 0.33719-0.95754 1.0997-2.1631 1.6904-1.24 0.60757-0.92077 2.5044-0.0737 3.863 0.57609 2.036 2.5575 3.6684 4.7156 2.6819 1.542-0.63655 1.32-1.6093 2.7396-3.2732 0.96656-1.1328-0.24835-2.5704-1.5308-3.401-0.70739-0.47916-2.8074-1.6109-3.6878-1.5611z"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.16530;fill:#cccccc"
+        />
+      </g
+      >
+      <g
+          id="g6727"
+          transform="translate(52.32 403.78)"
+        >
+        <path
+            id="path6729"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#1e1e1e;stroke-width:.15547;fill:#aa1212"
+            d="m274.42-7.536c-2.4734 0.50328-4.6389 2.0438-6.5783 3.5758-1.3313 1.3006-1.5781 3.2896-1.1223 5.0139 0.25236 1.5163-0.21236 3.0139-0.92796 4.3289-0.50158 1.2091-0.16781 2.8783 1.1903 3.2503 1.7055 0.59268 3.758 0.10192 5.2748 1.2875 2.0898 1.2202 3.9813 3.3515 6.5895 3.226 2.2348-1.1206 4.4176-3.5023 3.809-6.1751-0.55025-1.2689-1.4628-2.5534-1.0251-4.0131 0.30078-1.6269 0.65682-3.5372-0.62188-4.8682-1.475-1.5345-3.2464-2.7813-4.7904-4.2657-0.58475-0.45765-1.1426-1.077-1.7976-1.3604z"
+        />
+        <path
+            id="path6731"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#9e9e9e;stroke-width:.15547;fill:#ececec"
+            d="m273.86-6.5725c-1.9968 0.17659-4.0729 1.8683-5.8221 3.4771-1.0578 1.3253-0.84995 3.1261-0.53443 4.6641 0.14488 1.5881-0.56869 3.0447-1.1563 4.46-0.22568 0.85736 0.3248 2.0217 1.3231 2.0948 1.7898 0.36811 3.6619 0.094676 5.1581 1.3061 1.8793 1.0996 3.5206 2.9793 5.8447 2.9879 1.8763-0.98981 3.7974-2.9827 3.2795-5.2811-0.74342-1.4276-1.5172-3.0424-0.92311-4.6738 0.19916-1.3242 0.48402-3.1656-0.79192-4.1491-1.8472-1.6361-2.6456-2.5536-3.6429-3.42-1.46-0.98365-1.1648-1.5954-2.7346-1.466z"
+        />
+        <path
+            id="path6733"
+            style="fill-opacity:.54902;stroke-dashoffset:42;stroke:#bdbdbd;stroke-width:.16530;fill:#cccccc"
+            d="m273.59-3.1227c-0.88425 0.33719-0.95754 1.0997-2.1631 1.6904-1.24 0.60757-0.92077 2.5044-0.0737 3.863 0.57609 2.036 2.5575 3.6684 4.7156 2.6819 1.542-0.63655 1.32-1.6093 2.7396-3.2732 0.96656-1.1328-0.24835-2.5704-1.5308-3.401-0.70739-0.47916-2.8074-1.6109-3.6878-1.5611z"
+        />
+      </g
+      >
+    </g
+    >
+  </g
+  >
+  <metadata
+    >
+    <rdf:RDF
+      >
+      <cc:Work
+        >
+        <dc:format
+          >image/svg+xml</dc:format
+        >
+        <dc:type
+            rdf:resource="http://purl.org/dc/dcmitype/StillImage"
+        />
+        <cc:license
+            rdf:resource="http://creativecommons.org/licenses/publicdomain/"
+        />
+        <dc:publisher
+          >
+          <cc:Agent
+              rdf:about="http://openclipart.org/"
+            >
+            <dc:title
+              >Openclipart</dc:title
+            >
+          </cc:Agent
+          >
+        </dc:publisher
+        >
+        <dc:title
+          >Cell culture</dc:title
+        >
+        <dc:date
+          >2011-09-25T02:43:54</dc:date
+        >
+        <dc:description
+          >A culture dish with eukaryotic cells</dc:description
+        >
+        <dc:source
+          >https://openclipart.org/detail/161839/cell-culture-by-matrs</dc:source
+        >
+        <dc:creator
+          >
+          <cc:Agent
+            >
+            <dc:title
+              >matrs</dc:title
+            >
+          </cc:Agent
+          >
+        </dc:creator
+        >
+        <dc:subject
+          >
+          <rdf:Bag
+            >
+            <rdf:li
+              >biology</rdf:li
+            >
+            <rdf:li
+              >cell</rdf:li
+            >
+            <rdf:li
+              >cell culture</rdf:li
+            >
+            <rdf:li
+              >eukaryotic</rdf:li
+            >
+          </rdf:Bag
+          >
+        </dc:subject
+        >
+      </cc:Work
+      >
+      <cc:License
+          rdf:about="http://creativecommons.org/licenses/publicdomain/"
+        >
+        <cc:permits
+            rdf:resource="http://creativecommons.org/ns#Reproduction"
+        />
+        <cc:permits
+            rdf:resource="http://creativecommons.org/ns#Distribution"
+        />
+        <cc:permits
+            rdf:resource="http://creativecommons.org/ns#DerivativeWorks"
+        />
+      </cc:License
+      >
+    </rdf:RDF
+    >
+  </metadata
+  >
+</svg
+>
+`;
 const COLOR_MAP = {
   media: "#ff9a66",
   buffer: "#4a90d9",
@@ -1848,19 +2684,31 @@ const STAR_THRESHOLDS = {
   threeStar: 80,
   twoStar: 50
 };
+const BACK_ROW = 50;
+const FRONT_ROW = 68;
+const OUTSIDE_ROW = 68;
 const HOOD_ITEMS = {
-  flask: { x: 30, y: 22, width: 16, height: 28, label: "T-75 Flask" },
-  well_plate: { x: 10, y: 52, width: 35, height: 18, label: "24-Well Plate" },
-  media_bottle: { x: 8, y: 15, width: 12, height: 26, label: "DMEM Media" },
-  trypsin_bottle: { x: 20, y: 15, width: 10, height: 22, label: "Trypsin-EDTA" },
-  aspirating_pipette: { x: 72, y: 10, width: 5, height: 32, label: "Aspirating Pipette" },
-  serological_pipette: { x: 64, y: 10, width: 4, height: 32, label: "Serological Pipette" },
-  waste_container: { x: 82, y: 42, width: 12, height: 18, label: "Waste" },
-  drug_vials: { x: 52, y: 25, width: 14, height: 18, label: "Drug Dilutions" },
-  multichannel_pipette: { x: 78, y: 28, width: 10, height: 22, label: "Multichannel Pipette" },
-  ethanol_bottle: { x: 88, y: 10, width: 8, height: 18, label: "70% Ethanol" },
-  microscope: { x: 82, y: 52, width: 12, height: 22, label: "Microscope" },
-  incubator: { x: 52, y: 48, width: 14, height: 24, label: "Incubator" }
+  // Back row (left to right): clean vessels, do not block airflow
+  flask: { x: 8, groundY: BACK_ROW, width: 12, label: "T-75 Flask", alignY: "bottom" },
+  well_plate: { x: 22, groundY: BACK_ROW, width: 18, label: "24-Well Plate", alignY: "bottom" },
+  media_bottle: { x: 42, groundY: BACK_ROW, width: 8, label: "DMEM Media", alignY: "bottom" },
+  trypsin_bottle: { x: 52, groundY: BACK_ROW, width: 7, label: "Trypsin-EDTA", alignY: "bottom" },
+  // Center working area: pipettes and ethanol (left to right, clean to dirty)
+  ethanol_bottle: { x: 8, groundY: FRONT_ROW, width: 5, label: "70% Ethanol", alignY: "bottom" },
+  serological_pipette: { x: 18, groundY: FRONT_ROW, width: 3, label: "Serological Pipette", alignY: "tip" },
+  aspirating_pipette: { x: 23, groundY: FRONT_ROW, width: 3, label: "Aspirating Pipette", alignY: "tip" },
+  multichannel_pipette: { x: 28, groundY: FRONT_ROW, width: 5, label: "Multichannel Pipette", alignY: "tip" },
+  drug_vials: { x: 38, groundY: FRONT_ROW, width: 14, label: "Drug Dilutions", alignY: "bottom" },
+  // Front-right corner: waste (dirty side)
+  waste_container: { x: 56, groundY: FRONT_ROW, width: 7, label: "Waste", alignY: "bottom" },
+  // Outside hood (right side wall area, x>78%): lab equipment
+  incubator: { x: 78, groundY: OUTSIDE_ROW, width: 10, label: "Incubator", alignY: "bottom" },
+  microscope: { x: 78, groundY: 35, width: 8, label: "Microscope", alignY: "bottom" }
+};
+const TIP_OFFSET = {
+  serological_pipette: 0,
+  aspirating_pipette: 0,
+  multichannel_pipette: 0
 };
 function createWellPlate() {
   const wells = [];
@@ -2654,6 +3502,32 @@ const renderToolbar = () => {
   html += "</div>";
   return html;
 };
+function getItemTopY(itemId, config, heightPct) {
+  const align = config.alignY || "bottom";
+  switch (align) {
+    case "top":
+      return config.groundY;
+    case "center":
+      return config.groundY - heightPct / 2;
+    case "tip": {
+      const offset = TIP_OFFSET[itemId] || 0;
+      return config.groundY - heightPct + offset;
+    }
+    case "bottom":
+    default:
+      return config.groundY - heightPct;
+  }
+}
+function getSvgAspectRatio(svgHtml) {
+  const match = svgHtml.match(/viewBox="([^"]+)"/);
+  if (!match) return 1;
+  const parts = match[1].split(/\s+/);
+  if (parts.length < 4) return 1;
+  const vbWidth = parseFloat(parts[2]);
+  const vbHeight = parseFloat(parts[3]);
+  if (vbWidth <= 0) return 1;
+  return vbHeight / vbWidth;
+}
 function getItemSvgHtml(itemId) {
   switch (itemId) {
     case "flask":
@@ -2695,24 +3569,33 @@ function renderHoodScene() {
   html += "</div>";
   const currentStepData = getCurrentStep();
   const activeTargets = currentStepData && currentStepData.targetItems ? currentStepData.targetItems : [];
+  const sceneEl = document.getElementById("hood-scene");
+  const sceneW = sceneEl ? sceneEl.clientWidth : 800;
+  const sceneH = sceneEl ? sceneEl.clientHeight : 600;
   const entries = Object.entries(HOOD_ITEMS);
   for (let i = 0; i < entries.length; i++) {
     const itemId = entries[i][0];
     const config = entries[i][1];
     const isSelected = gameState.selectedTool === itemId;
     const isTarget = activeTargets.indexOf(itemId) >= 0;
-    const borderStyle = isSelected ? "3px solid #4caf50" : "2px solid transparent";
-    const opacity = isSelected ? "0.7" : "1";
+    const borderStyle = isSelected ? "4px solid #2196f3" : "2px solid transparent";
+    const boxShadow = isSelected ? "0 0 12px rgba(33, 150, 243, 0.5)" : "none";
+    const opacity = "1";
     const activeClass = isTarget && !isSelected ? " is-active" : "";
+    const svgHtml = getItemSvgHtml(itemId);
+    const svgAspect = getSvgAspectRatio(svgHtml);
+    const heightPct = config.width * (sceneW / sceneH) * svgAspect;
+    const topPct = getItemTopY(itemId, config, heightPct);
     html += '<div class="hood-item' + activeClass + '" data-item-id="' + itemId + '" ';
     html += 'style="position:absolute;';
-    html += "left:" + config.x + "%;top:" + config.y + "%;";
-    html += "width:" + config.width + "%;height:" + config.height + "%;";
+    html += "left:" + config.x + "%;top:" + topPct.toFixed(1) + "%;";
+    html += "width:" + config.width + "%;height:" + heightPct.toFixed(1) + "%;";
     html += "cursor:pointer;border:" + borderStyle + ";border-radius:4px;";
+    html += "box-shadow:" + boxShadow + ";";
     html += "opacity:" + opacity + ';transition:all 0.2s ease;" ';
     html += 'draggable="true" ';
     html += 'title="' + config.label + '">';
-    html += getItemSvgHtml(itemId);
+    html += svgHtml;
     html += '<div class="hood-item-label">' + config.label + "</div>";
     html += "</div>";
   }

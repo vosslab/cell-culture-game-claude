@@ -6,7 +6,9 @@ set -e
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
 
-# Build the game
+# Clean previous build artifacts and rebuild from scratch
+echo "Cleaning previous build..."
+rm -f cell_culture_game.html _temp_bundle.js _temp_all.ts
 echo "Building game..."
 bash build_game.sh
 

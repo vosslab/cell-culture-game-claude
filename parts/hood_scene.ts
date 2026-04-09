@@ -2,6 +2,41 @@
 // hood_scene.ts - Main hood view rendering and interaction
 // ============================================
 
+//============================================
+// Compute the top Y position (percentage) for a hood item based on its alignY anchor
+function getItemTopY(itemId: string, config: HoodItemConfig, heightPct: number): number {
+	const align = config.alignY || 'bottom';
+	switch (align) {
+		case 'top':
+			return config.groundY;
+		case 'center':
+			return config.groundY - heightPct / 2;
+		case 'tip': {
+			// tip offset allows fine-tuning when the visual tip is not at the SVG bottom
+			const offset = (TIP_OFFSET as Record<string, number>)[itemId] || 0;
+			return config.groundY - heightPct + offset;
+		}
+		case 'bottom':
+		default:
+			return config.groundY - heightPct;
+	}
+}
+
+//============================================
+// Extract aspect ratio (height/width) from an SVG string's viewBox attribute
+function getSvgAspectRatio(svgHtml: string): number {
+	// match viewBox="minX minY width height"
+	const match = svgHtml.match(/viewBox="([^"]+)"/);
+	if (!match) return 1.0;
+	const parts = match[1].split(/\s+/);
+	if (parts.length < 4) return 1.0;
+	const vbWidth = parseFloat(parts[2]);
+	const vbHeight = parseFloat(parts[3]);
+	if (vbWidth <= 0) return 1.0;
+	return vbHeight / vbWidth;
+}
+
+//============================================
 // Map item IDs to their SVG generator functions
 function getItemSvgHtml(itemId: string): string {
 	switch (itemId) {
@@ -41,6 +76,12 @@ function renderHoodScene(): void {
 	const activeTargets: string[] = currentStepData && currentStepData.targetItems
 		? currentStepData.targetItems : [];
 
+	// Compute scene aspect ratio for height calculation
+	// Hood scene uses the full panel area; ratio converts width% to height%
+	const sceneEl = document.getElementById('hood-scene');
+	const sceneW = sceneEl ? sceneEl.clientWidth : 800;
+	const sceneH = sceneEl ? sceneEl.clientHeight : 600;
+
 	// Place each hood item
 	const entries = Object.entries(HOOD_ITEMS);
 	for (let i = 0; i < entries.length; i++) {
@@ -48,20 +89,32 @@ function renderHoodScene(): void {
 		const config = entries[i][1];
 		const isSelected = gameState.selectedTool === itemId;
 		const isTarget = activeTargets.indexOf(itemId) >= 0;
-		const borderStyle = isSelected ? '3px solid #4caf50' : '2px solid transparent';
-		const opacity = isSelected ? '0.7' : '1';
+		const borderStyle = isSelected ? '4px solid #2196f3' : '2px solid transparent';
+		const boxShadow = isSelected ? '0 0 12px rgba(33, 150, 243, 0.5)' : 'none';
+		const opacity = '1';
 		// Add is-active class for step-aware target highlighting
 		const activeClass = isTarget && !isSelected ? ' is-active' : '';
 
+		// Compute height from SVG aspect ratio so the div matches the artwork
+		const svgHtml = getItemSvgHtml(itemId);
+		const svgAspect = getSvgAspectRatio(svgHtml);
+		// Convert: widthPx = config.width% * sceneW, heightPx = widthPx * svgAspect
+		// height% = heightPx / sceneH * 100
+		const heightPct = config.width * (sceneW / sceneH) * svgAspect;
+
+		// Compute top position based on alignY semantic anchor
+		const topPct = getItemTopY(itemId, config, heightPct);
+
 		html += '<div class="hood-item' + activeClass + '" data-item-id="' + itemId + '" ';
 		html += 'style="position:absolute;';
-		html += 'left:' + config.x + '%;top:' + config.y + '%;';
-		html += 'width:' + config.width + '%;height:' + config.height + '%;';
+		html += 'left:' + config.x + '%;top:' + topPct.toFixed(1) + '%;';
+		html += 'width:' + config.width + '%;height:' + heightPct.toFixed(1) + '%;';
 		html += 'cursor:pointer;border:' + borderStyle + ';border-radius:4px;';
+		html += 'box-shadow:' + boxShadow + ';';
 		html += 'opacity:' + opacity + ';transition:all 0.2s ease;" ';
 		html += 'draggable="true" ';
 		html += 'title="' + config.label + '">';
-		html += getItemSvgHtml(itemId);
+		html += svgHtml;
 		html += '<div class="hood-item-label">' + config.label + '</div>';
 		html += '</div>';
 	}

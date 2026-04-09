@@ -66,6 +66,13 @@ body {
 	/* shadows removed per user feedback */
 }
 
+/* Align SVGs to top of their container so empty space falls below */
+.hood-item {
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+}
+
 /* ===== Protocol Panel ===== */
 #protocol-panel {
 	width: 25%;
@@ -578,7 +585,7 @@ body {
 
 /* ===== Target Highlighting ===== */
 .hood-item.is-active {
-	border: 2px solid rgba(76, 175, 80, 0.7) !important;
+	border: 4px dashed rgba(76, 175, 80, 0.8) !important;
 	border-radius: 6px;
 	box-shadow: 0 0 12px rgba(76, 175, 80, 0.4);
 	animation: targetPulse 2s ease-in-out infinite;
