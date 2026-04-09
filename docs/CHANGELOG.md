@@ -17,10 +17,15 @@
 - Hood scene renderer now consumes `ComputedItemLayout[]` from the layout engine instead of doing inline layout math; items and labels render in separate z-indexed DOM layers (`#hood-items-layer`, `#hood-labels-layer`)
 - Hood item labels now wrap to two lines when too wide, with collision resolution to prevent overlap; labels use shortLabel fallback for tight zones; full educational labels preserved (e.g., "Serological Pipette" not "Sero")
 - Layout engine uses separate visual width and layout footprint: narrow items like pipettes get spacing based on label width, not visual width, preventing label collisions without shrinking objects
-- Pipettes moved from front `tools` zone to back-right `tools_storage` zone, freeing front working area and reducing label density
-- Layout engine derives aspect ratios from SVG viewBox at runtime instead of hardcoded values, making layout robust to SVG asset changes
-- Zone padding (1%) and minimum scale (0.6) prevent items from touching zone edges or shrinking excessively
-- T-75 Flask is now visually larger (widthScale 1.2) and positioned as the primary focal object in the `primary` zone
+- Pipettes moved to back-right `pipettes` zone with `align: 'right'`, clustered against the hood right wall as a tool group
+- Split old `secondary` zone into `plate` (well plate alone), `reagents` (media + trypsin), and `primary` (flask center); layout now reads left-to-right: plate, reagents, flask, pipettes
+- Labels positioned above objects (not below) to avoid escaping the hood work surface; labels anchored to object top edge with consistent offset
+- Left/right aligned zones now cluster items at the specified edge instead of distributing evenly; gap expansion only applies to center-aligned zones
+- Layout engine derives aspect ratios from static SVG constants at runtime (`getStaticSvg()`), not from `getItemSvgHtml()` which depends on game state
+- Footprint and label width estimation unified: both use same `splitLabelAtMiddle()` + char width logic; footprint capped at 1.4x visual width to prevent spacing blowup; gap capped at 4%
+- Scene bounds (`HOOD_BOUNDS`) enforced as final clamp pass in `computeSceneLayout()` for both items and labels
+- Zone padding (1%) and minimum scale (0.75) prevent items from touching zone edges or shrinking excessively
+- T-75 Flask is now visually larger (widthScale 1.2) and positioned as the primary focal object in the center `primary` zone
 - Label font size reduced from 10px to 9px with `white-space: normal` and `text-align: center` for multi-line support
 - Added accessibility attributes on hood items: `role="button"`, `tabindex="0"`, `aria-label`, `aria-pressed`
 - Changed held item highlight from 3px solid green to 4px solid blue border with blue box-shadow; target items now use 4px dashed green border instead of 2px solid green, making holding vs clickable states visually distinct (`parts/hood_scene.ts`, `parts/style.css`)

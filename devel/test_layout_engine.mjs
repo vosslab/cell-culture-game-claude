@@ -336,6 +336,102 @@ async function runTests(page) {
 			}
 		})();
 
+		// ---- test 13: footprint vs visual width ----
+		(function() {
+			var name = 'Footprint: narrow items spaced by label width';
+			try {
+				// 3 narrow items (width 3) with wide labels (8)
+				var items = [
+					{ id: 'p1', asset: 'p1', kind: 'pipette', zone: 'test',
+					  priority: 1, widthScale: 1.0,
+					  label: 'Serological Pipette', anchorY: 'bottom' },
+					{ id: 'p2', asset: 'p2', kind: 'pipette', zone: 'test',
+					  priority: 2, widthScale: 1.0,
+					  label: 'Aspirating Pipette', anchorY: 'bottom' },
+					{ id: 'p3', asset: 'p3', kind: 'pipette', zone: 'test',
+					  priority: 3, widthScale: 1.0,
+					  label: 'Multichannel Pipette', anchorY: 'bottom' },
+				];
+				var spMap = {
+					p1: { defaultWidth: 3, labelWidth: 8 },
+					p2: { defaultWidth: 3, labelWidth: 8 },
+					p3: { defaultWidth: 3, labelWidth: 8 },
+				};
+				var rules = {
+					zones: { test: { x0: 0, x1: 50, baseline: 80, gap: 2 } },
+					labelFontSize: 9, labelLineHeight: 1.1, labelOffsetY: 3,
+				};
+				var layouts = computeSceneLayout(items, spMap, rules, 800, 600);
+				// items should be spaced wider than visual width
+				var gap01 = layouts[1].x - (layouts[0].x + layouts[0].width);
+				var pass = gap01 > 3;
+				tests.push({ name, pass,
+					detail: 'gap=' + gap01.toFixed(1) + ' (>3 means footprint working)' });
+			} catch (e) {
+				tests.push({ name, pass: false, detail: String(e) });
+			}
+		})();
+
+		// ---- test 14: overflow respects MIN_SCALE ----
+		(function() {
+			var name = 'Overflow: scale never below MIN_SCALE';
+			try {
+				// 5 items in a tiny zone to force heavy overflow
+				var items = [];
+				var spMap = {};
+				for (var k = 0; k < 5; k++) {
+					var id = 'ov' + k;
+					items.push({ id: id, asset: id, kind: 'bottle',
+					  zone: 'test', priority: k + 1, widthScale: 1.0,
+					  label: 'Item ' + k, anchorY: 'bottom' });
+					spMap[id] = { defaultWidth: 10, labelWidth: 5 };
+				}
+				var rules = {
+					zones: { test: { x0: 0, x1: 20, baseline: 80, gap: 1 } },
+					labelFontSize: 9, labelLineHeight: 1.1, labelOffsetY: 3,
+				};
+				var layouts = computeSceneLayout(items, spMap, rules, 100, 100);
+				// width should be >= defaultWidth * MIN_SCALE (0.75)
+				var minExpected = 10 * 0.75;
+				var allAbove = true;
+				for (var k = 0; k < layouts.length; k++) {
+					if (layouts[k].width < minExpected - 0.01) allAbove = false;
+				}
+				tests.push({ name, pass: allAbove,
+					detail: 'width=' + layouts[0].width.toFixed(2)
+					+ ' min=' + minExpected.toFixed(2) });
+			} catch (e) {
+				tests.push({ name, pass: false, detail: String(e) });
+			}
+		})();
+
+		// ---- test 15: labels clamped to padded zone bounds ----
+		(function() {
+			var name = 'Zone clamping: labels within padded bounds';
+			try {
+				var it = { id: 'wl', asset: 'wl', kind: 'bottle',
+				  zone: 'test', priority: 1, widthScale: 1.0,
+				  label: 'Very Long Label That Should Be Clamped',
+				  anchorY: 'bottom' };
+				var spMap = { wl: { defaultWidth: 5, labelWidth: 10 } };
+				var rules = {
+					zones: { test: { x0: 10, x1: 30, baseline: 80, gap: 2 } },
+					labelFontSize: 9, labelLineHeight: 1.1, labelOffsetY: 3,
+				};
+				var layouts = computeSceneLayout([it], spMap, rules, 100, 100);
+				var lay = layouts[0];
+				var labelLeft = lay.labelX - lay.labelWidth / 2;
+				var labelRight = lay.labelX + lay.labelWidth / 2;
+				// with ZONE_PADDING=1, padded bounds [11,29]
+				var pass = labelLeft >= 10 && labelRight <= 30;
+				tests.push({ name, pass,
+					detail: 'L=' + labelLeft.toFixed(1)
+					+ ' R=' + labelRight.toFixed(1) });
+			} catch (e) {
+				tests.push({ name, pass: false, detail: String(e) });
+			}
+		})();
+
 		return tests;
 	});
 

@@ -6,6 +6,12 @@
 // Average character width as percentage of font size
 const AVG_CHAR_WIDTH_PCT = 0.55;
 
+// Max footprint inflation: label can expand footprint up to K * visual width
+const MAX_FOOTPRINT_RATIO = 1.4;
+
+// Max gap between items (% of scene) to prevent excessive spreading
+const MAX_GAP = 4;
+
 // Cache for SVG aspect ratios parsed at runtime
 var _aspectRatioCache: Record<string, number> = {};
 
@@ -129,7 +135,9 @@ function layoutZoneItems(
 			}
 			estLabelW = Math.max(maxLineW, specLabelW);
 		}
-		var footprint = Math.max(visualW, estLabelW);
+		// cap label influence on footprint to prevent spacing blowup
+		var cappedLabelW = Math.min(estLabelW, visualW * MAX_FOOTPRINT_RATIO);
+		var footprint = Math.max(visualW, cappedLabelW);
 		widths.push(visualW);
 		footprints.push(footprint);
 		totalFootprint += footprint;
@@ -139,10 +147,10 @@ function layoutZoneItems(
 	var scaleFactor = 1.0;
 	var gap = 0;
 	var startX = effectiveX0;
+	var align = zone.align || 'center';
 
 	if (n === 1) {
 		// single item: place based on alignment, no gap logic
-		var align = zone.align || 'center';
 		if (align === 'center') {
 			startX = effectiveX0
 				+ (zoneWidth - footprints[0]) / 2;
@@ -154,11 +162,16 @@ function layoutZoneItems(
 		// multiple items: use footprints for distribution
 		var totalGapWidth = (n - 1) * zone.gap;
 		if (totalFootprint + totalGapWidth <= zoneWidth) {
-			// items fit: spread gaps evenly
-			gap = Math.max(
-				zone.gap,
-				(zoneWidth - totalFootprint) / (n - 1)
-			);
+			if (align === 'left' || align === 'right') {
+				// left/right align: cluster items at edge, use minimum gap
+				gap = zone.gap;
+			} else {
+				// center align: spread gaps evenly, capped
+				gap = Math.min(
+					MAX_GAP,
+					Math.max(zone.gap, (zoneWidth - totalFootprint) / (n - 1))
+				);
+			}
 		} else {
 			// overflow: shrink gaps first, then scale
 			gap = zone.gap;
@@ -181,7 +194,6 @@ function layoutZoneItems(
 		var totalSpan = scaledFootprintTotal + (n - 1) * gap;
 
 		// compute starting X from alignment
-		var align = zone.align || 'center';
 		if (align === 'center') {
 			startX = effectiveX0
 				+ (zoneWidth - totalSpan) / 2;
@@ -340,7 +352,7 @@ function layoutLabels(
 		lay.labelWidth = finalWidth;
 		lay.labelMultiline = lines.length > 1;
 
-		// center label X on item, clamped to padded zone bounds
+		// label X centered on object, clamped to padded zone bounds
 		var centerX = lay.x + lay.width / 2;
 		var halfW = finalWidth / 2;
 		var paddedX0 = zone.x0 + ZONE_PADDING;
@@ -349,8 +361,8 @@ function layoutLabels(
 		var maxX = paddedX1 - halfW;
 		lay.labelX = Math.max(minX, Math.min(maxX, centerX));
 
-		// label Y below baseline
-		lay.labelY = zone.baseline + rules.labelOffsetY;
+		// labels always above the object to avoid going outside hood
+		lay.labelY = lay.y - rules.labelOffsetY;
 	}
 
 	// second pass: collision resolution per zone
@@ -460,6 +472,31 @@ function computeSceneLayout(
 
 	// compute labels with collision resolution
 	layoutLabels(allLayouts, items, specs, rules);
+
+	// final pass: clamp to scene bounds if defined
+	if (rules.sceneBounds) {
+		var sb = rules.sceneBounds;
+		for (var i = 0; i < allLayouts.length; i++) {
+			var lay = allLayouts[i];
+			// clamp item position
+			if (lay.x < sb.left) lay.x = sb.left;
+			if (lay.x + lay.width > sb.right) {
+				lay.x = sb.right - lay.width;
+			}
+			if (lay.y < sb.top) lay.y = sb.top;
+			if (lay.y + lay.height > sb.bottom) {
+				lay.y = sb.bottom - lay.height;
+			}
+			// clamp label position
+			var halfLW = lay.labelWidth / 2;
+			if (lay.labelX - halfLW < sb.left) {
+				lay.labelX = sb.left + halfLW;
+			}
+			if (lay.labelX + halfLW > sb.right) {
+				lay.labelX = sb.right - halfLW;
+			}
+		}
+	}
 
 	return allLayouts;
 }

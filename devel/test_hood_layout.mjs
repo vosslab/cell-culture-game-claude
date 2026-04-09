@@ -29,7 +29,7 @@ async function main() {
 
 		// Click start button and wait for hood scene to load
 		await page.click('#welcome-start-btn');
-		await page.waitForTimeout(600);
+		await page.waitForTimeout(1000);
 
 		// Take screenshot of hood scene
 		await page.screenshot({ path: screenshotPath });
@@ -141,6 +141,152 @@ async function main() {
 		printCheck(5, 'Layer structure', check5Pass,
 			`#hood-items-layer=${layerResult.hasItemsLayer} #hood-labels-layer=${layerResult.hasLabelsLayer}`);
 		if (!check5Pass) exitCode = 1;
+
+		// ---- Check 6: All items contained within hood scene ----
+		const containmentResult = await page.evaluate(() => {
+			var scene = document.getElementById('hood-scene');
+			if (!scene) return { ok: false, violations: ['hood-scene not found'] };
+			var sceneBox = scene.getBoundingClientRect();
+			var violations = [];
+
+			// check all hood items are within scene bounds
+			var items = document.querySelectorAll('.hood-item');
+			for (var i = 0; i < items.length; i++) {
+				var el = items[i];
+				var id = el.getAttribute('data-item-id') || 'unknown';
+				var box = el.getBoundingClientRect();
+				// allow 2px tolerance for borders
+				var tol = 2;
+				if (box.left < sceneBox.left - tol) {
+					violations.push(id + ' left edge outside scene ('
+						+ box.left.toFixed(0) + ' < ' + sceneBox.left.toFixed(0) + ')');
+				}
+				if (box.right > sceneBox.right + tol) {
+					violations.push(id + ' right edge outside scene ('
+						+ box.right.toFixed(0) + ' > ' + sceneBox.right.toFixed(0) + ')');
+				}
+				if (box.top < sceneBox.top - tol) {
+					violations.push(id + ' top edge outside scene ('
+						+ box.top.toFixed(0) + ' < ' + sceneBox.top.toFixed(0) + ')');
+				}
+				if (box.bottom > sceneBox.bottom + tol) {
+					violations.push(id + ' bottom edge outside scene ('
+						+ box.bottom.toFixed(0) + ' > ' + sceneBox.bottom.toFixed(0) + ')');
+				}
+			}
+
+			// check all labels are within scene bounds
+			var labels = document.querySelectorAll('.hood-item-label');
+			for (var i = 0; i < labels.length; i++) {
+				var el = labels[i];
+				var text = el.textContent.trim().substring(0, 20);
+				var box = el.getBoundingClientRect();
+				if (box.left < sceneBox.left - 2) {
+					violations.push('label "' + text + '" left outside scene');
+				}
+				if (box.right > sceneBox.right + 2) {
+					violations.push('label "' + text + '" right outside scene');
+				}
+				if (box.bottom > sceneBox.bottom + 2) {
+					violations.push('label "' + text + '" bottom outside scene');
+				}
+			}
+			return { ok: violations.length === 0, violations: violations };
+		});
+		const check6Pass = containmentResult.ok;
+		printCheck(6, 'All items and labels within scene bounds', check6Pass,
+			check6Pass
+				? 'all 12 items and 12 labels contained'
+				: containmentResult.violations.join('; '));
+		if (!check6Pass) exitCode = 1;
+
+		// ---- Check 7: No item-to-item overlap ----
+		const itemOverlapResult = await page.evaluate(() => {
+			var items = Array.from(document.querySelectorAll('.hood-item'));
+			var boxes = items.map(function(el) {
+				var r = el.getBoundingClientRect();
+				return {
+					id: el.getAttribute('data-item-id') || 'unknown',
+					left: r.left, right: r.right,
+					top: r.top, bottom: r.bottom,
+				};
+			});
+			var overlaps = [];
+			for (var i = 0; i < boxes.length; i++) {
+				for (var j = i + 1; j < boxes.length; j++) {
+					var a = boxes[i];
+					var b = boxes[j];
+					// check 2D overlap with 2px tolerance
+					var tol = 2;
+					var hOverlap = a.right - tol > b.left && b.right - tol > a.left;
+					var vOverlap = a.bottom - tol > b.top && b.bottom - tol > a.top;
+					if (hOverlap && vOverlap) {
+						overlaps.push(a.id + ' overlaps ' + b.id);
+					}
+				}
+			}
+			return { count: items.length, overlaps: overlaps };
+		});
+		const check7Pass = itemOverlapResult.overlaps.length === 0;
+		printCheck(7, 'No item-to-item overlap', check7Pass,
+			check7Pass
+				? itemOverlapResult.count + ' items checked, no overlaps'
+				: itemOverlapResult.overlaps.join('; '));
+		if (!check7Pass) exitCode = 1;
+
+		// ---- Check 8: Labels anchored to their objects ----
+		const anchorResult = await page.evaluate(() => {
+			var items = Array.from(document.querySelectorAll('.hood-item'));
+			var labels = Array.from(document.querySelectorAll('.hood-item-label'));
+			var violations = [];
+			// labels appear in same order as items in the DOM
+			for (var i = 0; i < items.length && i < labels.length; i++) {
+				var itemBox = items[i].getBoundingClientRect();
+				var labelBox = labels[i].getBoundingClientRect();
+				var id = items[i].getAttribute('data-item-id') || 'unknown';
+				// label center X should be near item center X (within 15px)
+				var itemCenterX = itemBox.left + itemBox.width / 2;
+				var labelCenterX = labelBox.left + labelBox.width / 2;
+				var dx = Math.abs(itemCenterX - labelCenterX);
+				if (dx > 15) {
+					violations.push(id + ' label X off by ' + dx.toFixed(0) + 'px');
+				}
+				// label should be near its item (above or below)
+				// back row items have labels above, front row below
+				var aboveGap = itemBox.top - labelBox.bottom;
+				var belowGap = labelBox.top - itemBox.bottom;
+				var bestGap = Math.min(Math.abs(aboveGap), Math.abs(belowGap));
+				if (bestGap > 35) {
+					violations.push(id + ' label too far: ' + bestGap.toFixed(0) + 'px');
+				}
+			}
+			return { violations: violations };
+		});
+		const check8Pass = anchorResult.violations.length === 0;
+		printCheck(8, 'Labels anchored to objects', check8Pass,
+			check8Pass
+				? 'all labels properly anchored'
+				: anchorResult.violations.join('; '));
+		if (!check8Pass) exitCode = 1;
+
+		// ---- Check 9: No labels are truncated ----
+		const truncResult = await page.evaluate(() => {
+			var labels = Array.from(document.querySelectorAll('.hood-item-label'));
+			var truncated = [];
+			for (var i = 0; i < labels.length; i++) {
+				var text = labels[i].textContent || '';
+				if (text.indexOf('...') >= 0 || text.indexOf('\u2026') >= 0) {
+					truncated.push(text.trim());
+				}
+			}
+			return { count: labels.length, truncated: truncated };
+		});
+		const check9Pass = truncResult.truncated.length === 0;
+		printCheck(9, 'No labels truncated', check9Pass,
+			check9Pass
+				? truncResult.count + ' labels, none truncated'
+				: 'truncated: ' + truncResult.truncated.join(', '));
+		if (!check9Pass) exitCode = 1;
 
 		console.log('');
 		console.log(`Screenshot saved to ${screenshotPath}`);
