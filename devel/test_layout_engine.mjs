@@ -27,6 +27,11 @@ function compileLayoutEngine() {
 async function runTests(page) {
 	// All test logic runs in a single page.evaluate() call
 	const results = await page.evaluate(() => {
+		// shared tolerance for numeric comparisons in tests
+		const TEST_TOLERANCE = 0.01;
+		// internal engine constants reproduced for test assertions
+		const ZONE_PADDING = 1;
+		const MIN_SCALE = 0.75;
 		// ---- helpers ----
 		function item(id, priority, widthScale, anchorY, shortLabel) {
 			return {
@@ -427,6 +432,321 @@ async function runTests(page) {
 				tests.push({ name, pass,
 					detail: 'L=' + labelLeft.toFixed(1)
 					+ ' R=' + labelRight.toFixed(1) });
+			} catch (e) {
+				tests.push({ name, pass: false, detail: String(e) });
+			}
+		})();
+
+		// ---- helper: check mode-specific cluster-anchor invariant ----
+		function anchorOk(layouts, align, x0, x1) {
+			var effX0 = x0 + ZONE_PADDING;
+			var effX1 = x1 - ZONE_PADDING;
+			var first = layouts[0];
+			var last = layouts[layouts.length - 1];
+			if (align === 'left') {
+				return Math.abs(first.x - effX0) < TEST_TOLERANCE;
+			}
+			if (align === 'right') {
+				return Math.abs(
+					(last.x + last.width) - effX1
+				) < TEST_TOLERANCE;
+			}
+			var mid = (first.x + last.x + last.width) / 2;
+			var zm = (effX0 + effX1) / 2;
+			return Math.abs(mid - zm) < TEST_TOLERANCE;
+		}
+
+		// ---- test 16: pipettes-like right-align flush to edge ----
+		(function() {
+			var name = 'Pipettes-like right-align: last visual edge flush';
+			try {
+				var items = [
+					{ id: 's', asset: 's', kind: 'pipette', zone: 'test',
+					  priority: 1, widthScale: 1.0,
+					  label: 'Serological Pipette', anchorY: 'bottom' },
+					{ id: 'a', asset: 'a', kind: 'pipette', zone: 'test',
+					  priority: 2, widthScale: 1.0,
+					  label: 'Aspirating Pipette', anchorY: 'bottom' },
+					{ id: 'm', asset: 'm', kind: 'pipette', zone: 'test',
+					  priority: 3, widthScale: 1.0,
+					  label: 'Multichannel Pipette', anchorY: 'bottom' },
+				];
+				var spMap = {
+					s: { defaultWidth: 3, labelWidth: 6 },
+					a: { defaultWidth: 3, labelWidth: 6 },
+					m: { defaultWidth: 5, labelWidth: 6 },
+				};
+				var rules = {
+					zones: { test: { x0: 54, x1: 82, baseline: 50,
+					  gap: 2, align: 'right' } },
+					labelFontSize: 9, labelLineHeight: 1.1, labelOffsetY: 3,
+				};
+				var layouts = computeSceneLayout(items, spMap, rules, 100, 100);
+				var last = layouts[layouts.length - 1];
+				var effX1 = 82 - ZONE_PADDING;
+				var pass = Math.abs((last.x + last.width) - effX1)
+					< TEST_TOLERANCE;
+				tests.push({ name, pass, detail:
+					'last.x+w=' + (last.x + last.width).toFixed(3)
+					+ ' expected ' + effX1.toFixed(3) });
+			} catch (e) {
+				tests.push({ name, pass: false, detail: String(e) });
+			}
+		})();
+
+		// ---- test 17: right-align overflow past MIN_SCALE (Bug 1) ----
+		(function() {
+			var name = 'Right-align overflow past MIN_SCALE: anchor preserved';
+			try {
+				// zone width 20 (padded 18); 4 items with defaultWidth=8,
+				// gap=1. Total footprint=32 (caps to 1.4*8=11.2 each => 32
+				// since labelWidth 5 < 11.2). After MIN_SCALE (0.75),
+				// scaled total 24, still > 18 -> negative gap branch.
+				var items = [];
+				var spMap = {};
+				for (var k = 0; k < 4; k++) {
+					var id = 'r' + k;
+					items.push({ id: id, asset: id, kind: 'bottle',
+					  zone: 'test', priority: k + 1, widthScale: 1.0,
+					  label: 'Item ' + k, anchorY: 'bottom' });
+					spMap[id] = { defaultWidth: 8, labelWidth: 5 };
+				}
+				var rules = {
+					zones: { test: { x0: 60, x1: 80, baseline: 50,
+					  gap: 1, align: 'right' } },
+					labelFontSize: 9, labelLineHeight: 1.1, labelOffsetY: 3,
+				};
+				var layouts = computeSceneLayout(items, spMap, rules, 100, 100);
+				var last = layouts[layouts.length - 1];
+				var first = layouts[0];
+				var rightFlush = Math.abs((last.x + last.width) - 79)
+					< TEST_TOLERANCE;
+				var firstReasonable = first.x >= 60 - 1;
+				// verify negative-gap branch: items overlap
+				var overlapped = layouts[1].x
+					< layouts[0].x + layouts[0].width;
+				var pass = rightFlush && firstReasonable && overlapped;
+				tests.push({ name, pass,
+					detail: 'rightFlush=' + rightFlush
+					+ ' firstReasonable=' + firstReasonable
+					+ ' overlapped=' + overlapped
+					+ ' last.x+w=' + (last.x + last.width).toFixed(3) });
+			} catch (e) {
+				tests.push({ name, pass: false, detail: String(e) });
+			}
+		})();
+
+		// ---- test 18: left-align overflow past MIN_SCALE (Bug 1 mirror) ----
+		(function() {
+			var name = 'Left-align overflow past MIN_SCALE: first flush to x0';
+			try {
+				var items = [];
+				var spMap = {};
+				for (var k = 0; k < 4; k++) {
+					var id = 'l' + k;
+					items.push({ id: id, asset: id, kind: 'bottle',
+					  zone: 'test', priority: k + 1, widthScale: 1.0,
+					  label: 'Item ' + k, anchorY: 'bottom' });
+					spMap[id] = { defaultWidth: 8, labelWidth: 5 };
+				}
+				var rules = {
+					zones: { test: { x0: 10, x1: 30, baseline: 50,
+					  gap: 1, align: 'left' } },
+					labelFontSize: 9, labelLineHeight: 1.1, labelOffsetY: 3,
+				};
+				var layouts = computeSceneLayout(items, spMap, rules, 100, 100);
+				var first = layouts[0];
+				var pass = Math.abs(first.x - 11) < TEST_TOLERANCE;
+				tests.push({ name, pass,
+					detail: 'first.x=' + first.x.toFixed(3) + ' expected 11' });
+			} catch (e) {
+				tests.push({ name, pass: false, detail: String(e) });
+			}
+		})();
+
+		// ---- test 19: center-align overflow past MIN_SCALE (Bug 1) ----
+		(function() {
+			var name = 'Center-align overflow: cluster midpoint = zone mid';
+			try {
+				var items = [];
+				var spMap = {};
+				for (var k = 0; k < 4; k++) {
+					var id = 'c' + k;
+					items.push({ id: id, asset: id, kind: 'bottle',
+					  zone: 'test', priority: k + 1, widthScale: 1.0,
+					  label: 'Item ' + k, anchorY: 'bottom' });
+					spMap[id] = { defaultWidth: 8, labelWidth: 5 };
+				}
+				var rules = {
+					zones: { test: { x0: 40, x1: 60, baseline: 50,
+					  gap: 1, align: 'center' } },
+					labelFontSize: 9, labelLineHeight: 1.1, labelOffsetY: 3,
+				};
+				var layouts = computeSceneLayout(items, spMap, rules, 100, 100);
+				var first = layouts[0];
+				var last = layouts[layouts.length - 1];
+				var mid = (first.x + last.x + last.width) / 2;
+				var pass = Math.abs(mid - 50) < TEST_TOLERANCE;
+				tests.push({ name, pass,
+					detail: 'mid=' + mid.toFixed(3) + ' expected 50' });
+			} catch (e) {
+				tests.push({ name, pass: false, detail: String(e) });
+			}
+		})();
+
+		// ---- test 20: n === 1 oversized item in each align mode ----
+		(function() {
+			var name = 'n=1 oversized item: alignment anchor honored';
+			try {
+				var alignModes = ['left', 'center', 'right'];
+				var allPass = true;
+				var details = [];
+				for (var ai = 0; ai < alignModes.length; ai++) {
+					var mode = alignModes[ai];
+					var it = { id: 'big', asset: 'big', kind: 'bottle',
+					  zone: 'test', priority: 1, widthScale: 1.0,
+					  label: 'Big Item', anchorY: 'bottom' };
+					var spMap = { big: { defaultWidth: 30, labelWidth: 10 } };
+					var rules = {
+						zones: { test: { x0: 0, x1: 20, baseline: 50,
+						  gap: 2, align: mode } },
+						labelFontSize: 9, labelLineHeight: 1.1, labelOffsetY: 3,
+					};
+					var layouts = computeSceneLayout([it], spMap, rules,
+						100, 100);
+					var ok = anchorOk(layouts, mode, 0, 20);
+					if (!ok) allPass = false;
+					details.push(mode + ':' + (ok ? 'OK' : 'FAIL'));
+				}
+				tests.push({ name, pass: allPass, detail: details.join(' ') });
+			} catch (e) {
+				tests.push({ name, pass: false, detail: String(e) });
+			}
+		})();
+
+		// ---- test 21: n === 2 fit + overflow in each align mode ----
+		(function() {
+			var name = 'n=2 cluster: anchor preserved across all modes';
+			try {
+				var alignModes = ['left', 'center', 'right'];
+				var cases = [
+					{ dw: 5, expect: 'fit' },
+					{ dw: 30, expect: 'overflow' },
+				];
+				var allPass = true;
+				var details = [];
+				for (var ai = 0; ai < alignModes.length; ai++) {
+					for (var ci = 0; ci < cases.length; ci++) {
+						var mode = alignModes[ai];
+						var dw = cases[ci].dw;
+						var items = [
+							{ id: 'a', asset: 'a', kind: 'bottle',
+							  zone: 'test', priority: 1, widthScale: 1.0,
+							  label: 'A', anchorY: 'bottom' },
+							{ id: 'b', asset: 'b', kind: 'bottle',
+							  zone: 'test', priority: 2, widthScale: 1.0,
+							  label: 'B', anchorY: 'bottom' },
+						];
+						var spMap = {
+							a: { defaultWidth: dw, labelWidth: 5 },
+							b: { defaultWidth: dw, labelWidth: 5 },
+						};
+						var rules = {
+							zones: { test: { x0: 0, x1: 30, baseline: 50,
+							  gap: 1, align: mode } },
+							labelFontSize: 9, labelLineHeight: 1.1,
+							labelOffsetY: 3,
+						};
+						var layouts = computeSceneLayout(items, spMap,
+							rules, 100, 100);
+						var ok = anchorOk(layouts, mode, 0, 30);
+						if (!ok) allPass = false;
+						details.push(mode + '/' + cases[ci].expect
+							+ ':' + (ok ? 'OK' : 'FAIL'));
+					}
+				}
+				tests.push({ name, pass: allPass, detail: details.join(' ') });
+			} catch (e) {
+				tests.push({ name, pass: false, detail: String(e) });
+			}
+		})();
+
+		// ---- test 22: narrow item with wide label keeps single line ----
+		(function() {
+			var name = 'Narrow item, wide label: uses footprint availability';
+			try {
+				// defaultWidth 3, labelWidth 6 - footprint capped at
+				// 1.4*3=4.2, labelWidth 6 > 4.2 so footprint = 4.2
+				// Single short label should fit on one line in unscaled
+				// charWidth units (label.length * 0.55 <= 4.2 means
+				// about 7 chars max).
+				var it = { id: 'p', asset: 'p', kind: 'pipette',
+				  zone: 'test', priority: 1, widthScale: 1.0,
+				  label: 'Short', anchorY: 'bottom' };
+				var spMap = { p: { defaultWidth: 3, labelWidth: 6 } };
+				var rules = {
+					zones: { test: { x0: 0, x1: 30, baseline: 50,
+					  gap: 2, align: 'center' } },
+					labelFontSize: 9, labelLineHeight: 1.1, labelOffsetY: 3,
+				};
+				var layouts = computeSceneLayout([it], spMap, rules,
+					100, 100);
+				var lay = layouts[0];
+				// footprint field must be populated and >= width
+				var hasFootprint = typeof lay.footprint === 'number'
+					&& lay.footprint >= lay.width - TEST_TOLERANCE;
+				var singleLine = lay.labelLines.length === 1;
+				var pass = hasFootprint && singleLine;
+				tests.push({ name, pass,
+					detail: 'footprint=' + lay.footprint
+					+ ' width=' + lay.width
+					+ ' lines=' + lay.labelLines.length });
+			} catch (e) {
+				tests.push({ name, pass: false, detail: String(e) });
+			}
+		})();
+
+		// ---- test 23: sceneBounds clamp preserves cluster spacing ----
+		(function() {
+			var name = 'sceneBounds clamp: cluster translated as a unit';
+			try {
+				// place a right-aligned cluster whose rightmost item
+				// escapes sb.right by ~2. All items should shift left
+				// by the same dx.
+				var items = [];
+				var spMap = {};
+				for (var k = 0; k < 3; k++) {
+					var id = 'g' + k;
+					items.push({ id: id, asset: id, kind: 'bottle',
+					  zone: 'test', priority: k + 1, widthScale: 1.0,
+					  label: 'Item ' + k, anchorY: 'bottom' });
+					spMap[id] = { defaultWidth: 5, labelWidth: 3 };
+				}
+				// zone x1=100 so last item right edge = 99; sb.right=97
+				// forces dx = -2 across the whole cluster
+				var rules = {
+					zones: { test: { x0: 70, x1: 100, baseline: 50,
+					  gap: 1, align: 'right' } },
+					labelFontSize: 9, labelLineHeight: 1.1, labelOffsetY: 3,
+					sceneBounds: { left: 0, right: 97, top: 0, bottom: 100 },
+				};
+				var layouts = computeSceneLayout(items, spMap, rules,
+					100, 100);
+				// sort by x to match ordering
+				layouts.sort(function(a, b) { return a.x - b.x; });
+				// check inter-item deltas are consistent (all siblings
+				// shifted uniformly)
+				var d01 = layouts[1].x - layouts[0].x;
+				var d12 = layouts[2].x - layouts[1].x;
+				var uniform = Math.abs(d01 - d12) < TEST_TOLERANCE;
+				var inBounds = (layouts[2].x + layouts[2].width)
+					<= 97 + TEST_TOLERANCE;
+				var pass = uniform && inBounds;
+				tests.push({ name, pass,
+					detail: 'd01=' + d01.toFixed(3)
+					+ ' d12=' + d12.toFixed(3)
+					+ ' lastRight=' + (layouts[2].x + layouts[2].width)
+						.toFixed(3) });
 			} catch (e) {
 				tests.push({ name, pass: false, detail: String(e) });
 			}

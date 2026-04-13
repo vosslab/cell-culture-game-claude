@@ -13,6 +13,11 @@ type SceneItem = {
 	shortLabel?: string;
 	anchorY: 'bottom' | 'tip' | 'center';
 	baselineOverride?: number;
+	// alignStop: only meaningful when the zone uses align: 'tab-stops'.
+	// Items at the same stop are packed together with the zone's gap and
+	// the cluster is anchored to its stop (left wall, row midpoint, or
+	// right wall). Unset items default to 'center'.
+	alignStop?: 'left' | 'center' | 'right';
 };
 
 type AssetSpec = {
@@ -23,12 +28,25 @@ type AssetSpec = {
 };
 
 // Resolved zone with computed x0/x1 (what the engine uses)
+// align:
+//   'left'      -> first item visual left edge flush with effectiveX0
+//   'right'     -> last item visual right edge flush with effectiveX1
+//   'center'    -> cluster visual midpoint at row bounds midpoint, gaps
+//                  capped at MAX_GAP so the cluster may not span the row
+//   'justify'   -> first item flush-left AND last item flush-right; gap
+//                  expands to fill the row (space-between distribution)
+//   'tab-stops' -> each item has a per-item `alignStop` of 'left',
+//                  'center', or 'right'. Items sharing a stop are packed
+//                  with the zone's gap, and each sub-cluster is anchored
+//                  at its stop (like word-processor tab stops). Used for
+//                  grouped layouts (e.g. 3 left, 1 center, 3 right) that
+//                  leave whitespace between groups.
 type ZoneDef = {
 	x0: number;
 	x1: number;
 	baseline: number;
 	gap: number;
-	align?: 'center' | 'left' | 'right';
+	align?: 'center' | 'left' | 'right' | 'justify' | 'tab-stops';
 };
 
 // Semantic zone definition (what humans write)
@@ -38,7 +56,7 @@ type SemanticZoneDef = {
 	widthPct: number;       // how much of the scene width this zone occupies
 	baseline: number;
 	gap: number;
-	align?: 'center' | 'left' | 'right';
+	align?: 'center' | 'left' | 'right' | 'justify' | 'tab-stops';
 };
 
 // Physical scene container bounds (% of viewport)
@@ -64,6 +82,10 @@ type ComputedItemLayout = {
 	y: number;
 	width: number;
 	height: number;
+	// footprint is the horizontal spacing slot for this item, always >= width,
+	// in the same units/scale as width (post-scaleFactor scene %). Used by the
+	// label pass to estimate available label width.
+	footprint: number;
 	tooltip: string;
 	labelLines: string[];
 	labelX: number;

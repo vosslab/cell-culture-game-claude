@@ -2,9 +2,27 @@
 // layout_engine.ts - Scene layout engine
 // Computes positions and labels for scene items
 // ============================================
+//
+// Alignment-preservation invariant (applies under all inputs, including
+// pathological overflow where items visually overlap):
+//
+//   align === 'left':   first.x ~= effectiveX0
+//   align === 'right':  last.x + last.width ~= effectiveX1
+//   align === 'center': (first.x + last.x + last.width) / 2
+//                       ~= (effectiveX0 + effectiveX1) / 2
+//
+// All comparisons use EPSILON tolerance. Visible item overlap is the
+// acceptable signal that content is oversized for its zone; silently
+// re-centering or clamping items to the opposite edge is never acceptable.
+// Bounds checks operate on visual boxes (lay.x, lay.x + lay.width), not
+// footprints. Footprints are spacing hints used only for inter-item
+// distribution and label-availability estimation.
 
 // Average character width as percentage of font size
 const AVG_CHAR_WIDTH_PCT = 0.55;
+
+// Float tolerance for fit-vs-overflow comparisons and invariant checks
+const EPSILON = 0.001;
 
 // Max footprint inflation: label can expand footprint up to K * visual width
 const MAX_FOOTPRINT_RATIO = 1.4;
@@ -72,6 +90,35 @@ const MIN_SCALE = 0.75;
 const ZONE_PADDING = 1;
 
 // ============================================
+// Verify the alignment-preservation invariant for a cluster of items.
+// first = leftmost item (lowest x), last = rightmost item (highest x).
+// Returns true iff the mode-specific visual-edge equality holds.
+function clusterAnchorOk(
+	first: ComputedItemLayout,
+	last: ComputedItemLayout,
+	align: string,
+	effectiveX0: number,
+	effectiveX1: number
+): boolean {
+	if (align === 'left') {
+		return Math.abs(first.x - effectiveX0) < EPSILON;
+	}
+	if (align === 'right') {
+		return Math.abs((last.x + last.width) - effectiveX1) < EPSILON;
+	}
+	if (align === 'justify') {
+		// Both first left edge AND last right edge must be flush.
+		var leftOk = Math.abs(first.x - effectiveX0) < EPSILON;
+		var rightOk = Math.abs((last.x + last.width) - effectiveX1) < EPSILON;
+		return leftOk && rightOk;
+	}
+	// center
+	var clusterMid = (first.x + last.x + last.width) / 2;
+	var zoneMid = (effectiveX0 + effectiveX1) / 2;
+	return Math.abs(clusterMid - zoneMid) < EPSILON;
+}
+
+// ============================================
 function splitLabelAtMiddle(text: string): string[] {
 	// Find the space nearest to the middle of the string
 	var mid = Math.floor(text.length / 2);
@@ -105,6 +152,43 @@ function layoutZoneItems(
 	var results: ComputedItemLayout[] = [];
 	var n = zoneItems.length;
 	if (n === 0) {
+		return results;
+	}
+	// Tab-stops: partition items by per-item alignStop, run each
+	// sub-cluster as its own row with the corresponding alignment, then
+	// concatenate. Items at the same stop are packed with zone.gap; the
+	// whitespace between stops is whatever the sub-cluster math leaves.
+	if (zone.align === 'tab-stops') {
+		var leftItems: SceneItem[] = [];
+		var centerItems: SceneItem[] = [];
+		var rightItems: SceneItem[] = [];
+		for (var ti = 0; ti < n; ti++) {
+			var stop = zoneItems[ti].alignStop || 'center';
+			if (stop === 'left') leftItems.push(zoneItems[ti]);
+			else if (stop === 'right') rightItems.push(zoneItems[ti]);
+			else centerItems.push(zoneItems[ti]);
+		}
+		var groups: Array<{items: SceneItem[], align: string}> = [
+			{ items: leftItems,   align: 'left' },
+			{ items: centerItems, align: 'center' },
+			{ items: rightItems,  align: 'right' },
+		];
+		for (var gi = 0; gi < groups.length; gi++) {
+			if (groups[gi].items.length === 0) continue;
+			var subZone: ZoneDef = {
+				x0: zone.x0,
+				x1: zone.x1,
+				baseline: zone.baseline,
+				gap: zone.gap,
+				align: groups[gi].align as ('left' | 'center' | 'right'),
+			};
+			var subLayouts = layoutZoneItems(
+				groups[gi].items, subZone, specs, viewportW, viewportH
+			);
+			for (var sj = 0; sj < subLayouts.length; sj++) {
+				results.push(subLayouts[sj]);
+			}
+		}
 		return results;
 	}
 	// apply internal zone padding to prevent edge clipping
@@ -150,21 +234,46 @@ function layoutZoneItems(
 	var align = zone.align || 'center';
 
 	if (n === 1) {
-		// single item: place based on alignment, no gap logic
-		if (align === 'center') {
-			startX = effectiveX0
-				+ (zoneWidth - footprints[0]) / 2;
+		// single item: place based on alignment using visual-edge math.
+		// startX is the LEFT EDGE OF THE FOOTPRINT SLOT; the visual box
+		// sits inset by (footprint - width) / 2 inside that slot. To make
+		// the visual edge hug the zone edge, offset startX by that inset.
+		// 'justify' with a single item is ambiguous (both edges cannot be
+		// flush simultaneously); fall back to center placement.
+		var soloInset = (footprints[0] - widths[0]) / 2;
+		if (align === 'center' || align === 'justify') {
+			startX = effectiveX0 + (zoneWidth - widths[0]) / 2 - soloInset;
 		} else if (align === 'right') {
-			startX = effectiveX1 - footprints[0];
+			startX = effectiveX1 - widths[0] - soloInset;
+		} else {
+			// left
+			startX = effectiveX0 - soloInset;
 		}
-		// 'left' keeps startX = effectiveX0
 	} else {
 		// multiple items: use footprints for distribution
 		var totalGapWidth = (n - 1) * zone.gap;
-		if (totalFootprint + totalGapWidth <= zoneWidth) {
+		if (totalFootprint + totalGapWidth <= zoneWidth + EPSILON) {
 			if (align === 'left' || align === 'right') {
 				// left/right align: cluster items at edge, use minimum gap
 				gap = zone.gap;
+			} else if (align === 'justify') {
+				// justify (space-between): expand gap uncapped so first
+				// and last items' VISUAL edges (not footprint edges) land
+				// on effectiveX0 and effectiveX1. The visual span equals
+				// scaledFootprintTotal + (n-1)*gap - firstInset - lastInset
+				// and must equal zoneWidth, so:
+				//   gap = (zoneWidth + firstInset + lastInset - totalFp)
+				//         / (n - 1)
+				var jFirstInset = (footprints[0] - widths[0]) / 2;
+				var jLastInset  = (footprints[n - 1] - widths[n - 1]) / 2;
+				gap = (zoneWidth + jFirstInset + jLastInset - totalFootprint)
+					/ (n - 1);
+				// Never shrink below the zone's configured minimum gap;
+				// if items would need to overlap to reach both edges,
+				// fall back to zone.gap and accept less-than-flush span.
+				if (gap < zone.gap) {
+					gap = zone.gap;
+				}
 			} else {
 				// center align: spread gaps evenly, capped
 				gap = Math.min(
@@ -180,7 +289,7 @@ function layoutZoneItems(
 				(zoneWidth - totalGapWidth) / totalFootprint,
 				1.0
 			);
-			// enforce minimum scale
+			// enforce minimum scale to keep items legible
 			scaleFactor = Math.max(scaleFactor, MIN_SCALE);
 		}
 
@@ -191,19 +300,49 @@ function layoutZoneItems(
 			footprints[i] = footprints[i] * scaleFactor;
 			scaledFootprintTotal += footprints[i];
 		}
+
+		// post-scale overflow recovery (Bug 1 fix): if items still do not
+		// fit after the MIN_SCALE floor was applied, collapse the gap -
+		// potentially to a negative value so items visibly overlap while
+		// the cluster origin still honors the alignment invariant.
+		var naiveSpan = scaledFootprintTotal + (n - 1) * gap;
+		if (naiveSpan > zoneWidth + EPSILON) {
+			gap = (zoneWidth - scaledFootprintTotal) / (n - 1);
+			// gap may be negative; that is intentional
+		}
 		var totalSpan = scaledFootprintTotal + (n - 1) * gap;
 
-		// compute starting X from alignment
+		// compute starting X using visual-edge math: the boundary items'
+		// VISUAL edges (not footprint edges) hug the zone edges.
+		// first item's visual left = startX + (footprints[0] - widths[0]) / 2
+		// last item's  visual right = startX + totalSpan
+		//                             - (footprints[n-1] - widths[n-1]) / 2
+		var firstInset = (footprints[0] - widths[0]) / 2;
+		var lastInset = (footprints[n - 1] - widths[n - 1]) / 2;
 		if (align === 'center') {
-			startX = effectiveX0
-				+ (zoneWidth - totalSpan) / 2;
+			// center the visual span within the zone
+			var visualSpan = totalSpan - firstInset - lastInset;
+			startX = (effectiveX0 + effectiveX1) / 2
+				- visualSpan / 2 - firstInset;
 		} else if (align === 'right') {
-			startX = effectiveX1 - totalSpan;
+			startX = effectiveX1 - totalSpan + lastInset;
+		} else if (align === 'justify') {
+			// justify: first item's visual left edge hugs effectiveX0.
+			// Gap was chosen above so last item's visual right edge lands
+			// on effectiveX1 (space-between distribution). If the gap
+			// floor kicked in (items couldn't expand enough), the right
+			// edge may fall short; that is the intentional fallback.
+			startX = effectiveX0 - firstInset;
+		} else {
+			// left
+			startX = effectiveX0 - firstInset;
 		}
-		// 'left' keeps startX = effectiveX0
 	}
 
-	// assign positions left-to-right using footprints
+	// assign positions left-to-right using footprints.
+	// No per-item visual clamp (Bug 2 fix): the startX math above keeps
+	// items inside the zone by construction. An invariant check after the
+	// loop catches any regression.
 	var curX = startX;
 	for (var i = 0; i < n; i++) {
 		var item = zoneItems[i];
@@ -235,14 +374,6 @@ function layoutZoneItems(
 		// visual X is centered within footprint
 		var visualX = curX + visualOffset;
 
-		// hard clamp visual position to zone bounds
-		if (visualX < effectiveX0) {
-			visualX = effectiveX0;
-		}
-		if (visualX + itemWidth > effectiveX1) {
-			visualX = effectiveX1 - itemWidth;
-		}
-
 		// build layout with placeholder label values
 		// labelX centered on visual object, not footprint
 		var layout: ComputedItemLayout = {
@@ -251,6 +382,7 @@ function layoutZoneItems(
 			y: top,
 			width: itemWidth,
 			height: height,
+			footprint: itemFootprint,
 			tooltip: item.label,
 			labelLines: [],
 			labelX: visualX + itemWidth / 2,
@@ -264,7 +396,64 @@ function layoutZoneItems(
 		curX += itemFootprint + gap;
 	}
 
+	// ---- post-condition invariant checks (safety net for Bug 2 removal) ----
+	// first = leftmost (index 0), last = rightmost (index n-1)
+	var first = results[0];
+	var last = results[n - 1];
+	if (!clusterAnchorOk(first, last, align, effectiveX0, effectiveX1)) {
+		console.warn(
+			'layout_engine: alignment anchor violated'
+			+ ' (align=' + align + ', n=' + n + ')'
+			+ ' first.x=' + first.x.toFixed(3)
+			+ ' last.x+w=' + (last.x + last.width).toFixed(3)
+			+ ' effective=[' + effectiveX0.toFixed(3)
+			+ ',' + effectiveX1.toFixed(3) + ']'
+		);
+	}
+	// visual-box containment only in non-overflow case (gap >= -EPSILON)
+	if (gap >= -EPSILON) {
+		if (first.x < effectiveX0 - EPSILON) {
+			console.warn(
+				'layout_engine: first item escapes left zone edge'
+				+ ' first.x=' + first.x.toFixed(3)
+				+ ' effectiveX0=' + effectiveX0.toFixed(3)
+			);
+		}
+		if (last.x + last.width > effectiveX1 + EPSILON) {
+			console.warn(
+				'layout_engine: last item escapes right zone edge'
+				+ ' last.x+w=' + (last.x + last.width).toFixed(3)
+				+ ' effectiveX1=' + effectiveX1.toFixed(3)
+			);
+		}
+	}
+
 	return results;
+}
+
+// ============================================
+// Group layouts by their source item's zone ID. Uses itemMap for the
+// id -> SceneItem lookup; every layout must resolve or the function throws.
+function groupLayoutsByZone(
+	layouts: ComputedItemLayout[],
+	itemMap: Record<string, SceneItem>
+): Record<string, ComputedItemLayout[]> {
+	var groups: Record<string, ComputedItemLayout[]> = {};
+	for (var i = 0; i < layouts.length; i++) {
+		var src = itemMap[layouts[i].id];
+		if (!src) {
+			throw new Error(
+				'groupLayoutsByZone: layout id ' + layouts[i].id
+				+ ' has no matching item in itemMap'
+			);
+		}
+		var zoneId = src.zone;
+		if (!groups[zoneId]) {
+			groups[zoneId] = [];
+		}
+		groups[zoneId].push(layouts[i]);
+	}
+	return groups;
 }
 
 // ============================================
@@ -287,15 +476,23 @@ function layoutLabels(
 		var spec = specs[item.asset];
 		var zone = rules.zones[item.zone];
 
-		// estimate label width from character count
+		// estimate label width from character count (unscaled char units)
 		var charWidth = item.label.length * AVG_CHAR_WIDTH_PCT;
 		var specWidth = spec.labelWidth * item.widthScale;
 		var estWidth = Math.max(charWidth, specWidth);
 
-		// available width = layout footprint, not just visual
-		var availableWidth = Math.max(
-			lay.width, specWidth
-		);
+		// Available width for label wrap decisions. lay.footprint is
+		// post-scale, so we recover the effective scale from the ratio of
+		// rendered visual width to unscaled visual width and project
+		// lay.footprint back into unscaled units. All comparisons below
+		// (charWidth, estWidth, finalWidth, availableWidth) are then in
+		// unscaled units, matching the existing char-width math.
+		var unscaledVisual = spec.defaultWidth * item.widthScale;
+		var effectiveScale = unscaledVisual > 0
+			? lay.width / unscaledVisual : 1.0;
+		var unscaledFootprint = effectiveScale > 0
+			? lay.footprint / effectiveScale : lay.footprint;
+		var availableWidth = Math.max(unscaledFootprint, specWidth);
 
 		// try full label first
 		var labelText = item.label;
@@ -366,17 +563,7 @@ function layoutLabels(
 	}
 
 	// second pass: collision resolution per zone
-	// group layouts by zone
-	var zoneGroups: Record<string, ComputedItemLayout[]> = {};
-	for (var i = 0; i < layouts.length; i++) {
-		var zoneId = itemMap[layouts[i].id].zone;
-		if (!zoneGroups[zoneId]) {
-			zoneGroups[zoneId] = [];
-		}
-		zoneGroups[zoneId].push(layouts[i]);
-	}
-
-	// resolve collisions in each zone
+	var zoneGroups = groupLayoutsByZone(layouts, itemMap);
 	var zoneKeys = Object.keys(zoneGroups);
 	for (var z = 0; z < zoneKeys.length; z++) {
 		var group = zoneGroups[zoneKeys[z]];
@@ -473,27 +660,95 @@ function computeSceneLayout(
 	// compute labels with collision resolution
 	layoutLabels(allLayouts, items, specs, rules);
 
-	// final pass: clamp to scene bounds if defined
+	// final pass: group-level clamp to scene bounds if defined.
+	// Group items by zone and translate each group as a unit so that
+	// right/center/left alignment semantics are preserved even when one
+	// item in a cluster would violate sceneBounds. (Bug 4 fix.)
 	if (rules.sceneBounds) {
 		var sb = rules.sceneBounds;
-		for (var i = 0; i < allLayouts.length; i++) {
-			var lay = allLayouts[i];
-			// clamp item position
-			if (lay.x < sb.left) lay.x = sb.left;
-			if (lay.x + lay.width > sb.right) {
-				lay.x = sb.right - lay.width;
+		var itemMapForClamp: Record<string, SceneItem> = {};
+		for (var i = 0; i < items.length; i++) {
+			itemMapForClamp[items[i].id] = items[i];
+		}
+		var clampGroups = groupLayoutsByZone(allLayouts, itemMapForClamp);
+		var clampKeys = Object.keys(clampGroups);
+		for (var gi = 0; gi < clampKeys.length; gi++) {
+			var gKey = clampKeys[gi];
+			var gLays = clampGroups[gKey];
+			var gZone = rules.zones[gKey];
+			var gAlign = (gZone && gZone.align) || 'center';
+
+			// compute max violations on each axis
+			var maxLeft = 0;
+			var maxRight = 0;
+			var maxTop = 0;
+			var maxBottom = 0;
+			for (var li = 0; li < gLays.length; li++) {
+				var gLay = gLays[li];
+				if (gLay.x < sb.left) {
+					var lv = sb.left - gLay.x;
+					if (lv > maxLeft) maxLeft = lv;
+				}
+				if (gLay.x + gLay.width > sb.right) {
+					var rv = (gLay.x + gLay.width) - sb.right;
+					if (rv > maxRight) maxRight = rv;
+				}
+				if (gLay.y < sb.top) {
+					var tv = sb.top - gLay.y;
+					if (tv > maxTop) maxTop = tv;
+				}
+				if (gLay.y + gLay.height > sb.bottom) {
+					var bv = (gLay.y + gLay.height) - sb.bottom;
+					if (bv > maxBottom) maxBottom = bv;
+				}
 			}
-			if (lay.y < sb.top) lay.y = sb.top;
-			if (lay.y + lay.height > sb.bottom) {
-				lay.y = sb.bottom - lay.height;
+
+			// x-axis: resolve violations, alignment-preferred tiebreak
+			var dx = 0;
+			if (maxLeft > EPSILON && maxRight > EPSILON) {
+				// group is wider than sceneBounds -- impossible to satisfy
+				// both edges; honor the alignment-preferred edge.
+				if (gAlign === 'right') {
+					dx = -maxRight;
+				} else {
+					// left or center default to left edge
+					dx = maxLeft;
+				}
+				console.warn(
+					'layout_engine: zone "' + gKey
+					+ '" exceeds sceneBounds width'
+					+ ' (align=' + gAlign + ')'
+				);
+			} else if (maxLeft > 0) {
+				dx = maxLeft;
+			} else if (maxRight > 0) {
+				dx = -maxRight;
 			}
-			// clamp label position
-			var halfLW = lay.labelWidth / 2;
-			if (lay.labelX - halfLW < sb.left) {
-				lay.labelX = sb.left + halfLW;
+
+			// y-axis: same pattern but no alignment concept for vertical
+			var dy = 0;
+			if (maxTop > EPSILON && maxBottom > EPSILON) {
+				// height exceeds sceneBounds: prefer top
+				dy = maxTop;
+				console.warn(
+					'layout_engine: zone "' + gKey
+					+ '" exceeds sceneBounds height'
+				);
+			} else if (maxTop > 0) {
+				dy = maxTop;
+			} else if (maxBottom > 0) {
+				dy = -maxBottom;
 			}
-			if (lay.labelX + halfLW > sb.right) {
-				lay.labelX = sb.right - halfLW;
+
+			// apply uniform shift to every item AND label in the group
+			if (dx !== 0 || dy !== 0) {
+				for (var li2 = 0; li2 < gLays.length; li2++) {
+					var s = gLays[li2];
+					s.x += dx;
+					s.y += dy;
+					s.labelX += dx;
+					s.labelY += dy;
+				}
 			}
 		}
 	}

@@ -1,5 +1,46 @@
 # Changelog
 
+## 2026-04-13
+
+### Behavior or Interface Changes
+- Extended `HOOD_ZONES.pipettes` x1 from 82 to 92 so the right-aligned pipette cluster sits flush with the hood interior right wall (~93%) instead of stopping ~11% short; microscope and incubator in the `outside` zone share x-range with pipettes but live at baseline 68 (front row, below the hood opening) while pipettes anchor at baseline 50 (back row), so no physical overlap (`parts/hood_config.ts`)
+- Right-aligned and left-aligned zones now position boundary items by their VISUAL edge (not footprint edge), so clusters are flush with the zone edge when items have footprint > visual width (e.g., narrow pipettes with wide labels); user-visible effect: pipettes are now flush with the hood right wall instead of sitting ~0.5-0.8% short (`parts/layout_engine.ts`)
+- Center-aligned zones now center the visual span (not the footprint span) of the cluster, so clusters with asymmetric first/last footprint insets are centered correctly
+- Single-item zones (n===1) now apply the same visual-edge math, honoring alignment intent even when the item's label-derived footprint is wider than its visual
+
+### Additions and New Features
+- Added `align: 'tab-stops'` mode to the row layout engine: each item declares a per-item `alignStop` of `'left' | 'center' | 'right'`, items sharing a stop are packed together with the zone's gap, and each sub-cluster is anchored at its stop (left wall, row midpoint, or right wall). Whitespace falls between the packed groups rather than between every item, so layouts read as discrete clusters rather than evenly distributed rows. Implemented by partitioning zone items by `alignStop` and recursively invoking `layoutZoneItems` with three synthetic sub-zones (`parts/layout_engine.ts`, `parts/scene_types.ts`)
+
+### Behavior or Interface Changes
+- Collapsed the four hood-interior back-row zones (`plate`, `reagents`, `primary`, `pipettes`) into a single `back_row` zone spanning the full hood interior `[x0=7, x1=93]` and the two hood-interior front-row zones (`tools_active`, `dirty`) into a single `front_row` at `[x0=7, x1=77]`; both rows use the new `align: 'tab-stops'` mode with three anchor groups each (left wall / row midpoint / right wall); the previous zone-partitioned model was imposing artificial sub-row boundaries and intermediate `justify` (space-between) attempts produced evenly distributed rows instead of the intended grouped clusters (`parts/hood_config.ts`)
+- Back row `alignStop` groups: left = 24-well plate, DMEM media, Trypsin-EDTA; center = T-75 flask (dominant working object); right = serological, aspirating, multichannel pipettes. Front row `alignStop` groups: left = 70% ethanol; center = drug dilutions; right = waste container. `front_row.x1=77` intentionally leaves the hood-interior right band clear of the `outside` zone (microscope + incubator) which shares baseline 68
+- Added `baselineOverride: 52` on the `flask` item spec so the flask's bottom anchor sits 2% lower than the other back-row items (matching the original `primary` zone's baseline=52 visual alignment with the work-surface line)
+
+### Fixes and Maintenance
+- Investigated reported "pipette row gap" and confirmed the row alignment engine in `parts/layout_engine.ts` already implements the intended row model correctly (single `startX` per row, insertion-order placement, overflow-gap collapse, group-level `sceneBounds` clamp, `lay.footprint`-based label width); the reported alignment issue was caused by the hood scene being partitioned into multiple narrow row configs in `parts/hood_config.ts`, not by a defect in the row alignment engine; intermediate attempts to widen only the `pipettes` row (x1=92 -> x1=100) overshot the hood interior wall on tall-aspect viewports and exposed the true root cause, which was the zone model itself
+- Corrected misleading comment in `parts/hood_config.ts` that described the hood interior right wall as "~93%, with 1% padding"; the hood-bg SVG in `parts/svg_assets.ts getHoodBackgroundSvg` is an 800x600 viewBox with interior walls drawn at `x=60` and `x=740` (7.5% and 92.5% of the SVG width), and the collapsed row bounds `[7, 93]` now reflect that geometry directly
+- Fixed Bug 1: overflow beyond `MIN_SCALE` (0.75) no longer leaves clusters with startX outside the zone; when items cannot fit at `MIN_SCALE`, the gap is now collapsed (possibly to a negative value) so visual overlap is accepted while the cluster origin still honors the alignment invariant (`parts/layout_engine.ts`)
+- Fixed Bug 2: removed per-item visual clamp that silently rewrote item positions and decoupled `curX` advancement from actual rendered positions; replaced with a per-zone post-condition invariant check that calls `console.warn` on regression instead of masking bugs
+- Fixed Bug 3: label pass now uses `lay.footprint` (newly added) instead of `lay.width` for available-width estimation, matching the original comment's stated intent; unit reconciliation recovers `effectiveScale = lay.width / unscaledVisual` so footprint and spec values are compared in the same coordinate system; added `footprint: number` field to `ComputedItemLayout` in `parts/scene_types.ts`
+- Fixed Bug 4: final `sceneBounds` clamp is now group-level (per zone) instead of per-item; computes a single `dx`/`dy` per zone group from the maximum violation across siblings and translates the entire cluster uniformly, preserving inter-item spacing and alignment; alignment-preferred tiebreak (right-align zones honor the right edge, left/center honor the left edge) when a group exceeds `sceneBounds` on both sides, with a `console.warn` for configuration visibility
+- Added module-level alignment-preservation invariant comment to `parts/layout_engine.ts` documenting the three mode-specific visual-edge equalities
+- Added `EPSILON = 0.001` constant and `clusterAnchorOk()` helper function for consistent float-tolerance comparisons across engine, assertions, and tests
+- Extracted `groupLayoutsByZone(layouts, itemMap)` helper; reused by `layoutLabels` collision pass and `computeSceneLayout` sceneBounds clamp
+- Documented the non-bug flagged in initial review: the braceless `for (var pass = 0; pass < 3; pass++)` in `layoutLabels` is correct because the outer loop's body is the entire inner `for` statement with its own block
+
+### Developer Tests and Notes
+- Added 8 new regression tests to `devel/test_layout_engine.mjs` (total now 23):
+  - Pipettes-like right-align: last visual edge flush with effective zone right
+  - Right-align overflow past `MIN_SCALE`: anchor preserved, items visually overlap
+  - Left-align overflow past `MIN_SCALE`: first item flush with effective zone left
+  - Center-align overflow: cluster midpoint equals zone midpoint
+  - `n===1` oversized items in all three alignment modes
+  - `n===2` clusters in all three alignment modes, both fit and overflow
+  - Narrow item with wide label uses footprint-based availability (single line)
+  - `sceneBounds` clamp translates right-aligned cluster as a unit, preserving inter-item deltas
+- Shared `TEST_TOLERANCE = 0.01` constant and `anchorOk(layouts, align, x0, x1)` helper added to the test file for consistent invariant verification
+- Hood visual test (`devel/test_hood_layout.mjs`) still passes all 9 checks after fixes
+
 ## 2026-04-09
 
 ### Additions and New Features
