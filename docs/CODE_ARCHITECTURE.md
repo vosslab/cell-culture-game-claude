@@ -129,8 +129,7 @@ source source_me.sh && python3 -m pytest tests/
 - **Style:** indentation (tabs), whitespace, shebang consistency
 - **Imports:** no `import *`, no relative imports, all third-party in
   requirements files
-- **E2E:** Playwright walkthrough exercises all 9 protocol steps with
-  screenshot capture
+- **E2E:** `bash walkthrough.sh` runs [devel/protocol_walkthrough.mjs](../devel/protocol_walkthrough.mjs), a two-pass Playwright test that walks the explicit `nextId` chain through all 25 protocol steps, screenshots each, and asserts `validateTriggerCoverage()` passes. See [docs/PROTOCOL_STEPS.md](PROTOCOL_STEPS.md) for the protocol-flow architecture.
 
 Test scope is controllable via environment variables (`FAST_REPO_HYGIENE=1`,
 `REPO_HYGIENE_SCOPE=changed`, `SKIP_REPO_HYGIENE=1`).
@@ -138,8 +137,12 @@ Test scope is controllable via environment variables (`FAST_REPO_HYGIENE=1`,
 ## Extension points
 
 - **New protocol steps:** Add entries to `PROTOCOL_STEPS` in
-  [parts/constants.ts](../parts/constants.ts) and implement the corresponding
-  scene renderer
+  [parts/constants.ts](../parts/constants.ts), wire a `triggerStep(id)` call
+  in the scene that owns the step, and add a module-scope
+  `registeredTriggers.add(id)` pre-registration line. Step ordering uses
+  explicit `nextId` linked-list transitions (not array position). Full
+  instructions, validators, and the walkthrough test are documented in
+  [docs/PROTOCOL_STEPS.md](PROTOCOL_STEPS.md).
 - **New scenes:** Create a new `*_scene.ts` file in `parts/`, add it to the
   build order in [build_game.sh](../build_game.sh), and register it in the
   render dispatcher in [parts/init.ts](../parts/init.ts)

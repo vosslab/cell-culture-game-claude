@@ -659,18 +659,47 @@ body {
 	transition: all 0.2s ease;
 }
 
+/* is-selected: the tool the student is currently holding. Strongest
+ * visual cue in the scene -- dominates is-active because the held tool
+ * is what "moves with" the player's attention. Thick blue border, blue
+ * background tint, and a second concentric blue outline that breathes
+ * outward via outline-offset. No drop shadows. See the user preference
+ * documented in .claude memory (feedback_no_shadows.md).
+ */
 .hood-item.is-selected {
-	border: 4px solid #2196f3 !important;
-	border-radius: 4px;
-	box-shadow: 0 0 12px rgba(33, 150, 243, 0.5);
+	border: 5px solid #1565c0 !important;
+	border-radius: 6px;
+	background-color: rgba(21, 101, 192, 0.18);
+	outline: 4px solid #1565c0;
+	outline-offset: 4px;
+	animation: selectedPulse 1.4s ease-in-out infinite;
 }
 
-/* ===== Target Highlighting ===== */
+@keyframes selectedPulse {
+	0%, 100% {
+		outline-offset: 3px;
+		outline-width: 4px;
+	}
+	50% {
+		outline-offset: 8px;
+		outline-width: 5px;
+	}
+}
+
+/* ===== Target Highlighting =====
+ * Quieter than is-selected -- the held tool must dominate visually. 3px
+ * solid green #2e7d32 (4.9:1 on white, meets WCAG AA for graphics) with
+ * a second concentric outline that gently breathes via outline-offset.
+ * No background tint; that weight is reserved for is-selected. No drop
+ * shadows. See docs/ACCESSIBILITY_REVIEW.md: pair color with size and
+ * motion so the cue is not color-only.
+ */
 .hood-item.is-active {
-	border: 4px dashed rgba(76, 175, 80, 0.8) !important;
+	border: 3px solid #2e7d32 !important;
 	border-radius: 6px;
-	box-shadow: 0 0 12px rgba(76, 175, 80, 0.4);
-	animation: targetPulse 2s ease-in-out infinite;
+	outline: 2px solid #2e7d32;
+	outline-offset: 2px;
+	animation: targetPulse 2.2s ease-in-out infinite;
 }
 
 /* ===== Depth tier cues ===== */
@@ -698,10 +727,12 @@ body {
 
 @keyframes targetPulse {
 	0%, 100% {
-		box-shadow: 0 0 8px rgba(76, 175, 80, 0.3);
+		outline-offset: 2px;
+		outline-width: 2px;
 	}
 	50% {
-		box-shadow: 0 0 16px rgba(76, 175, 80, 0.6);
+		outline-offset: 5px;
+		outline-width: 3px;
 	}
 }
 
@@ -4610,6 +4641,32 @@ const renderToolbar = () => {
   html += "</div>";
   return html;
 };
+function getStartingToolForStep(step) {
+  if (!step.targetItems) return null;
+  for (const itemId of step.targetItems) {
+    const item = HOOD_SCENE_ITEMS.find((i) => i.id === itemId);
+    if (item && item.kind === "pipette") {
+      return item.id;
+    }
+  }
+  return null;
+}
+function getReagentSourceForStep(step) {
+  if (!step.targetItems) return null;
+  for (const itemId of step.targetItems) {
+    const item = HOOD_SCENE_ITEMS.find((i) => i.id === itemId);
+    if (item && (item.kind === "bottle" || item.kind === "rack")) {
+      return item.id;
+    }
+  }
+  for (const itemId of step.targetItems) {
+    const item = HOOD_SCENE_ITEMS.find((i) => i.id === itemId);
+    if (item && item.kind !== "pipette" && item.kind !== "plate") {
+      return item.id;
+    }
+  }
+  return null;
+}
 registeredTriggers.add("spray_hood");
 registeredTriggers.add("pbs_wash");
 registeredTriggers.add("add_trypsin");
@@ -4733,23 +4790,34 @@ function renderHoodScene() {
     if (actions.length > 0) {
       hintText = actions[0];
     } else {
-      hintText = "Current step: " + currentStep.label;
+      hintText = currentStep.action;
+      if (!gameState.selectedTool) {
+        const startTool = getStartingToolForStep(currentStep);
+        if (startTool) {
+          const startLabel = getHoodItemLabel(startTool);
+          hintText = "Pick up the " + startLabel + " -- " + currentStep.action;
+        }
+      }
     }
   }
   if (gameState.selectedTool) {
     const toolLabel = getHoodItemLabel(gameState.selectedTool);
     if (gameState.selectedTool === "serological_pipette") {
-      if (gameState.trypsinAdded && !gameState.trypsinNeutralized) {
-        hintText = "Holding: " + toolLabel + " -- Click the media bottle to neutralize trypsin";
-      } else if (!gameState.trypsinAdded && gameState.flaskMediaMl < 1) {
-        hintText = "Holding: " + toolLabel + " -- Click the trypsin bottle";
-      } else if (gameState.flaskMediaAge === "old" || gameState.flaskMediaMl < 1) {
-        hintText = "Holding: " + toolLabel + " -- Click the trypsin or media bottle";
+      if (currentStep) {
+        const source = getReagentSourceForStep(currentStep);
+        if (source) {
+          const sourceLabel = getHoodItemLabel(source);
+          hintText = "Holding: " + toolLabel + " -- Click the " + sourceLabel;
+        } else {
+          hintText = "Holding: " + toolLabel + " -- " + currentStep.action;
+        }
       } else {
-        hintText = "Holding: " + toolLabel + " -- Click the flask";
+        hintText = "Holding: " + toolLabel;
       }
     } else if (gameState.selectedTool === "serological_pipette_with_trypsin") {
       hintText = "Trypsin loaded -- Click the flask to add";
+    } else if (gameState.selectedTool === "serological_pipette_with_pbs") {
+      hintText = "PBS loaded -- Click the flask to rinse";
     } else if (gameState.selectedTool === "serological_pipette_with_sample") {
       hintText = "Cell sample loaded -- Click the microscope to load hemocytometer";
     } else if (gameState.selectedTool === "serological_pipette_with_media") {
@@ -4757,7 +4825,17 @@ function renderHoodScene() {
     } else if (gameState.selectedTool === "serological_pipette_with_cells") {
       hintText = "Cells loaded -- Click the 24-well plate";
     } else if (gameState.selectedTool === "multichannel_pipette") {
-      hintText = "Holding: " + toolLabel + " -- Click the drug vials";
+      if (currentStep) {
+        const source = getReagentSourceForStep(currentStep);
+        if (source) {
+          const sourceLabel = getHoodItemLabel(source);
+          hintText = "Holding: " + toolLabel + " -- Click the " + sourceLabel;
+        } else {
+          hintText = "Holding: " + toolLabel + " -- " + currentStep.action;
+        }
+      } else {
+        hintText = "Holding: " + toolLabel;
+      }
     } else if (gameState.selectedTool === "multichannel_pipette_with_drug") {
       hintText = "Drugs loaded -- Click the 24-well plate";
     } else if (gameState.selectedTool === "aspirating_pipette") {
@@ -4771,9 +4849,12 @@ function renderHoodScene() {
     }
   }
   html += '<div id="hood-toolbar" style="position:absolute;top:8px;left:50%;transform:translateX(-50%);';
-  html += "background:rgba(255,255,255,0.92);padding:10px 24px;border-radius:20px;";
-  html += "font-size:16px;font-weight:500;color:#212121;";
-  html += 'white-space:nowrap;z-index:100;display:flex;align-items:center;gap:12px;">';
+  html += "background:#ffffff;padding:12px 28px 12px 22px;border-radius:10px;";
+  html += "border:2px solid #2e7d32;border-left-width:6px;";
+  html += "font-size:18px;font-weight:700;color:#1a1a1a;letter-spacing:0.2px;";
+  html += 'white-space:nowrap;z-index:100;display:flex;align-items:center;gap:14px;">';
+  html += '<span style="font-size:12px;font-weight:700;text-transform:uppercase;';
+  html += 'letter-spacing:1.2px;color:#2e7d32;">Next</span>';
   html += "<span>" + hintText + "</span>";
   if (gameState.selectedTool) {
     html += '<button id="put-down-btn" style="padding:4px 12px;background:#ef5350;color:#fff;';
@@ -4877,6 +4958,22 @@ function onItemClick(itemId) {
       gameState.trypsinNeutralized = true;
     }
     startAddingMedia();
+    renderHoodScene();
+    renderProtocolPanel();
+    renderScoreDisplay();
+    return;
+  }
+  if (tool === "serological_pipette" && itemId === "pbs_bottle") {
+    gameState.selectedTool = "serological_pipette_with_pbs";
+    showNotification("PBS loaded into pipette. Click the flask to rinse.");
+    renderHoodScene();
+    return;
+  }
+  if (tool === "serological_pipette_with_pbs" && itemId === "flask") {
+    gameState.selectedTool = null;
+    gameState.flaskMediaAge = "fresh";
+    triggerStep("pbs_wash");
+    showNotification("Flask rinsed with PBS.", "success");
     renderHoodScene();
     renderProtocolPanel();
     renderScoreDisplay();

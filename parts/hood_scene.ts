@@ -2,6 +2,53 @@
 // hood_scene.ts - Main hood view rendering and interaction
 // ============================================
 
+//============================================
+// Return the id of the first pipette-kind target item for a step, or
+// null if the step has no pipette target. Used by the toolbar hint to
+// tell the student which tool to pick up first when they are not yet
+// holding anything. Searches HOOD_SCENE_ITEMS for each target id; if
+// the student is standing in the hood and the step targets a pipette,
+// that pipette is "what to pick up".
+function getStartingToolForStep(step: ProtocolStep): string | null {
+	if (!step.targetItems) return null;
+	for (const itemId of step.targetItems) {
+		const item = HOOD_SCENE_ITEMS.find(i => i.id === itemId);
+		if (item && item.kind === 'pipette') {
+			return item.id;
+		}
+	}
+	return null;
+}
+
+//============================================
+// Return the id of the reagent source the student should click next
+// when holding an unloaded pipette. The "source" is the container to
+// draw from -- a bottle or rack for most steps, falling back to the
+// flask for draw-from-flask steps (aspirate old media, seed plate).
+// Used by the toolbar hint to tell the student "click the X" after
+// they pick up a pipette but before they have loaded anything into
+// it. Scene code derives this from the current step's targetItems so
+// the hint and the green is-active highlights share one truth.
+function getReagentSourceForStep(step: ProtocolStep): string | null {
+	if (!step.targetItems) return null;
+	// Preferred: a bottle or rack in the targets (reagent container)
+	for (const itemId of step.targetItems) {
+		const item = HOOD_SCENE_ITEMS.find(i => i.id === itemId);
+		if (item && (item.kind === 'bottle' || item.kind === 'rack')) {
+			return item.id;
+		}
+	}
+	// Fallback: first non-pipette, non-plate target (usually the flask
+	// for aspirate_old_media and seed_plate)
+	for (const itemId of step.targetItems) {
+		const item = HOOD_SCENE_ITEMS.find(i => i.id === itemId);
+		if (item && item.kind !== 'pipette' && item.kind !== 'plate') {
+			return item.id;
+		}
+	}
+	return null;
+}
+
 // Pre-register every step id this scene owns. validateTriggerCoverage()
 // runs on the load event -- before any click handlers have fired -- and
 // verifies that each PROTOCOL_STEPS id is in registeredTriggers. Each
@@ -131,24 +178,49 @@ function renderHoodScene(): void {
 		if (actions.length > 0) {
 			hintText = actions[0];
 		} else {
-			hintText = 'Current step: ' + currentStep.label;
+			// Base hint is the step's action text. If the step requires a
+			// tool (pipette) and the student is not yet holding one, append
+			// a "pick up the X" suggestion so the hint tells them where to
+			// start. Without this the banner said things like "Wash the
+			// flask with 4 mL PBS" with no indication that they must pick
+			// up the serological pipette first.
+			hintText = currentStep.action;
+			if (!gameState.selectedTool) {
+				const startTool = getStartingToolForStep(currentStep);
+				if (startTool) {
+					const startLabel = getHoodItemLabel(startTool);
+					hintText = 'Pick up the ' + startLabel + ' -- ' + currentStep.action;
+				}
+			}
 		}
 	}
 	if (gameState.selectedTool) {
 		const toolLabel = getHoodItemLabel(gameState.selectedTool);
 		// Provide context-aware next action when holding a tool
 		if (gameState.selectedTool === 'serological_pipette') {
-			if (gameState.trypsinAdded && !gameState.trypsinNeutralized) {
-				hintText = 'Holding: ' + toolLabel + ' -- Click the media bottle to neutralize trypsin';
-			} else if (!gameState.trypsinAdded && gameState.flaskMediaMl < 1) {
-				hintText = 'Holding: ' + toolLabel + ' -- Click the trypsin bottle';
-			} else if (gameState.flaskMediaAge === 'old' || gameState.flaskMediaMl < 1) {
-				hintText = 'Holding: ' + toolLabel + ' -- Click the trypsin or media bottle';
+			// Held an unloaded serological pipette: the next click is
+			// the reagent source for the current protocol step. Derived
+			// from step.targetItems via getReagentSourceForStep so the
+			// hint, the green is-active highlights, and the actual
+			// protocol state share one truth. Prior versions peeked at
+			// gameState.trypsinAdded/flaskMediaMl/flaskMediaAge and
+			// could show a misleading hint -- the new source-of-truth
+			// is the current step.
+			if (currentStep) {
+				const source = getReagentSourceForStep(currentStep);
+				if (source) {
+					const sourceLabel = getHoodItemLabel(source);
+					hintText = 'Holding: ' + toolLabel + ' -- Click the ' + sourceLabel;
+				} else {
+					hintText = 'Holding: ' + toolLabel + ' -- ' + currentStep.action;
+				}
 			} else {
-				hintText = 'Holding: ' + toolLabel + ' -- Click the flask';
+				hintText = 'Holding: ' + toolLabel;
 			}
 		} else if (gameState.selectedTool === 'serological_pipette_with_trypsin') {
 			hintText = 'Trypsin loaded -- Click the flask to add';
+		} else if (gameState.selectedTool === 'serological_pipette_with_pbs') {
+			hintText = 'PBS loaded -- Click the flask to rinse';
 		} else if (gameState.selectedTool === 'serological_pipette_with_sample') {
 			hintText = 'Cell sample loaded -- Click the microscope to load hemocytometer';
 		} else if (gameState.selectedTool === 'serological_pipette_with_media') {
@@ -156,7 +228,22 @@ function renderHoodScene(): void {
 		} else if (gameState.selectedTool === 'serological_pipette_with_cells') {
 			hintText = 'Cells loaded -- Click the 24-well plate';
 		} else if (gameState.selectedTool === 'multichannel_pipette') {
-			hintText = 'Holding: ' + toolLabel + ' -- Click the drug vials';
+			// Unloaded multichannel pipette: derive next click from the
+			// current step's reagent source. The prior hardcoded "Click
+			// the drug vials" only made sense under the legacy 12-step
+			// protocol and is wrong for seed_plate, media_adjust,
+			// add_carboplatin, add_metformin, add_mtt, add_dmso.
+			if (currentStep) {
+				const source = getReagentSourceForStep(currentStep);
+				if (source) {
+					const sourceLabel = getHoodItemLabel(source);
+					hintText = 'Holding: ' + toolLabel + ' -- Click the ' + sourceLabel;
+				} else {
+					hintText = 'Holding: ' + toolLabel + ' -- ' + currentStep.action;
+				}
+			} else {
+				hintText = 'Holding: ' + toolLabel;
+			}
 		} else if (gameState.selectedTool === 'multichannel_pipette_with_drug') {
 			hintText = 'Drugs loaded -- Click the 24-well plate';
 		} else if (gameState.selectedTool === 'aspirating_pipette') {
@@ -170,10 +257,18 @@ function renderHoodScene(): void {
 		}
 	}
 
+	// "Current step" banner. Opaque white background, solid green left
+	// accent matching the target outline, bold large text. Pairs color
+	// with size and weight so the cue is not color-only, per
+	// docs/ACCESSIBILITY_REVIEW.md. No drop shadows -- uses a solid green
+	// border on all sides for edge definition instead.
 	html += '<div id="hood-toolbar" style="position:absolute;top:8px;left:50%;transform:translateX(-50%);';
-	html += 'background:rgba(255,255,255,0.92);padding:10px 24px;border-radius:20px;';
-	html += 'font-size:16px;font-weight:500;color:#212121;';
-	html += 'white-space:nowrap;z-index:100;display:flex;align-items:center;gap:12px;">';
+	html += 'background:#ffffff;padding:12px 28px 12px 22px;border-radius:10px;';
+	html += 'border:2px solid #2e7d32;border-left-width:6px;';
+	html += 'font-size:18px;font-weight:700;color:#1a1a1a;letter-spacing:0.2px;';
+	html += 'white-space:nowrap;z-index:100;display:flex;align-items:center;gap:14px;">';
+	html += '<span style="font-size:12px;font-weight:700;text-transform:uppercase;';
+	html += 'letter-spacing:1.2px;color:#2e7d32;">Next</span>';
 	html += '<span>' + hintText + '</span>';
 	// Show put-down button when a tool is selected
 	if (gameState.selectedTool) {
@@ -319,7 +414,29 @@ function onItemClick(itemId: string): void {
 		return;
 	}
 
-	// PBS bottle -> flask: wash after aspirating old media
+	// Serological pipette -> pbs_bottle: load PBS (mirrors trypsin/media flow
+	// so all reagent-loading steps use the same pipette pattern)
+	if (tool === 'serological_pipette' && itemId === 'pbs_bottle') {
+		gameState.selectedTool = 'serological_pipette_with_pbs';
+		showNotification('PBS loaded into pipette. Click the flask to rinse.');
+		renderHoodScene();
+		return;
+	}
+
+	// Loaded serological pipette (PBS) -> flask: rinse the flask
+	if (tool === 'serological_pipette_with_pbs' && itemId === 'flask') {
+		gameState.selectedTool = null;
+		gameState.flaskMediaAge = 'fresh';
+		triggerStep('pbs_wash');
+		showNotification('Flask rinsed with PBS.', 'success');
+		renderHoodScene();
+		renderProtocolPanel();
+		renderScoreDisplay();
+		return;
+	}
+
+	// Legacy direct PBS-bottle -> flask path. Kept for students who grab
+	// the bottle without the pipette. Same completion behavior.
 	if (tool === 'pbs_bottle' && itemId === 'flask' && gameState.flaskMediaAge === 'old') {
 		gameState.selectedTool = null;
 		gameState.flaskMediaAge = 'fresh';

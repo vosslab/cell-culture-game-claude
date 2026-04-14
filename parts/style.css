@@ -652,18 +652,47 @@ body {
 	transition: all 0.2s ease;
 }
 
+/* is-selected: the tool the student is currently holding. Strongest
+ * visual cue in the scene -- dominates is-active because the held tool
+ * is what "moves with" the player's attention. Thick blue border, blue
+ * background tint, and a second concentric blue outline that breathes
+ * outward via outline-offset. No drop shadows. See the user preference
+ * documented in .claude memory (feedback_no_shadows.md).
+ */
 .hood-item.is-selected {
-	border: 4px solid #2196f3 !important;
-	border-radius: 4px;
-	box-shadow: 0 0 12px rgba(33, 150, 243, 0.5);
+	border: 5px solid #1565c0 !important;
+	border-radius: 6px;
+	background-color: rgba(21, 101, 192, 0.18);
+	outline: 4px solid #1565c0;
+	outline-offset: 4px;
+	animation: selectedPulse 1.4s ease-in-out infinite;
 }
 
-/* ===== Target Highlighting ===== */
+@keyframes selectedPulse {
+	0%, 100% {
+		outline-offset: 3px;
+		outline-width: 4px;
+	}
+	50% {
+		outline-offset: 8px;
+		outline-width: 5px;
+	}
+}
+
+/* ===== Target Highlighting =====
+ * Quieter than is-selected -- the held tool must dominate visually. 3px
+ * solid green #2e7d32 (4.9:1 on white, meets WCAG AA for graphics) with
+ * a second concentric outline that gently breathes via outline-offset.
+ * No background tint; that weight is reserved for is-selected. No drop
+ * shadows. See docs/ACCESSIBILITY_REVIEW.md: pair color with size and
+ * motion so the cue is not color-only.
+ */
 .hood-item.is-active {
-	border: 4px dashed rgba(76, 175, 80, 0.8) !important;
+	border: 3px solid #2e7d32 !important;
 	border-radius: 6px;
-	box-shadow: 0 0 12px rgba(76, 175, 80, 0.4);
-	animation: targetPulse 2s ease-in-out infinite;
+	outline: 2px solid #2e7d32;
+	outline-offset: 2px;
+	animation: targetPulse 2.2s ease-in-out infinite;
 }
 
 /* ===== Depth tier cues ===== */
@@ -691,10 +720,12 @@ body {
 
 @keyframes targetPulse {
 	0%, 100% {
-		box-shadow: 0 0 8px rgba(76, 175, 80, 0.3);
+		outline-offset: 2px;
+		outline-width: 2px;
 	}
 	50% {
-		box-shadow: 0 0 16px rgba(76, 175, 80, 0.6);
+		outline-offset: 5px;
+		outline-width: 3px;
 	}
 }
 
