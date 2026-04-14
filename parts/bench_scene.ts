@@ -147,9 +147,16 @@ function renderBenchScene(): void {
 		depthById[r.id] = r.depth || 'mid';
 	}
 
-	const activeTargets: string[] =
-		currentStepData && currentStepData.targetItems
-		? currentStepData.targetItems : [];
+	// Only highlight bench items when the active step actually lives
+	// on the bench. For hood/microscope/incubator/plate_reader steps,
+	// clear the bench's highlights so stale targets from a previous
+	// bench step (e.g. count_cells's cell_counter) do not linger on
+	// the hidden bench div. Symmetric with the hood_scene.ts fix.
+	let activeTargets: string[] = [];
+	if (currentStepData && currentStepData.scene === 'bench'
+		&& currentStepData.targetItems) {
+		activeTargets = currentStepData.targetItems;
+	}
 
 	let itemsHtml = '';
 	let labelsHtml = '';

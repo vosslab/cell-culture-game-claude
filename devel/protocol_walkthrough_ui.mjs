@@ -247,8 +247,29 @@ async function getBannerText(page) {
 }
 
 async function getActiveHighlights(page) {
+	// Only read highlights from the visible persistent scene. The
+	// hidden hood / bench divs keep their last-rendered is-active
+	// classes since they are not re-rendered while out of view, so
+	// a global `.hood-item.is-active` query leaks stale highlights
+	// across steps. The student never sees those (they are on a
+	// hidden div) so they are not real UX bugs. Scope the read to
+	// whichever persistent scene is currently on screen.
 	return await page.evaluate(() => {
-		const els = document.querySelectorAll('.hood-item.is-active');
+		const scene = gameState.activeScene;
+		let container = null;
+		if (scene === 'hood') container = document.getElementById('hood-scene');
+		else if (scene === 'bench') container = document.getElementById('bench-scene');
+		// Modal scenes (microscope, incubator, plate_reader) sit on top
+		// of the hood or bench and do not have their own highlighted
+		// items, so fall back to whichever persistent scene is visible.
+		if (!container) {
+			const hood = document.getElementById('hood-scene');
+			const bench = document.getElementById('bench-scene');
+			const hoodVisible = hood && hood.style.display !== 'none';
+			container = hoodVisible ? hood : bench;
+		}
+		if (!container) return [];
+		const els = container.querySelectorAll('.hood-item.is-active');
 		return Array.from(els)
 			.map((el) => el.getAttribute('data-item-id'))
 			.filter(Boolean);

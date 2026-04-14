@@ -4738,7 +4738,10 @@ function renderHoodScene() {
     viewportH
   );
   const currentStepData = getCurrentStep();
-  const activeTargets = currentStepData && currentStepData.targetItems ? currentStepData.targetItems : [];
+  let activeTargets = [];
+  if (currentStepData && currentStepData.scene === "hood" && currentStepData.targetItems) {
+    activeTargets = currentStepData.targetItems;
+  }
   let itemsHtml = "";
   let labelsHtml = "";
   for (let i = 0; i < layout.length; i++) {
@@ -5329,7 +5332,10 @@ function renderBenchScene() {
     const r = resolvedItems[ri];
     depthById[r.id] = r.depth || "mid";
   }
-  const activeTargets = currentStepData && currentStepData.targetItems ? currentStepData.targetItems : [];
+  let activeTargets = [];
+  if (currentStepData && currentStepData.scene === "bench" && currentStepData.targetItems) {
+    activeTargets = currentStepData.targetItems;
+  }
   let itemsHtml = "";
   let labelsHtml = "";
   for (let i = 0; i < layout.length; i++) {
@@ -6128,6 +6134,7 @@ function calculateScore() {
   const timingFeedback = gameState.incubationTimingOk ? "Incubations hit the target times." : "Incubation timing off.";
   const mttPoints = Math.max(0, 20 - gameState.mttTechniqueErrors * 5);
   const mttFeedback = gameState.mttTechniqueErrors === 0 ? "MTT steps (Part 6): Perfect. MTT volume and DMSO solubilization were correct." : "MTT steps (Part 6): " + gameState.mttTechniqueErrors + " errors. Check MTT volume and DMSO solubilization.";
+  const NOISE_TOLERANCE = 0.05;
   let absorbancePoints = 20;
   const rowMeans = [];
   for (let row = 0; row < 8; row++) {
@@ -6140,7 +6147,8 @@ function calculateScore() {
     rowMeans.push(mean);
   }
   for (let row = 0; row < 7; row++) {
-    if (rowMeans[row] < rowMeans[row + 1]) {
+    const diff = rowMeans[row + 1] - rowMeans[row];
+    if (diff > NOISE_TOLERANCE) {
       absorbancePoints = absorbancePoints - 3;
     }
   }

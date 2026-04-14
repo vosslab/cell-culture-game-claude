@@ -108,11 +108,19 @@ function renderHoodScene(): void {
 		viewportW, viewportH
 	);
 
-	// Determine active targets for current protocol step
+	// Determine active targets for current protocol step. Only highlight
+	// hood items when the active step actually lives on the hood; for
+	// bench/microscope/incubator/plate_reader steps we clear the hood's
+	// highlights so stale targets from the previous hood step do not
+	// linger on the (hidden) hood div. Without this, advancing through
+	// a non-hood step left the hood visually pointing at an item that
+	// was no longer the current target.
 	const currentStepData = getCurrentStep();
-	const activeTargets: string[] =
-		currentStepData && currentStepData.targetItems
-		? currentStepData.targetItems : [];
+	let activeTargets: string[] = [];
+	if (currentStepData && currentStepData.scene === 'hood'
+		&& currentStepData.targetItems) {
+		activeTargets = currentStepData.targetItems;
+	}
 
 	// Build items and labels in one pass into separate layer strings
 	let itemsHtml = '';

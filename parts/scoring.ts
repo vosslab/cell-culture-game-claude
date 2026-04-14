@@ -31,7 +31,21 @@ function calculateScore(): ScoreResult {
 	// Category 5: absorbance_plausibility (max 20)
 	// Walk gameState.wellPlate, compute mean absorbance per row for cols 0..5
 	// Check monotonic decreasing from row A (0) to row H (7)
-	// Subtract 3 per non-monotonic pair
+	// Subtract 3 per non-monotonic pair. A tolerance absorbs MTT read
+	// noise: mttAbsorbance adds +/- OD560_NOISE (0.03) per well, so the
+	// mean of 6 wells has std ~0.012. Real dose-response curves have
+	// near-flat regions at low doses (rows A..C are all within ~0.01
+	// absorbance units of each other given CARB_IC50_UM = 5 uM), so
+	// penalizing noise-level flips on those pairs would punish a
+	// correct run. Only flag flips whose MAGNITUDE exceeds the
+	// noise-tolerance threshold.
+	// With noise std ~0.012 per row mean, a 2-sigma tolerance is 0.024.
+	// 0.05 gives ~4-sigma safety so honest runs reliably score 100.
+	// Real biological dose-response differences between adjacent rows
+	// at low doses (A..D, with CARB_IC50_UM = 5 uM) are themselves
+	// below this threshold, so a flip there is not distinguishable
+	// from noise and should not be penalized.
+	const NOISE_TOLERANCE = 0.05;
 	let absorbancePoints = 20;
 	const rowMeans: number[] = [];
 	for (let row = 0; row < 8; row++) {
@@ -43,9 +57,11 @@ function calculateScore(): ScoreResult {
 		const mean = sum / 6;
 		rowMeans.push(mean);
 	}
-	// Check monotonic decreasing
 	for (let row = 0; row < 7; row++) {
-		if (rowMeans[row] < rowMeans[row + 1]) {
+		// row should be >= row+1 (monotonic decreasing). Only deduct if
+		// the flip exceeds the tolerance.
+		const diff = rowMeans[row + 1] - rowMeans[row];
+		if (diff > NOISE_TOLERANCE) {
 			absorbancePoints = absorbancePoints - 3;
 		}
 	}
