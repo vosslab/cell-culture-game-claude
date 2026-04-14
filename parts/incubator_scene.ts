@@ -2,6 +2,15 @@
 // incubator_scene.ts - Incubator transition with time-skip
 // ============================================
 
+// Module-scope lock: true while an incubation animation is running.
+// Prevents a second overlay animation from starting if renderGame() is
+// called during the first one. Without this guard, completeStep() ->
+// renderGame() -> renderIncubatorScene() -> runIncubationOverlay()
+// stacked a second setInterval, and the second onComplete ran after
+// activeStepId had advanced, falling into the fallback scan and
+// pushing the next incubate_* id into outOfOrderAttempts.
+let incubationInProgress: boolean = false;
+
 // ============================================
 // Generic incubation timer that drives the overlay progress bar
 // ============================================
@@ -11,8 +20,10 @@ function runIncubationOverlay(
 	label: string,
 	onComplete: () => void,
 ): void {
+	if (incubationInProgress) return;
 	const overlay = document.getElementById('incubator-screen');
 	if (!overlay) return;
+	incubationInProgress = true;
 
 	// Update the heading text
 	const heading = overlay.querySelector('h2');
@@ -58,7 +69,16 @@ function runIncubationOverlay(
 			timerText.textContent = 'Complete!';
 			setTimeout(() => {
 				overlay.classList.remove('active');
-				onComplete();
+				// Keep the lock held across onComplete so any nested
+				// renderGame -> renderIncubatorScene call (triggered by
+				// completeStep's re-render while activeScene is still
+				// 'incubator') does NOT start a second animation. The
+				// lock is released only after onComplete returns.
+				try {
+					onComplete();
+				} finally {
+					incubationInProgress = false;
+				}
 			}, 1000);
 		}
 	}, 50);
@@ -103,7 +123,12 @@ function renderIncubatorScene(): void {
 				}
 			}
 		}
-		switchScene('plate_reader');
+		// After an incubation animation, route back to hood. The next
+		// protocol step after every incubate_* step lives on the hood
+		// (carb_intermediate after day1, add_mtt after 48h, decant_mtt
+		// after mtt). Routing to plate_reader was wrong and left a modal
+		// overlay blocking every subsequent click.
+		switchScene('hood');
 	});
 }
 

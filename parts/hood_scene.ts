@@ -278,10 +278,24 @@ function renderHoodScene(): void {
 	}
 	html += '</div>';
 
+	// Scene-switch button to bench. Mirrors the "To Hood" button in
+	// bench_scene.ts so the student can walk between the two persistent
+	// scenes without a keyboard shortcut.
+	html += '<button class="scene-nav-btn" id="hood-to-bench-btn" ';
+	html += 'style="right:16px;left:auto;">To Bench &rarr;</button>';
+
 	hoodScene.style.position = 'relative';
 	hoodScene.innerHTML = html;
 
 	setupHoodEventListeners();
+
+	const toBenchBtn = document.getElementById('hood-to-bench-btn');
+	if (toBenchBtn) {
+		toBenchBtn.addEventListener('click', () => {
+			switchScene('bench');
+			renderGame();
+		});
+	}
 }
 
 // ============================================
@@ -364,12 +378,9 @@ function onItemClick(itemId: string): void {
 		return;
 	}
 
-	// Well plate held -> incubator: plate incubation
-	if (tool === 'well_plate' && itemId === 'incubator') {
-		gameState.selectedTool = null;
-		renderIncubatorScene();
-		return;
-	}
+	// Dead code removed: well_plate + incubator was the hood-era path
+	// for plate incubation, but incubator now lives on the bench. The
+	// bench_scene.ts handler owns this flow.
 
 	// Serological pipette -> trypsin_bottle: load trypsin
 	if (tool === 'serological_pipette' && itemId === 'trypsin_bottle') {

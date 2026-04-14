@@ -45,8 +45,11 @@ function renderMicroscopeScene(): void {
 	const modal = overlay.querySelector('.modal-content') as HTMLElement;
 	if (!modal) return;
 
-	// Check which microscope step we are on
-	const viabilityDone = gameState.completedSteps.includes('microscope_check');
+	// Check which microscope screen we are on. microscope_check is no
+	// longer a protocol step; the viability-check substep is tracked by
+	// a UI-internal flag on gameState so the confirm button advances
+	// past the viability screen instead of looping forever.
+	const viabilityDone = gameState.microscopeViabilityChecked === true;
 
 	let html = '<button class="modal-close" aria-label="Close">&times;</button>';
 
@@ -105,7 +108,10 @@ function renderMicroscopeScene(): void {
 		const confirmBtn = document.getElementById('confirm-viability');
 		if (confirmBtn) {
 			confirmBtn.addEventListener('click', () => {
-				// Stay in microscope for counting
+				// Mark viability check as done and re-render so the
+				// counting screen appears. Without this flag the scene
+				// rendered the viability screen forever.
+				gameState.microscopeViabilityChecked = true;
 				renderMicroscopeScene();
 			});
 		}
@@ -121,7 +127,7 @@ function renderMicroscopeScene(): void {
 	const closeBtn = modal.querySelector('.modal-close') as HTMLElement;
 	if (closeBtn) {
 		closeBtn.addEventListener('click', () => {
-			const viabilityDone = gameState.completedSteps.includes('microscope_check');
+			const viabilityDone = gameState.microscopeViabilityChecked === true;
 			const countDone = gameState.completedSteps.includes('count_cells');
 			// Warn if closing with incomplete microscope work
 			if (!viabilityDone || !countDone) {
@@ -503,13 +509,22 @@ function renderPlateReaderScene(): void {
 	if (completeBtn) {
 		completeBtn.addEventListener('click', () => {
 			triggerStep('plate_read');
-			overlay.classList.remove('active');
+			// Note: "results" is fired separately by the close button so
+			// the student has an explicit "I reviewed the results"
+			// gesture. See the close-button handler below.
 		});
 	}
 
 	const closeBtn = modal.querySelector('.modal-close') as HTMLElement;
 	if (closeBtn) {
 		closeBtn.addEventListener('click', () => {
+			// Closing the plate-reader overlay while the "results" step
+			// is active should fire triggerStep('results'). Previously
+			// this handler only switched scenes and left the protocol
+			// stuck at the final step.
+			if (gameState.activeStepId === 'results') {
+				triggerStep('results');
+			}
 			overlay.classList.remove('active');
 			switchScene('hood');
 		});

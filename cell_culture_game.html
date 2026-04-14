@@ -2274,20 +2274,21 @@ const BENCH_BOUNDS = {
   bottom: 98
 };
 const BENCH_ZONES = {
-  // Parked equipment: back shelf, small and high on screen.
-  back_shelf: { x0: 5, x1: 95, baseline: 30, gap: 3, align: "tab-stops" },
-  // Default working row: where most equipment sits.
-  mid_bench: { x0: 5, x1: 95, baseline: 58, gap: 3, align: "tab-stops" },
-  // Pulled-forward row: the instrument the student is using right now.
-  front_bench: { x0: 5, x1: 95, baseline: 88, gap: 3, align: "tab-stops" }
+  // Parked equipment: back shelf, small and high on screen. Unused
+  // in the current M3 bench layout but kept so future work can park
+  // secondary equipment without adding a new zone.
+  back_shelf: { x0: 5, x1: 95, baseline: 22, gap: 3, align: "tab-stops" },
+  // Single working row: every bench instrument sits here, spread
+  // across the width via tab-stop alignment.
+  mid_bench: { x0: 5, x1: 95, baseline: 75, gap: 3, align: "tab-stops" }
 };
 const BENCH_SCENE_ITEMS = [
-  { id: "centrifuge", asset: "centrifuge", kind: "equipment", zone: "mid_bench", priority: 1, widthScale: 1, label: "Centrifuge", anchorY: "bottom", alignStop: "left" },
-  { id: "water_bath", asset: "water_bath", kind: "equipment", zone: "mid_bench", priority: 2, widthScale: 1, label: "37C Water Bath", shortLabel: "Water Bath", anchorY: "bottom", alignStop: "left" },
-  { id: "vortex", asset: "vortex", kind: "equipment", zone: "mid_bench", priority: 3, widthScale: 1, label: "Vortex", anchorY: "bottom", alignStop: "center" },
-  { id: "cell_counter", asset: "cell_counter", kind: "equipment", zone: "mid_bench", priority: 4, widthScale: 1, label: "Cell Counter", anchorY: "bottom", alignStop: "center" },
-  { id: "microscope", asset: "microscope", kind: "equipment", zone: "front_bench", priority: 5, widthScale: 1, label: "Microscope", anchorY: "bottom", alignStop: "left" },
-  { id: "incubator", asset: "incubator", kind: "equipment", zone: "front_bench", priority: 6, widthScale: 1, label: "Incubator", anchorY: "bottom", alignStop: "right" }
+  { id: "centrifuge", asset: "centrifuge", kind: "equipment", zone: "mid_bench", priority: 1, widthScale: 0.85, label: "Centrifuge", anchorY: "bottom", alignStop: "left" },
+  { id: "water_bath", asset: "water_bath", kind: "equipment", zone: "mid_bench", priority: 2, widthScale: 0.85, label: "37C Water Bath", shortLabel: "Water Bath", anchorY: "bottom", alignStop: "left" },
+  { id: "cell_counter", asset: "cell_counter", kind: "equipment", zone: "mid_bench", priority: 3, widthScale: 0.85, label: "Cell Counter", anchorY: "bottom", alignStop: "center" },
+  { id: "microscope", asset: "microscope", kind: "equipment", zone: "mid_bench", priority: 4, widthScale: 0.85, label: "Microscope", anchorY: "bottom", alignStop: "center" },
+  { id: "vortex", asset: "vortex", kind: "equipment", zone: "mid_bench", priority: 5, widthScale: 0.85, label: "Vortex", anchorY: "bottom", alignStop: "right" },
+  { id: "incubator", asset: "incubator", kind: "equipment", zone: "mid_bench", priority: 6, widthScale: 0.85, label: "Incubator", anchorY: "bottom", alignStop: "right" }
 ];
 const BENCH_LAYOUT_RULES = {
   zones: BENCH_ZONES,
@@ -3656,6 +3657,7 @@ function createInitialGameState() {
     trypsinIncubated: false,
     trypsinNeutralized: false,
     hemocytometerLoaded: false,
+    microscopeViabilityChecked: false,
     mediaWarmed: false,
     startTime: Date.now(),
     endTime: null,
@@ -4862,9 +4864,18 @@ function renderHoodScene() {
     html += "Put down (Esc)</button>";
   }
   html += "</div>";
+  html += '<button class="scene-nav-btn" id="hood-to-bench-btn" ';
+  html += 'style="right:16px;left:auto;">To Bench &rarr;</button>';
   hoodScene.style.position = "relative";
   hoodScene.innerHTML = html;
   setupHoodEventListeners();
+  const toBenchBtn = document.getElementById("hood-to-bench-btn");
+  if (toBenchBtn) {
+    toBenchBtn.addEventListener("click", () => {
+      switchScene("bench");
+      renderGame();
+    });
+  }
 }
 function onItemClick(itemId) {
   if (!gameState.selectedTool) {
@@ -4922,11 +4933,6 @@ function onItemClick(itemId) {
   if (tool === "flask" && itemId === "incubator" && gameState.trypsinAdded && !gameState.trypsinIncubated) {
     gameState.selectedTool = null;
     renderTrypsinIncubation();
-    return;
-  }
-  if (tool === "well_plate" && itemId === "incubator") {
-    gameState.selectedTool = null;
-    renderIncubatorScene();
     return;
   }
   if (tool === "serological_pipette" && itemId === "trypsin_bottle") {
@@ -5249,19 +5255,37 @@ function getBenchItemSvgHtml(itemId) {
 }
 function onBenchItemClick(itemId) {
   if (itemId === "microscope") {
+    if (gameState.selectedTool === "serological_pipette_with_sample") {
+      gameState.selectedTool = null;
+      gameState.hemocytometerLoaded = true;
+      showNotification(
+        "Sample mixed with trypan blue and loaded onto hemocytometer.",
+        "success"
+      );
+    }
     switchScene("microscope");
-    renderGame();
     return;
   }
   if (itemId === "incubator") {
+    if (gameState.selectedTool === "flask" && gameState.trypsinAdded && !gameState.trypsinIncubated) {
+      gameState.selectedTool = null;
+      renderTrypsinIncubation();
+      return;
+    }
+    if (gameState.selectedTool === "well_plate") {
+      gameState.selectedTool = null;
+      switchScene("incubator");
+      return;
+    }
     switchScene("incubator");
-    renderGame();
     return;
   }
   if (itemId === "centrifuge") {
     const currentStep = getCurrentStep();
     if (currentStep && currentStep.id === "centrifuge") {
       triggerStep("centrifuge");
+      gameState.flaskMediaMl = 0;
+      gameState.flaskMediaAge = "old";
     }
     showNotification("Cells centrifuged.");
     return;
@@ -5346,10 +5370,10 @@ function renderBenchScene() {
   html += 'width:100%;height:100%;pointer-events:none;">';
   html += '<svg viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice"';
   html += ' style="width:100%;height:100%;">';
-  html += '<rect x="0" y="0" width="800" height="380" fill="#e8d9bf"/>';
-  html += '<rect x="0" y="380" width="800" height="220" fill="#c9a97a"/>';
-  html += '<rect x="0" y="378" width="800" height="4" fill="#8a6b3d"/>';
-  html += '<line x1="40" y1="150" x2="760" y2="150" stroke="#c2ae8a" stroke-width="2"/>';
+  html += '<rect x="0" y="0" width="800" height="160" fill="#e8d9bf"/>';
+  html += '<rect x="0" y="160" width="800" height="440" fill="#c9a97a"/>';
+  html += '<rect x="0" y="158" width="800" height="4" fill="#8a6b3d"/>';
+  html += '<line x1="40" y1="80" x2="760" y2="80" stroke="#c2ae8a" stroke-width="2"/>';
   html += "</svg>";
   html += "</div>";
   html += '<div id="bench-items-layer">';
@@ -5388,6 +5412,7 @@ function renderBenchScene() {
 }
 registeredTriggers.add("aspirate_old_media");
 registeredTriggers.add("neutralize_trypsin");
+registeredTriggers.add("resuspend");
 let aspirationInterval = null;
 let mediaAdditionInterval = null;
 let stopMediaAddition = false;
@@ -5480,7 +5505,12 @@ function stopAddingMedia() {
   const waste = Math.abs(finalVolume - FRESH_MEDIA_TARGET_ML);
   gameState.mediaWastedMl += waste;
   gameState.flaskMediaAge = "fresh";
-  triggerStep("neutralize_trypsin");
+  const active = gameState.activeStepId;
+  if (active === "resuspend") {
+    triggerStep("resuspend");
+  } else {
+    triggerStep("neutralize_trypsin");
+  }
   hideTransferHud();
   const difference = (finalVolume - FRESH_MEDIA_TARGET_ML).toFixed(2);
   const differenceAbs = Math.abs(parseFloat(difference));
@@ -5582,32 +5612,39 @@ function selectDilutionSeries(index) {
   if (!option.correct) {
     registerWarning("Suboptimal dilution: " + option.description);
   }
-  gameState.wellPlate.forEach((well) => {
-    well.drugConcentrationUm = option.doses[well.col];
-  });
-  gameState.drugsAdded = true;
   if (option.correct) {
     showNotification("Half-log dilution applied -- good choice for a full dose-response!", "success");
   }
-  const dilutionAndDrugIds = [
+  const dilutionPrepIds = [
     "carb_intermediate",
     "carb_low_range",
     "carb_high_range",
-    "metformin_stock",
-    "add_carboplatin",
-    "add_metformin"
+    "metformin_stock"
   ];
-  for (const id of dilutionAndDrugIds) {
-    triggerStep(id);
+  const drugAdditionIds = ["add_carboplatin", "add_metformin"];
+  const active = gameState.activeStepId;
+  if (drugAdditionIds.indexOf(active || "") >= 0) {
+    applyPlateDoseMap();
+    gameState.drugsAdded = true;
+    for (const id of drugAdditionIds) {
+      triggerStep(id);
+    }
+  } else {
+    for (const id of dilutionPrepIds) {
+      triggerStep(id);
+    }
   }
   if (overlay) overlay.classList.remove("active");
   renderHoodScene();
   renderProtocolPanel();
   renderScoreDisplay();
 }
+let incubationInProgress = false;
 function runIncubationOverlay(simulatedMinutes, animationMs, label, onComplete) {
+  if (incubationInProgress) return;
   const overlay = document.getElementById("incubator-screen");
   if (!overlay) return;
+  incubationInProgress = true;
   const heading = overlay.querySelector("h2");
   if (heading) heading.textContent = label;
   const statusP = overlay.querySelector(".incubation-timer p");
@@ -5638,7 +5675,11 @@ function runIncubationOverlay(simulatedMinutes, animationMs, label, onComplete) 
       timerText.textContent = "Complete!";
       setTimeout(() => {
         overlay.classList.remove("active");
-        onComplete();
+        try {
+          onComplete();
+        } finally {
+          incubationInProgress = false;
+        }
       }, 1e3);
     }
   }, 50);
@@ -5668,7 +5709,7 @@ function renderIncubatorScene() {
         }
       }
     }
-    switchScene("plate_reader");
+    switchScene("hood");
   });
 }
 registeredTriggers.add("incubate_day1");
@@ -5697,7 +5738,7 @@ function renderMicroscopeScene() {
   const cellState = getCellState();
   const modal = overlay.querySelector(".modal-content");
   if (!modal) return;
-  const viabilityDone = gameState.completedSteps.includes("microscope_check");
+  const viabilityDone = gameState.microscopeViabilityChecked === true;
   let html = '<button class="modal-close" aria-label="Close">&times;</button>';
   if (!viabilityDone) {
     html += "<h2>Microscope - Viability Check</h2>";
@@ -5744,6 +5785,7 @@ function renderMicroscopeScene() {
     const confirmBtn = document.getElementById("confirm-viability");
     if (confirmBtn) {
       confirmBtn.addEventListener("click", () => {
+        gameState.microscopeViabilityChecked = true;
         renderMicroscopeScene();
       });
     }
@@ -5757,7 +5799,7 @@ function renderMicroscopeScene() {
   const closeBtn = modal.querySelector(".modal-close");
   if (closeBtn) {
     closeBtn.addEventListener("click", () => {
-      const viabilityDone2 = gameState.completedSteps.includes("microscope_check");
+      const viabilityDone2 = gameState.microscopeViabilityChecked === true;
       const countDone = gameState.completedSteps.includes("count_cells");
       if (!viabilityDone2 || !countDone) {
         const confirmed = confirm("Cell counting is not finished. Are you sure you want to leave?");
@@ -6064,12 +6106,14 @@ function renderPlateReaderScene() {
   if (completeBtn) {
     completeBtn.addEventListener("click", () => {
       triggerStep("plate_read");
-      overlay.classList.remove("active");
     });
   }
   const closeBtn = modal.querySelector(".modal-close");
   if (closeBtn) {
     closeBtn.addEventListener("click", () => {
+      if (gameState.activeStepId === "results") {
+        triggerStep("results");
+      }
       overlay.classList.remove("active");
       switchScene("hood");
     });

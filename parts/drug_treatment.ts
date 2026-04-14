@@ -113,33 +113,42 @@ function selectDilutionSeries(index: number): void {
 		registerWarning('Suboptimal dilution: ' + option.description);
 	}
 
-	// Apply the selected concentrations to the plate
-	gameState.wellPlate.forEach(well => {
-		well.drugConcentrationUm = option.doses[well.col];
-	});
-	gameState.drugsAdded = true;
-
 	if (option.correct) {
 		showNotification('Half-log dilution applied -- good choice for a full dose-response!', 'success');
 	}
 
-	// This single modal click stands in for the full dilution-prep +
-	// drug-addition sequence in the 25-step protocol. Fire all six triggers
-	// sequentially; the state machine only advances on the call whose id
-	// matches gameState.activeStepId, so any earlier/later clicks are
-	// recorded as out-of-order attempts without corrupting progress.
-	// TODO: split the dilution modal into distinct UI steps so each protocol
-	// step has its own click target (see plan Section 7).
-	const dilutionAndDrugIds: string[] = [
+	// The modal click collapses either the dilution-prep block (4 steps)
+	// OR the drug-addition block (2 steps), whichever matches the active
+	// protocol step. Firing all six at once broke the chain because the
+	// protocol interleaves prewarm_media + media_adjust between them,
+	// and the later firings became out-of-order attempts that blocked
+	// legitimate advances. TODO: split the modal into distinct UI steps
+	// so each protocol step has its own click target (see plan Section 7).
+	const dilutionPrepIds: string[] = [
 		'carb_intermediate',
 		'carb_low_range',
 		'carb_high_range',
 		'metformin_stock',
-		'add_carboplatin',
-		'add_metformin',
 	];
-	for (const id of dilutionAndDrugIds) {
-		triggerStep(id);
+	const drugAdditionIds: string[] = ['add_carboplatin', 'add_metformin'];
+	const active = gameState.activeStepId;
+	if (drugAdditionIds.indexOf(active || '') >= 0) {
+		// Drug-addition block: apply the M5 per-row dose map (carb conc
+		// by row A..H, metformin on cols 7..12) so the MTT readout has
+		// a real dose response to render. The legacy per-column write
+		// gave every row the same mean absorbance and tanked the
+		// monotonic-decreasing check in scoring.calculateScore.
+		applyPlateDoseMap();
+		gameState.drugsAdded = true;
+		for (const id of drugAdditionIds) {
+			triggerStep(id);
+		}
+	} else {
+		// Dilution prep block: the student is just preparing stocks,
+		// no wells are dosed yet.
+		for (const id of dilutionPrepIds) {
+			triggerStep(id);
+		}
 	}
 
 	// Close overlay and return to hood

@@ -27,10 +27,21 @@ if [ ! -d "$SYSTEM_CACHE" ] && [ ! -d "$LOCAL_CACHE" ]; then
 	npx playwright install chromium
 fi
 
-# Run the walkthrough (pass through any flags like --headed)
-echo "Running walkthrough..."
+# Run the data-layer walkthrough first -- asserts completeStep() order
+# via page.evaluate, fast gate for graph / trigger-coverage regressions.
+echo "Running data-layer walkthrough..."
 node devel/protocol_walkthrough.mjs "$@"
 
+# Run the real-click walkthrough second -- drives the protocol through
+# DOM clicks and catches banner/wiring mismatches the data-layer pass
+# cannot see. Both must pass for walkthrough.sh to succeed.
 echo ""
-echo "Screenshots saved to build/walkthrough/"
+echo "Running real-click walkthrough..."
+node devel/protocol_walkthrough_ui.mjs "$@"
+
+echo ""
+echo "Screenshots saved to:"
+echo "  build/walkthrough/      (data-layer pass)"
+echo "  build/walkthrough_ui/   (real-click pass)"
 ls -1 build/walkthrough/*.png 2>/dev/null | while read -r f; do echo "  $f"; done
+ls -1 build/walkthrough_ui/*.png 2>/dev/null | while read -r f; do echo "  $f"; done

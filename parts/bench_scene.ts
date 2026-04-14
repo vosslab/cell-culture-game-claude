@@ -39,13 +39,47 @@ function getBenchItemSvgHtml(itemId: string): string {
 // M4).
 function onBenchItemClick(itemId: string): void {
 	if (itemId === 'microscope') {
+		// Serological pipette loaded with sample: use this click to load
+		// the hemocytometer with trypan-blue-stained cells, then open the
+		// microscope overlay. Mirrors the legacy hood handler which is
+		// now dead because microscope no longer lives on the hood.
+		if (gameState.selectedTool === 'serological_pipette_with_sample') {
+			gameState.selectedTool = null;
+			gameState.hemocytometerLoaded = true;
+			showNotification(
+				'Sample mixed with trypan blue and loaded onto hemocytometer.',
+				'success',
+			);
+		}
+		// switchScene already calls renderGame -- calling it again here
+		// would start a second concurrent animation for modal scenes.
 		switchScene('microscope');
-		renderGame();
 		return;
 	}
 	if (itemId === 'incubator') {
+		// Flask held + trypsin added + not yet incubated: run trypsin
+		// incubation (UI sub-state, not a protocol step). After the
+		// animation we return to hood for media neutralization.
+		if (gameState.selectedTool === 'flask'
+			&& gameState.trypsinAdded && !gameState.trypsinIncubated) {
+			gameState.selectedTool = null;
+			renderTrypsinIncubation();
+			return;
+		}
+		// Well plate held: run the main incubator animation which
+		// dispatches the matching incubate_* protocol step and returns
+		// to hood. Do NOT call renderGame() after switchScene -- the
+		// switchScene call already does, and a second call would start
+		// a second concurrent runIncubationOverlay setInterval, causing
+		// onComplete to fire twice. The second fire fell into the
+		// fallback branch (since activeStepId had already advanced)
+		// and pushed the next incubate_* id into outOfOrderAttempts.
+		if (gameState.selectedTool === 'well_plate') {
+			gameState.selectedTool = null;
+			switchScene('incubator');
+			return;
+		}
 		switchScene('incubator');
-		renderGame();
 		return;
 	}
 	// Centrifuge: trigger the centrifuge step when clicked
@@ -54,6 +88,13 @@ function onBenchItemClick(itemId: string): void {
 		// TODO: replace activeStepId peek with trigger-spec lookup
 		if (currentStep && currentStep.id === 'centrifuge') {
 			triggerStep('centrifuge');
+			// Centrifuge pellets the cells; supernatant is discarded.
+			// Zero the flask volume so the subsequent resuspend flow
+			// (serological + media_bottle + flask) can start from an
+			// "empty" container without tripping startAddingMedia's
+			// "flask must be aspirated first" guard.
+			gameState.flaskMediaMl = 0;
+			gameState.flaskMediaAge = 'old';
 		}
 		showNotification('Cells centrifuged.');
 		return;
@@ -149,20 +190,24 @@ function renderBenchScene(): void {
 		labelsHtml += '</div>';
 	}
 
-	// Bench background: simple back-wall + work-surface split.
+	// Bench background: back-wall on top, work surface below. The two
+	// rows of equipment (mid_bench + front_bench) both sit on the bench
+	// surface; the split was pulled higher so both rows fit naturally on
+	// the wood rather than the back row hovering on the wall and the
+	// front row parked near the floor.
 	let html = '';
 	html += '<div id="bench-bg" style="position:absolute;top:0;left:0;';
 	html += 'width:100%;height:100%;pointer-events:none;">';
 	html += '<svg viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice"';
 	html += ' style="width:100%;height:100%;">';
-	// Back wall
-	html += '<rect x="0" y="0" width="800" height="380" fill="#e8d9bf"/>';
-	// Bench surface
-	html += '<rect x="0" y="380" width="800" height="220" fill="#c9a97a"/>';
+	// Back wall (upper ~25%)
+	html += '<rect x="0" y="0" width="800" height="160" fill="#e8d9bf"/>';
+	// Bench surface (lower ~75%)
+	html += '<rect x="0" y="160" width="800" height="440" fill="#c9a97a"/>';
 	// Surface edge highlight
-	html += '<rect x="0" y="378" width="800" height="4" fill="#8a6b3d"/>';
+	html += '<rect x="0" y="158" width="800" height="4" fill="#8a6b3d"/>';
 	// Soft shelf line on back wall
-	html += '<line x1="40" y1="150" x2="760" y2="150" stroke="#c2ae8a" stroke-width="2"/>';
+	html += '<line x1="40" y1="80" x2="760" y2="80" stroke="#c2ae8a" stroke-width="2"/>';
 	html += '</svg>';
 	html += '</div>';
 

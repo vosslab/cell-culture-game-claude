@@ -6,6 +6,7 @@
 // at page load time. See hood_scene.ts for the policy rationale.
 registeredTriggers.add('aspirate_old_media');
 registeredTriggers.add('neutralize_trypsin');
+registeredTriggers.add('resuspend');
 
 // Animation interval tracking
 let aspirationInterval: number | null = null;
@@ -176,8 +177,18 @@ function stopAddingMedia(): void {
 	// Set media age to fresh
 	gameState.flaskMediaAge = 'fresh';
 
-	// Complete the neutralize_trypsin step (media addition neutralizes trypsin)
-	triggerStep('neutralize_trypsin');
+	// Fire the protocol step that matches the current flow. The same
+	// "pipette + media_bottle + flask" click chain advances either
+	// neutralize_trypsin (after trypsin incubation) or resuspend (after
+	// centrifuge). triggerStep records out-of-order attempts harmlessly,
+	// so firing both when ambiguous is safe -- but we branch on
+	// activeStepId to keep the happy path clean.
+	const active = gameState.activeStepId;
+	if (active === 'resuspend') {
+		triggerStep('resuspend');
+	} else {
+		triggerStep('neutralize_trypsin');
+	}
 
 	// Hide transfer HUD
 	hideTransferHud();

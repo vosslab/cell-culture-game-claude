@@ -39,6 +39,8 @@ interface GameState {
 	trypsinNeutralized: boolean;
 	// Hemocytometer loading
 	hemocytometerLoaded: boolean;
+	// Microscope viability sub-screen: UI-internal, not a protocol step
+	microscopeViabilityChecked: boolean;
 	// Protocol realism tracking
 	mediaWarmed: boolean;
 	startTime: number;
@@ -107,6 +109,7 @@ function createInitialGameState(): GameState {
 		trypsinIncubated: false,
 		trypsinNeutralized: false,
 		hemocytometerLoaded: false,
+		microscopeViabilityChecked: false,
 		mediaWarmed: false,
 		startTime: Date.now(),
 		endTime: null,
