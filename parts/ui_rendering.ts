@@ -167,24 +167,29 @@ const renderResultsScreen = (scoreResult: ScoreResult): void => {
 		<div style="margin-top: 20px; border-top: 1px solid #eceff1; padding-top: 16px;">
 			<div style="text-align: left; font-size: 13px;">
 				<div style="margin-bottom: 12px;">
-					<div style="font-weight: 600; color: #212121;">Order & Sequence</div>
-					<div style="color: #757575;">${scoreResult.categories.order.points}/${scoreResult.categories.order.maxPoints} points</div>
-					<div style="color: #78909c; font-size: 12px; margin-top: 4px;">${scoreResult.categories.order.feedback}</div>
+					<div style="font-weight: 600; color: #212121;">Dilution Accuracy</div>
+					<div style="color: #757575;">${scoreResult.categories.dilutionAccuracy.points}/${scoreResult.categories.dilutionAccuracy.maxPoints} points</div>
+					<div style="color: #78909c; font-size: 12px; margin-top: 4px;">${scoreResult.categories.dilutionAccuracy.feedback}</div>
 				</div>
 				<div style="margin-bottom: 12px;">
-					<div style="font-weight: 600; color: #212121;">Cleanliness</div>
-					<div style="color: #757575;">${scoreResult.categories.cleanliness.points}/${scoreResult.categories.cleanliness.maxPoints} points</div>
-					<div style="color: #78909c; font-size: 12px; margin-top: 4px;">${scoreResult.categories.cleanliness.feedback}</div>
+					<div style="font-weight: 600; color: #212121;">Plate Map</div>
+					<div style="color: #757575;">${scoreResult.categories.plateMap.points}/${scoreResult.categories.plateMap.maxPoints} points</div>
+					<div style="color: #78909c; font-size: 12px; margin-top: 4px;">${scoreResult.categories.plateMap.feedback}</div>
 				</div>
 				<div style="margin-bottom: 12px;">
-					<div style="font-weight: 600; color: #212121;">Media Usage</div>
-					<div style="color: #757575;">${scoreResult.categories.wastedMedia.points}/${scoreResult.categories.wastedMedia.maxPoints} points</div>
-					<div style="color: #78909c; font-size: 12px; margin-top: 4px;">${scoreResult.categories.wastedMedia.feedback}</div>
-				</div>
-				<div>
 					<div style="font-weight: 600; color: #212121;">Timing</div>
 					<div style="color: #757575;">${scoreResult.categories.timing.points}/${scoreResult.categories.timing.maxPoints} points</div>
 					<div style="color: #78909c; font-size: 12px; margin-top: 4px;">${scoreResult.categories.timing.feedback}</div>
+				</div>
+				<div style="margin-bottom: 12px;">
+					<div style="font-weight: 600; color: #212121;">MTT Technique</div>
+					<div style="color: #757575;">${scoreResult.categories.mttTechnique.points}/${scoreResult.categories.mttTechnique.maxPoints} points</div>
+					<div style="color: #78909c; font-size: 12px; margin-top: 4px;">${scoreResult.categories.mttTechnique.feedback}</div>
+				</div>
+				<div>
+					<div style="font-weight: 600; color: #212121;">Absorbance Plausibility</div>
+					<div style="color: #757575;">${scoreResult.categories.absorbancePlausibility.points}/${scoreResult.categories.absorbancePlausibility.maxPoints} points</div>
+					<div style="color: #78909c; font-size: 12px; margin-top: 4px;">${scoreResult.categories.absorbancePlausibility.feedback}</div>
 				</div>
 			</div>
 		</div>

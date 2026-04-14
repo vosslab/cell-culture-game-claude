@@ -2,6 +2,13 @@
 // cell_model.ts - Cell population model
 // ============================================
 
+// METFORMIN_SHIFT: multiplicative IC50 shift when metformin is coexposed.
+// Default 0.5 = 2x sensitization (effective IC50 drops from 5 uM to 2.5 uM).
+// Tunable; docx defines only the 5 mM metformin concentration, not the
+// combo magnitude.
+const METFORMIN_SHIFT = 0.5;
+const CARB_IC50_UM = 5;
+
 // ============================================
 function getCellState(): CellState {
 	// Generate cell positions for the hemocytometer view
@@ -88,6 +95,23 @@ function applyIncubation(): void {
 			}
 		});
 		applyDrugEffect(maxConc);
+	}
+}
+
+// ============================================
+function computeWellViability(carbConcUm: number, metforminPresent: boolean): number {
+	const ic50 = metforminPresent ? CARB_IC50_UM * METFORMIN_SHIFT : CARB_IC50_UM;
+	const v = 0.1 + 0.9 * (ic50 / (ic50 + carbConcUm));
+	return Math.max(0.05, Math.min(1.0, v));
+}
+
+// ============================================
+function applyPlateDrugEffect(): void {
+	for (let i = 0; i < gameState.wellPlate.length; i++) {
+		const w = gameState.wellPlate[i];
+		const metformin = w.col >= 6; // columns 7-12 are 6..11 in 0-indexed
+		const v = computeWellViability(w.drugConcentrationUm, metformin);
+		w.absorbance = v; // plate reader reads viability proxy
 	}
 }
 

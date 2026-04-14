@@ -61,6 +61,8 @@ renderGame = function(): void {
 	}
 
 	// Always update the sidebar
+	const proto = document.getElementById('protocol-ui-panel');
+	if (proto) proto.innerHTML = renderProtocolUI();
 	renderProtocolPanel();
 	renderScoreDisplay();
 	renderMeters();

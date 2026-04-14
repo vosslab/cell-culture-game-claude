@@ -1,60 +1,67 @@
 // ============================================
-// scoring.ts - Accuracy scoring with star rating
+// scoring.ts - Protocol fidelity scoring
 // ============================================
 
 // ============================================
 function calculateScore(): ScoreResult {
-	const totalSteps = PROTOCOL_STEPS.length;
+	// Category 1: dilution_accuracy (max 25)
+	const dilutionPoints = Math.max(0, 25 - (gameState.dilutionErrors * 5));
+	const dilutionFeedback = gameState.dilutionErrors === 0
+		? 'Dilution prep (Part 4): Perfect. Carboplatin volume ratios were accurate.'
+		: 'Dilution prep (Part 4): ' + gameState.dilutionErrors + ' errors. Check your carboplatin volume ratios.';
 
-	// Order scoring: how many steps were done in correct order
-	const orderRatio = totalSteps > 0 ? gameState.stepsInCorrectOrder / totalSteps : 0;
-	const orderPoints = Math.round(orderRatio * SCORE_WEIGHTS.order);
-	let orderFeedback = 'Steps completed in perfect order.';
-	if (orderRatio < 1) {
-		orderFeedback = gameState.stepsOutOfOrder + ' step(s) out of order. Follow the protocol sequence.';
+	// Category 2: plate_map (max 20)
+	const plateMapPoints = Math.max(0, 20 - (gameState.plateMapErrors * 5));
+	const plateMapFeedback = gameState.plateMapErrors === 0
+		? 'Plate map (Part 5): Perfect. All wells correctly assigned.'
+		: 'Plate map (Part 5): ' + gameState.plateMapErrors + ' wells misassigned. Verify rows A-H and cols 1-12.';
+
+	// Category 3: timing (max 15)
+	const timingPoints = gameState.incubationTimingOk ? 15 : 8;
+	const timingFeedback = gameState.incubationTimingOk
+		? 'Incubations hit the target times.'
+		: 'Incubation timing off.';
+
+	// Category 4: mtt_technique (max 20)
+	const mttPoints = Math.max(0, 20 - (gameState.mttTechniqueErrors * 5));
+	const mttFeedback = gameState.mttTechniqueErrors === 0
+		? 'MTT steps (Part 6): Perfect. MTT volume and DMSO solubilization were correct.'
+		: 'MTT steps (Part 6): ' + gameState.mttTechniqueErrors + ' errors. Check MTT volume and DMSO solubilization.';
+
+	// Category 5: absorbance_plausibility (max 20)
+	// Walk gameState.wellPlate, compute mean absorbance per row for cols 0..5
+	// Check monotonic decreasing from row A (0) to row H (7)
+	// Subtract 3 per non-monotonic pair
+	let absorbancePoints = 20;
+	const rowMeans: number[] = [];
+	for (let row = 0; row < 8; row++) {
+		let sum = 0;
+		for (let col = 0; col < 6; col++) {
+			const w = gameState.wellPlate[row * PLATE_COLS + col];
+			sum = sum + w.absorbance;
+		}
+		const mean = sum / 6;
+		rowMeans.push(mean);
 	}
-
-	// Cleanliness scoring: based on number of errors
-	const maxErrors = 5; // scale
-	const cleanRatio = Math.max(0, 1 - (gameState.cleanlinessErrors / maxErrors));
-	const cleanPoints = Math.round(cleanRatio * SCORE_WEIGHTS.cleanliness);
-	let cleanFeedback = 'Excellent sterile technique!';
-	if (gameState.cleanlinessErrors > 0) {
-		cleanFeedback = gameState.cleanlinessErrors + ' contamination risk(s) detected. Be more careful with sterile technique.';
+	// Check monotonic decreasing
+	for (let row = 0; row < 7; row++) {
+		if (rowMeans[row] < rowMeans[row + 1]) {
+			absorbancePoints = absorbancePoints - 3;
+		}
 	}
+	absorbancePoints = Math.max(0, absorbancePoints);
+	const absorbanceFeedback = absorbancePoints >= 19
+		? 'Dose response looks plausible.'
+		: 'Dose response is not monotonic - check dilution.';
 
-	// Media waste scoring
-	const maxWaste = 5; // mL threshold for zero points
-	const wasteRatio = Math.max(0, 1 - (gameState.mediaWastedMl / maxWaste));
-	const wastePoints = Math.round(wasteRatio * SCORE_WEIGHTS.wastedMedia);
-	let wasteFeedback = 'Minimal media waste. Good pipetting accuracy!';
-	if (gameState.mediaWastedMl > 1) {
-		wasteFeedback = gameState.mediaWastedMl.toFixed(1) + ' mL of media wasted. Practice precise pipetting.';
-	}
+	// Total points
+	const totalPoints = dilutionPoints + plateMapPoints + timingPoints + mttPoints + absorbancePoints;
 
-	// Timing scoring: based on total time
-	const elapsedMs = (gameState.endTime || Date.now()) - gameState.startTime;
-	const elapsedMin = elapsedMs / 60000;
-	const idealMin = 3; // ideal completion time
-	const maxMin = 10; // max time for any points
-	let timingRatio = 1;
-	if (elapsedMin > idealMin) {
-		timingRatio = Math.max(0, 1 - ((elapsedMin - idealMin) / (maxMin - idealMin)));
-	}
-	const timingPoints = Math.round(timingRatio * SCORE_WEIGHTS.timing);
-	let timingFeedback = 'Great pacing! Efficient work.';
-	if (elapsedMin > idealMin) {
-		timingFeedback = 'Completed in ' + elapsedMin.toFixed(1) + ' minutes. With practice you will get faster.';
-	}
-
-	// Total
-	const totalPoints = orderPoints + cleanPoints + wastePoints + timingPoints;
-
-	// Star rating (never below 1)
+	// Star rating
 	let stars = 1;
-	if (totalPoints >= STAR_THRESHOLDS.threeStar) {
+	if (totalPoints >= 80) {
 		stars = 3;
-	} else if (totalPoints >= STAR_THRESHOLDS.twoStar) {
+	} else if (totalPoints >= 50) {
 		stars = 2;
 	}
 
@@ -62,10 +69,11 @@ function calculateScore(): ScoreResult {
 		stars: stars,
 		totalPoints: totalPoints,
 		categories: {
-			order: { points: orderPoints, maxPoints: SCORE_WEIGHTS.order, feedback: orderFeedback },
-			cleanliness: { points: cleanPoints, maxPoints: SCORE_WEIGHTS.cleanliness, feedback: cleanFeedback },
-			wastedMedia: { points: wastePoints, maxPoints: SCORE_WEIGHTS.wastedMedia, feedback: wasteFeedback },
-			timing: { points: timingPoints, maxPoints: SCORE_WEIGHTS.timing, feedback: timingFeedback },
+			dilutionAccuracy: { points: dilutionPoints, maxPoints: 25, feedback: dilutionFeedback },
+			plateMap: { points: plateMapPoints, maxPoints: 20, feedback: plateMapFeedback },
+			timing: { points: timingPoints, maxPoints: 15, feedback: timingFeedback },
+			mttTechnique: { points: mttPoints, maxPoints: 20, feedback: mttFeedback },
+			absorbancePlausibility: { points: absorbancePoints, maxPoints: 20, feedback: absorbanceFeedback },
 		},
 	};
 }

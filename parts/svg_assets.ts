@@ -175,43 +175,75 @@ function getEthanolBottleSvg(): string {
  * Gets the 24-well plate SVG (Hybrid C: base + per-well color overlays)
  */
 function getWellPlateSvg(wells: WellData[]): string {
-	// well positions match base SVG: cx = 22 + col*28, cy = 18 + row*26
-	const spacingX = 28;
-	const spacingY = 26;
-	const offsetX = 22;
-	const offsetY = 18;
-	const wellR = 10;
-	let overlayContent = '';
-	// inject colored circles on top of base SVG empty wells
-	for (let row = 0; row < PLATE_ROWS; row++) {
-		for (let col = 0; col < PLATE_COLS; col++) {
-			const cx = offsetX + col * spacingX;
-			const cy = offsetY + row * spacingY;
-			const well = wells[row * PLATE_COLS + col];
-			let fill = '';
-			if (well.hasCells && well.drugConcentrationUm > 0) {
-				// deeper purple for higher drug concentration
-				const intensity = Math.min(1, well.drugConcentrationUm / 10);
-				const r = Math.round(200 - intensity * 60);
-				const g = Math.round(180 - intensity * 80);
-				const b = Math.round(220 - intensity * 20);
-				fill = 'rgb(' + r + ',' + g + ',' + b + ')';
-			} else if (well.hasCells) {
-				fill = '#f0a0b0'; // pink = cells + media
+	// Render 8x12 well plate grid
+	// viewBox="0 0 320 240" with 10 px per well + padding for labels
+	const wellSize = 10;
+	const spacingX = 12;
+	const spacingY = 12;
+	const marginLeft = 25;
+	const marginTop = 20;
+
+	let svgContent = '<svg viewBox="0 0 320 240" xmlns="http://www.w3.org/2000/svg">';
+	svgContent += '<defs>';
+	svgContent += '<linearGradient id="well_gradient_carb" x1="0%" y1="0%" x2="100%" y2="100%">';
+	svgContent += '<stop offset="0%" style="stop-color:#f5e6c8;stop-opacity:1" />';
+	svgContent += '<stop offset="100%" style="stop-color:#8a4fa0;stop-opacity:1" />';
+	svgContent += '</linearGradient>';
+	svgContent += '</defs>';
+
+	// White background
+	svgContent += '<rect width="320" height="240" fill="white" />';
+
+	// Row labels (A-H) on the left
+	for (let row = 0; row < PLATE_96_ROWS; row++) {
+		const y = marginTop + row * spacingY + wellSize / 2;
+		svgContent += '<text x="8" y="' + (y + 2) + '" font-family="Arial,sans-serif"'
+			+ ' font-size="7" fill="#333333" text-anchor="middle">' + ROW_LABELS[row] + '</text>';
+	}
+
+	// Column labels (1-12) on top
+	for (let col = 0; col < PLATE_96_COLS; col++) {
+		const x = marginLeft + col * spacingX + wellSize / 2;
+		svgContent += '<text x="' + x + '" y="12" font-family="Arial,sans-serif"'
+			+ ' font-size="6" fill="#333333" text-anchor="middle">' + COL_LABELS[col] + '</text>';
+	}
+
+	// Draw wells as small squares with color coding
+	for (let row = 0; row < PLATE_96_ROWS; row++) {
+		for (let col = 0; col < PLATE_96_COLS; col++) {
+			const x = marginLeft + col * spacingY;
+			const y = marginTop + row * spacingY;
+			const well = wells[row * PLATE_96_COLS + col];
+
+			let fill = '#eaeaea'; // default empty grey
+
+			if (well.hasCells) {
+				if (well.absorbance > 0) {
+					// Gradient from tan (blank ~0.05) to purple (high ~1.2)
+					// Map absorbance to 0-1 range for gradient interpolation
+					const absorbanceMin = 0.05;
+					const absorbanceMax = 1.2;
+					const normalizedAbs = Math.max(0, Math.min(1, (well.absorbance - absorbanceMin) / (absorbanceMax - absorbanceMin)));
+					// Interpolate between tan (#f5e6c8) and purple (#8a4fa0)
+					const tanR = 245, tanG = 230, tanB = 200;
+					const purpleR = 138, purpleG = 79, purpleB = 160;
+					const r = Math.round(tanR + normalizedAbs * (purpleR - tanR));
+					const g = Math.round(tanG + normalizedAbs * (purpleG - tanG));
+					const b = Math.round(tanB + normalizedAbs * (purpleB - tanB));
+					fill = 'rgb(' + r + ',' + g + ',' + b + ')';
+				} else {
+					// Cells present but not yet read; use tan
+					fill = '#f5e6c8';
+				}
 			}
-			if (fill) {
-				overlayContent += '<circle cx="' + cx + '" cy="' + cy + '" r="' + wellR + '"'
-					+ ' fill="' + fill + '" opacity="0.9"/>';
-			}
+
+			svgContent += '<rect x="' + x + '" y="' + y + '" width="' + wellSize + '" height="' + wellSize + '"'
+				+ ' fill="' + fill + '" stroke="#ccc" stroke-width="0.5" />';
 		}
 	}
-	// concentration labels at bottom (engine-owned since they use game constants)
-	for (let col = 0; col < PLATE_COLS; col++) {
-		const cx = offsetX + col * spacingX;
-		overlayContent += '<text x="' + cx + '" y="125" font-family="Arial,sans-serif"'
-			+ ' font-size="5" fill="#999999" text-anchor="middle">' + DRUG_CONCENTRATION_LABELS[col] + '</text>';
-	}
-	return composeSvg(SVG_WELL_PLATE_24, "well_plate_24", [overlayContent]);
+
+	svgContent += '</svg>';
+	return svgContent;
 }
 
 // ============================================

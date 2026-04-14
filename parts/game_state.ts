@@ -42,6 +42,14 @@ interface GameState {
 	pipetteVolumeMl: number;
 	isDragging: boolean;
 	dragItem: string | null;
+	// Day state machine
+	day: 'day1_seed' | 'day1_wait' | 'day2_treat' | 'day2_wait' | 'day4_readout';
+	seenPartIntros: string[];
+	// M5 protocol fidelity counters
+	dilutionErrors: number;
+	plateMapErrors: number;
+	mttTechniqueErrors: number;
+	incubationTimingOk: boolean;
 }
 
 // ============================================
@@ -95,6 +103,12 @@ function createInitialGameState(): GameState {
 		pipetteVolumeMl: 0,
 		isDragging: false,
 		dragItem: null,
+		day: 'day1_seed',
+		seenPartIntros: [],
+		dilutionErrors: 0,
+		plateMapErrors: 0,
+		mttTechniqueErrors: 0,
+		incubationTimingOk: true,
 	};
 }
 
@@ -309,6 +323,35 @@ function getWell(row: number, col: number): WellData {
 // Forward declarations - overridden by later modules
 function renderGame(): void {
 	// Implemented in init.ts
+}
+
+// ============================================
+function advanceDay(): void {
+	switch (gameState.day) {
+		case 'day1_seed':
+			// day1_seed -> day1_wait (after p3_incubate_day1 completes)
+			gameState.day = 'day1_wait';
+			break;
+		case 'day1_wait':
+			// day1_wait -> day2_treat (via incubator click)
+			gameState.day = 'day2_treat';
+			break;
+		case 'day2_treat':
+			// day2_treat -> day2_wait (after p5_incubate_48h completes)
+			gameState.day = 'day2_wait';
+			break;
+		case 'day2_wait':
+			// day2_wait -> day4_readout (via incubator click)
+			gameState.day = 'day4_readout';
+			break;
+		case 'day4_readout':
+			// Already at final day; illegal transition
+			console.warn('advanceDay: illegal from day4_readout');
+			return;
+		default:
+			console.warn('advanceDay: illegal from ' + gameState.day);
+			return;
+	}
 }
 
 // ============================================

@@ -406,57 +406,87 @@ function renderPlateReaderScene(): void {
 	if (!overlay) return;
 
 	overlay.classList.add('active');
-	generatePlateReaderResults();
+	runMttReadout();
 
 	const modal = overlay.querySelector('.modal-content') as HTMLElement;
 	if (!modal) return;
 
 	let html = '<button class="modal-close" aria-label="Close">&times;</button>';
-	html += '<h2>Plate Reader Results (MTT Assay - 570 nm)</h2>';
-	html += '<div class="microscope-view" style="flex-direction:column;min-height:auto;padding:16px;">';
+	html += '<h2>Plate Reader Results (MTT Assay - 560 nm)</h2>';
+	html += '<div class="microscope-view" style="flex-direction:column;min-height:auto;padding:16px;overflow-y:auto;">';
 
-	// Results table
-	html += '<table style="border-collapse:collapse;width:100%;font-size:13px;">';
-	html += '<tr><th style="padding:6px;border:1px solid #ddd;background:#f5f5f5;"></th>';
-	for (let col = 0; col < PLATE_COLS; col++) {
-		html += '<th style="padding:6px;border:1px solid #ddd;background:#f5f5f5;">' + DRUG_CONCENTRATION_LABELS[col] + ' uM</th>';
+	// Split header with column group labels
+	html += '<div style="margin-bottom:12px;">';
+	html += '<div style="display:flex;font-size:12px;font-weight:600;color:#333;margin-bottom:4px;">';
+	html += '<div style="flex:0 0 40px;"></div>';
+	html += '<div style="flex:1;text-align:center;padding:4px;">Carboplatin only (1-6)</div>';
+	html += '<div style="flex:1;text-align:center;padding:4px;">+ Metformin 5 mM (7-12)</div>';
+	html += '</div>';
+
+	// 8x12 well plate grid with headers
+	html += '<table style="border-collapse:collapse;width:100%;font-size:12px;margin-bottom:16px;">';
+
+	// Sub-header row: column numbers 1-12
+	html += '<tr>';
+	html += '<td style="padding:4px;text-align:center;font-weight:600;width:40px;"></td>';
+	for (let col = 0; col < PLATE_96_COLS; col++) {
+		html += '<td style="padding:4px;text-align:center;font-weight:600;border-bottom:1px solid #ccc;">' + COL_LABELS[col] + '</td>';
 	}
 	html += '</tr>';
 
-	const rowLabels = ['A', 'B', 'C', 'D'];
-	for (let row = 0; row < PLATE_ROWS; row++) {
+	// Data rows: A-H, with colors based on absorbance (viability)
+	for (let row = 0; row < PLATE_96_ROWS; row++) {
 		html += '<tr>';
-		html += '<td style="padding:6px;border:1px solid #ddd;background:#f5f5f5;font-weight:600;">' + rowLabels[row] + '</td>';
-		for (let col = 0; col < PLATE_COLS; col++) {
+		html += '<td style="padding:4px;text-align:center;font-weight:600;width:40px;background:#f5f5f5;">' + ROW_LABELS[row] + '</td>';
+		for (let col = 0; col < PLATE_96_COLS; col++) {
 			const well = getWell(row, col);
-			const intensity = well.absorbance;
-			const bgR = Math.round(255 - intensity * 100);
-			const bgG = Math.round(255 - intensity * 40);
-			const bgB = Math.round(255 - intensity * 120);
-			html += '<td style="padding:6px;border:1px solid #ddd;text-align:center;background:rgb(' + bgR + ',' + bgG + ',' + bgB + ');">';
-			html += well.absorbance.toFixed(3);
+			const absorbance = well.absorbance;
+			// Color scale: lighter = higher viability/absorbance
+			const viability = Math.max(0, Math.min(1, absorbance / 1.2));
+			const bgR = Math.round(255 - viability * 80);
+			const bgG = Math.round(255 - viability * 30);
+			const bgB = Math.round(255 - viability * 100);
+			html += '<td style="padding:4px;text-align:center;border:1px solid #ddd;background:rgb(' + bgR + ',' + bgG + ',' + bgB + ');">';
+			html += absorbance.toFixed(3);
 			html += '</td>';
 		}
 		html += '</tr>';
 	}
 	html += '</table>';
+	html += '</div>';
 
-	// Column averages
-	html += '<div style="margin-top:16px;">';
-	html += '<h3 style="font-size:14px;margin:0 0 8px 0;">Column Averages</h3>';
-	html += '<div style="display:flex;gap:8px;flex-wrap:wrap;">';
-	for (let col = 0; col < PLATE_COLS; col++) {
-		let sum = 0;
-		for (let row = 0; row < PLATE_ROWS; row++) {
-			sum += getWell(row, col).absorbance;
+	// Row means: left columns (1-6) vs right columns (7-12)
+	html += '<div style="margin-bottom:16px;">';
+	html += '<h3 style="font-size:13px;font-weight:600;margin:0 0 8px 0;">Row Means</h3>';
+	html += '<table style="border-collapse:collapse;font-size:12px;width:400px;">';
+	html += '<tr>';
+	html += '<td style="padding:6px;border:1px solid #ddd;font-weight:600;width:30px;">Row</td>';
+	html += '<td style="padding:6px;border:1px solid #ddd;font-weight:600;">Carb-only mean (1-6)</td>';
+	html += '<td style="padding:6px;border:1px solid #ddd;font-weight:600;">+Metformin mean (7-12)</td>';
+	html += '</tr>';
+
+	for (let row = 0; row < PLATE_96_ROWS; row++) {
+		// Carboplatin only: columns 0-5
+		let carbSum = 0;
+		for (let col = 0; col < 6; col++) {
+			carbSum += getWell(row, col).absorbance;
 		}
-		const avg = sum / PLATE_ROWS;
-		html += '<div style="text-align:center;padding:8px 12px;background:#f0f2f5;border-radius:6px;min-width:60px;">';
-		html += '<div style="font-size:11px;color:#757575;">' + DRUG_CONCENTRATION_LABELS[col] + ' uM</div>';
-		html += '<div style="font-size:16px;font-weight:600;">' + avg.toFixed(3) + '</div>';
-		html += '</div>';
+		const carbMean = carbSum / 6;
+
+		// Metformin: columns 6-11
+		let metSum = 0;
+		for (let col = 6; col < 12; col++) {
+			metSum += getWell(row, col).absorbance;
+		}
+		const metMean = metSum / 6;
+
+		html += '<tr>';
+		html += '<td style="padding:6px;border:1px solid #ddd;font-weight:600;background:#f5f5f5;">' + ROW_LABELS[row] + '</td>';
+		html += '<td style="padding:6px;border:1px solid #ddd;text-align:center;">' + carbMean.toFixed(3) + '</td>';
+		html += '<td style="padding:6px;border:1px solid #ddd;text-align:center;">' + metMean.toFixed(3) + '</td>';
+		html += '</tr>';
 	}
-	html += '</div></div>';
+	html += '</table>';
 	html += '</div>';
 
 	html += '<div style="text-align:center;margin-top:16px;">';
@@ -468,8 +498,7 @@ function renderPlateReaderScene(): void {
 	const completeBtn = document.getElementById('complete-plate-read');
 	if (completeBtn) {
 		completeBtn.addEventListener('click', () => {
-			gameState.plateReadComplete = true;
-			completeStep('plate_read');
+			completeStep('p7_plate_read');
 			overlay.classList.remove('active');
 		});
 	}
@@ -483,21 +512,3 @@ function renderPlateReaderScene(): void {
 	}
 }
 
-// ============================================
-function generatePlateReaderResults(): void {
-	const controlAbsorbance = 1.2 + Math.random() * 0.3;
-
-	gameState.wellPlate.forEach(well => {
-		if (!well.hasCells) {
-			well.absorbance = 0.05 + Math.random() * 0.02;
-			return;
-		}
-		const drugConc = well.drugConcentrationUm;
-		const ic50 = 2;
-		const hillSlope = 1.5;
-		const survivalFraction = 1 / (1 + Math.pow(drugConc / ic50, hillSlope));
-		const baseAbsorbance = controlAbsorbance * survivalFraction;
-		const noise = (Math.random() - 0.5) * 0.08;
-		well.absorbance = Math.max(0.05, baseAbsorbance + noise);
-	});
-}
