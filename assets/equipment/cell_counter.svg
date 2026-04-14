@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" id="cell_counter" viewBox="0 0 60 70">
+	<!-- Countess-style benchtop cell counter: white body, screen on top, slide slot on front. -->
+	<defs>
+		<linearGradient id="cc_body" x1="0%" y1="0%" x2="0%" y2="100%">
+			<stop offset="0%" stop-color="#f6f6f6"/>
+			<stop offset="50%" stop-color="#e8e8e8"/>
+			<stop offset="100%" stop-color="#c2c2c2"/>
+		</linearGradient>
+	</defs>
+
+	<g id="body">
+	<!-- Rubber feet -->
+	<rect x="6"  y="64" width="6" height="4" rx="1" fill="#2a2a2a"/>
+	<rect x="48" y="64" width="6" height="4" rx="1" fill="#2a2a2a"/>
+
+	<!-- Main body -->
+	<rect x="4" y="10" width="52" height="56" rx="3" fill="url(#cc_body)" stroke="#3a4048" stroke-width="1"/>
+
+	<!-- Screen bezel -->
+	<rect x="7" y="13" width="46" height="26" rx="1.5" fill="#2a3038" stroke="#1a2028" stroke-width="0.6"/>
+	<!-- Screen content -->
+	<rect x="8.5" y="14.5" width="43" height="23" rx="0.6" fill="#1a2a3a"/>
+
+	<!-- Screen text: VIAB 94% -->
+	<text x="12" y="24" font-family="sans-serif" font-size="5" fill="#cfe8ff">Cells/mL</text>
+	<text x="12" y="30" font-family="monospace" font-size="5" fill="#8ef0a8">1.2e6</text>
+	<text x="32" y="24" font-family="sans-serif" font-size="5" fill="#cfe8ff">Viab</text>
+	<text x="32" y="30" font-family="monospace" font-size="5.2" fill="#8ef0a8">94%</text>
+	<!-- Small histogram bars -->
+	<rect x="12" y="33" width="2" height="3" fill="#8ef0a8"/>
+	<rect x="15" y="32" width="2" height="4" fill="#8ef0a8"/>
+	<rect x="18" y="31" width="2" height="5" fill="#8ef0a8"/>
+	<rect x="21" y="32.5" width="2" height="3.5" fill="#8ef0a8"/>
+	<rect x="24" y="34" width="2" height="2" fill="#8ef0a8"/>
+
+	<!-- Slide slot on the front face -->
+	<rect x="16" y="46" width="28" height="3" rx="0.5" fill="#2a3038" stroke="#1a2028" stroke-width="0.4"/>
+	<!-- Slide sticking out -->
+	<rect x="22" y="45" width="16" height="2" fill="#f0f0f0" stroke="#a0a0a0" stroke-width="0.3"/>
+
+	<!-- Buttons -->
+	<circle cx="14" cy="57" r="2.5" fill="#4a5460" stroke="#2a3038" stroke-width="0.4"/>
+	<circle cx="22" cy="57" r="2.5" fill="#4a5460" stroke="#2a3038" stroke-width="0.4"/>
+	<circle cx="30" cy="57" r="2.5" fill="#4a5460" stroke="#2a3038" stroke-width="0.4"/>
+	<circle cx="46" cy="57" r="3"   fill="#22c55e" stroke="#14532d" stroke-width="0.5"/>
+
+	<!-- Brand label -->
+	<text x="8" y="63" font-family="sans-serif" font-size="3.5" fill="#3a4048">Cell Counter</text>
+	</g>
+	<g id="overlay_root"/>
+</svg>

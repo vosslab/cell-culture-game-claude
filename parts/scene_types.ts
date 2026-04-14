@@ -18,7 +18,26 @@ type SceneItem = {
 	// the cluster is anchored to its stop (left wall, row midpoint, or
 	// right wall). Unset items default to 'center'.
 	alignStop?: 'left' | 'center' | 'right';
+	// depth: back = parked on rear shelf (smaller, higher), mid = working
+	// area, front = active item (larger, lower, outlined). Unset defaults
+	// to 'mid'. Auto-resolved from the active protocol step's targetItems
+	// by resolveItemDepth(); a manual depth here overrides the resolver.
+	depth?: 'back' | 'mid' | 'front';
+	// group: functional grouping used for auto-depth (items in the same
+	// group as the active step's targetItems get promoted to 'mid') and
+	// for visual clustering within tab-stop zones. Unset defaults to
+	// 'equipment'.
+	group?: SceneItemGroup;
 };
+
+type SceneItemGroup =
+	| 'stocks'
+	| 'wash'
+	| 'waste'
+	| 'pipetting'
+	| 'plate'
+	| 'dilution_prep'
+	| 'equipment';
 
 type AssetSpec = {
 	defaultWidth: number;       // baseline width in scene %

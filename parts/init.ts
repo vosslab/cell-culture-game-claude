@@ -29,9 +29,21 @@ function validateProtocolSteps(): string[] {
 
 // Override the stub renderGame with the real implementation
 renderGame = function(): void {
+	// Hood and bench are peer persistent scenes; exactly one is visible at a
+	// time. Modal overlays (microscope, incubator, plate_reader, results)
+	// sit on top of whichever persistent scene is showing.
+	const hoodEl = document.getElementById('hood-scene');
+	const benchEl = document.getElementById('bench-scene');
+	const showBench = gameState.activeScene === 'bench';
+	if (hoodEl) hoodEl.style.display = showBench ? 'none' : 'flex';
+	if (benchEl) benchEl.style.display = showBench ? 'flex' : 'none';
+
 	switch (gameState.activeScene) {
 		case 'hood':
 			renderHoodScene();
+			break;
+		case 'bench':
+			renderBenchScene();
 			break;
 		case 'incubator':
 			renderIncubatorScene();

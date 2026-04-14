@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" id="centrifuge" viewBox="0 0 60 70">
+	<!-- Benchtop centrifuge: round body with lid on top and a control panel. -->
+	<defs>
+		<linearGradient id="body_grad" x1="0%" y1="0%" x2="0%" y2="100%">
+			<stop offset="0%" stop-color="#9aa4ae"/>
+			<stop offset="50%" stop-color="#7a8490"/>
+			<stop offset="100%" stop-color="#5a6470"/>
+		</linearGradient>
+		<radialGradient id="lid_grad" cx="50%" cy="30%" r="60%">
+			<stop offset="0%" stop-color="#7a828c"/>
+			<stop offset="100%" stop-color="#525a64"/>
+		</radialGradient>
+	</defs>
+
+	<g id="body">
+	<!-- Rubber feet -->
+	<rect x="6"  y="64" width="6" height="4" rx="1" fill="#2a2a2a"/>
+	<rect x="48" y="64" width="6" height="4" rx="1" fill="#2a2a2a"/>
+
+	<!-- Main body: wide round-cornered box -->
+	<rect x="4" y="26" width="52" height="40" rx="6" fill="url(#body_grad)" stroke="#3a4048" stroke-width="1"/>
+
+	<!-- Lid dome on top -->
+	<ellipse cx="30" cy="26" rx="24" ry="10" fill="url(#lid_grad)" stroke="#3a4048" stroke-width="1"/>
+	<!-- Lid hinge on the back -->
+	<rect x="26" y="15" width="8" height="3" rx="1" fill="#3a4048"/>
+	<!-- Lid latch at the front -->
+	<rect x="27" y="32" width="6" height="2" rx="0.5" fill="#3a4048"/>
+
+	<!-- Control panel: digital screen + buttons -->
+	<rect x="10" y="40" width="22" height="10" rx="1" fill="#0a1a0a" stroke="#1a2a1a" stroke-width="0.6"/>
+	<text x="12" y="48" font-family="monospace" font-size="6" fill="#4ade80">13400</text>
+
+	<!-- Start button -->
+	<circle cx="40" cy="45" r="3" fill="#4a5460" stroke="#2a3038" stroke-width="0.6"/>
+	<text x="37.5" y="47" font-family="sans-serif" font-size="3" fill="#e0e0e0">ST</text>
+
+	<!-- Stop button -->
+	<circle cx="49" cy="45" r="3" fill="#4a5460" stroke="#2a3038" stroke-width="0.6"/>
+	<text x="46.5" y="47" font-family="sans-serif" font-size="3" fill="#e0e0e0">SP</text>
+
+	<!-- Red status LED -->
+	<circle cx="49" cy="55" r="1.4" fill="#ef4444" stroke="#7f1d1d" stroke-width="0.3"/>
+
+	<!-- Brand label -->
+	<text x="12" y="60" font-family="sans-serif" font-size="3.5" fill="#cfd6dc">Centrifuge</text>
+	</g>
+	<g id="overlay_root"/>
+</svg>

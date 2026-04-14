@@ -19,8 +19,16 @@ function getItemSvgHtml(itemId: string): string {
 		case 'drug_vials': return getDrugVialsSvg();
 		case 'multichannel_pipette': return getMultichannelPipetteSvg();
 		case 'ethanol_bottle': return getEthanolBottleSvg();
-		case 'microscope': return getMicroscopeSvg();
-		case 'incubator': return getIncubatorSvg();
+		case 'sterile_water': return getSterileWaterSvg();
+		case 'pbs_bottle': return getPbsBottleSvg();
+		case 'conical_15ml_rack': return getConical15mlRackSvg();
+		case 'dilution_tube_rack': return getDilutionTubeRackSvg();
+		case 'mtt_vial': return getMttVialSvg();
+		case 'dmso_bottle': return getDmsoBottleSvg();
+		case 'carboplatin_stock': return getCarboplatinStockSvg();
+		case 'metformin_stock': return getMetforminStockSvg();
+		case 'micropipette_rack': return getMicropipetteRackSvg();
+		case 'biohazard_decant': return getBiohazardDecanSvg();
 		default: return '';
 	}
 }

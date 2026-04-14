@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" id="vortex" viewBox="0 0 50 70">
+	<!-- Benchtop vortex mixer: cube body with a black rubber cup on top. -->
+	<defs>
+		<linearGradient id="vx_body" x1="0%" y1="0%" x2="0%" y2="100%">
+			<stop offset="0%" stop-color="#a0a0a0"/>
+			<stop offset="50%" stop-color="#8a8a8a"/>
+			<stop offset="100%" stop-color="#606060"/>
+		</linearGradient>
+	</defs>
+
+	<g id="body">
+	<!-- Rubber feet -->
+	<rect x="6"  y="64" width="6" height="4" rx="1" fill="#2a2a2a"/>
+	<rect x="38" y="64" width="6" height="4" rx="1" fill="#2a2a2a"/>
+
+	<!-- Base -->
+	<rect x="4" y="58" width="42" height="8" rx="1" fill="#4a4a4a" stroke="#2a2a2a" stroke-width="0.6"/>
+
+	<!-- Main cube body -->
+	<rect x="6" y="22" width="38" height="38" rx="2" fill="url(#vx_body)" stroke="#3a3a3a" stroke-width="1"/>
+
+	<!-- Power knob -->
+	<circle cx="15" cy="38" r="4" fill="#4a4a4a" stroke="#2a2a2a" stroke-width="0.6"/>
+	<line x1="15" y1="38" x2="15" y2="34.5" stroke="#e0e0e0" stroke-width="0.8"/>
+
+	<!-- Speed knob -->
+	<circle cx="33" cy="38" r="4" fill="#4a4a4a" stroke="#2a2a2a" stroke-width="0.6"/>
+	<line x1="33" y1="38" x2="36" y2="35.5" stroke="#e0e0e0" stroke-width="0.8"/>
+
+	<!-- Touch/continuous mode switch -->
+	<rect x="18" y="48" width="14" height="5" rx="0.6" fill="#2a2a2a"/>
+	<text x="19.5" y="52" font-family="sans-serif" font-size="3.5" fill="#e0e0e0">T  C</text>
+
+	<!-- Power indicator LED -->
+	<circle cx="40" cy="25" r="1.2" fill="#4ade80" stroke="#166534" stroke-width="0.3"/>
+
+	<!-- Rubber cup on top -->
+	<ellipse cx="25" cy="22" rx="9" ry="3.2" fill="#1a1a1a" stroke="#000000" stroke-width="0.6"/>
+	<ellipse cx="25" cy="20.5" rx="7" ry="2.2" fill="#2a2a2a"/>
+	<ellipse cx="25" cy="20" rx="5" ry="1.4" fill="#1a1a1a"/>
+
+	<!-- Brand label -->
+	<text x="10" y="17" font-family="sans-serif" font-size="3.5" fill="#3a3a3a">Vortex</text>
+	</g>
+	<g id="overlay_root"/>
+</svg>

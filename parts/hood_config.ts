@@ -41,12 +41,12 @@ const HOOD_BOUNDS: SceneBounds = {
 // back_row  [7-93]  baseline 50 -> left(plate,media,trypsin)
 //                                  center(flask)
 //                                  right(serological,aspirating,multi)
-// front_row [7-77]  baseline 68 -> left(ethanol) center(drug) right(waste)
-//                                  (x1=77 leaves room for the outside
-//                                  zone so front-row items do not collide
-//                                  with microscope/incubator on the same
-//                                  baseline)
-// outside   [78-97] baseline 68 -> microscope, incubator (right of hood)
+// front_row [7-93]  baseline 68 -> left(ethanol) center(drug)
+//                                  right(waste, biohazard)
+//
+// As of M3 the microscope and incubator live on the bench scene
+// (parts/bench_config.ts). The former `outside` zone has been removed
+// and front_row reclaims the full hood interior width.
 //
 // Insertion order in each row reflects real lab workflow, left to
 // right, clean to dirty. Flask is the dominant working object in the
@@ -58,12 +58,16 @@ const HOOD_ZONES: Record<string, ZoneDef> = {
 	// Hood interior back row: spans the full hood interior, tab-stop
 	// groups of 3 left / 1 center (flask) / 3 right (pipettes).
 	back_row:  { x0: 7,  x1: 93, baseline: 50, gap: 2, align: 'tab-stops' },
-	// Hood interior front row: three tab-stop groups. x1=77 keeps the
-	// row clear of the outside zone on the same baseline.
-	front_row: { x0: 7,  x1: 77, baseline: 68, gap: 2, align: 'tab-stops' },
-	// Outside the hood: microscope and incubator, left-aligned so they
-	// sit in the right-hand area without crowding the hood boundary.
-	outside:   { x0: 78, x1: 97, baseline: 68, gap: 6, align: 'left' },
+	// Hood interior front row: three tab-stop groups. M3 removed the
+	// outside zone so this row reclaims the full hood interior width.
+	front_row: { x0: 7,  x1: 93, baseline: 68, gap: 2, align: 'tab-stops' },
+	// Shelf row above back_row: reagent storage for wash buffers, assay
+	// reagents, and drug stock solutions. Baseline 22 sits well above
+	// back_row whose items have tops around y=34 (bottom-anchored items
+	// with aspect ratios that push heights to ~16% at widthScale 1.0).
+	// The 12% gap between shelf item bottoms (y=22) and back_row item
+	// tops (~y=34) keeps the shelves visually distinct without overlap.
+	shelf_row: { x0: 7,  x1: 93, baseline: 22, gap: 2, align: 'tab-stops' },
 };
 
 // Priority is set to the final left-to-right order within each row;
@@ -83,13 +87,21 @@ const HOOD_SCENE_ITEMS: SceneItem[] = [
 	{ id: 'serological_pipette',  asset: 'serological_pipette',  kind: 'pipette',   zone: 'back_row',  priority: 5,  widthScale: 1.0, label: 'Serological Pipette',  shortLabel: 'Serological',  anchorY: 'tip',    alignStop: 'right'  },
 	{ id: 'aspirating_pipette',   asset: 'aspirating_pipette',   kind: 'pipette',   zone: 'back_row',  priority: 6,  widthScale: 1.0, label: 'Aspirating Pipette',   shortLabel: 'Aspirating',   anchorY: 'tip',    alignStop: 'right'  },
 	{ id: 'multichannel_pipette', asset: 'multichannel_pipette', kind: 'pipette',   zone: 'back_row',  priority: 7,  widthScale: 1.0, label: 'Multichannel Pipette', shortLabel: 'Multichannel', anchorY: 'tip',    alignStop: 'right'  },
+	{ id: 'micropipette_rack',    asset: 'micropipette_rack',    kind: 'rack',      zone: 'back_row',  priority: 7.5, widthScale: 0.9, label: 'P20/P200/P1000',       shortLabel: 'Micropipettes', anchorY: 'bottom', alignStop: 'right'  },
 	// Front row, three tab-stop groups: ethanol | drug dilutions | waste
 	{ id: 'ethanol_bottle',       asset: 'ethanol_bottle',       kind: 'bottle',    zone: 'front_row', priority: 8,  widthScale: 1.0, label: '70% Ethanol',          anchorY: 'bottom', alignStop: 'left'   },
 	{ id: 'drug_vials',           asset: 'drug_vials',           kind: 'rack',      zone: 'front_row', priority: 9,  widthScale: 1.0, label: 'Drug Dilutions',       anchorY: 'bottom', alignStop: 'center' },
 	{ id: 'waste_container',      asset: 'waste_container',      kind: 'waste',     zone: 'front_row', priority: 10, widthScale: 1.0, label: 'Waste',                anchorY: 'bottom', alignStop: 'right'  },
-	// Outside the hood
-	{ id: 'microscope',           asset: 'microscope',           kind: 'equipment', zone: 'outside',   priority: 11, widthScale: 1.0, label: 'Microscope',           anchorY: 'bottom' },
-	{ id: 'incubator',            asset: 'incubator',            kind: 'equipment', zone: 'outside',   priority: 12, widthScale: 1.0, label: 'Incubator',            anchorY: 'bottom' },
+	{ id: 'biohazard_decant',     asset: 'biohazard_decant',     kind: 'waste',     zone: 'front_row', priority: 10.5, widthScale: 0.9, label: 'Biohazard',            anchorY: 'bottom', alignStop: 'right'  },
+	// Shelf row: reagent storage (left=wash, center=assay, right=drugs)
+	{ id: 'sterile_water',        asset: 'sterile_water',        kind: 'bottle',    zone: 'shelf_row', priority: 20, widthScale: 0.7, label: 'Sterile Water',         anchorY: 'bottom', alignStop: 'left'   },
+	{ id: 'pbs_bottle',           asset: 'pbs_bottle',           kind: 'bottle',    zone: 'shelf_row', priority: 21, widthScale: 0.7, label: '1x PBS',               anchorY: 'bottom', alignStop: 'left'   },
+	{ id: 'conical_15ml_rack',    asset: 'conical_15ml_rack',    kind: 'rack',      zone: 'shelf_row', priority: 22, widthScale: 0.75, label: '15 mL Tubes',          anchorY: 'bottom', alignStop: 'left'   },
+	{ id: 'dilution_tube_rack',   asset: 'dilution_tube_rack',   kind: 'rack',      zone: 'shelf_row', priority: 23, widthScale: 0.75, label: '1.5 mL Tubes',         anchorY: 'bottom', alignStop: 'left'   },
+	{ id: 'mtt_vial',             asset: 'mtt_vial',             kind: 'bottle',    zone: 'shelf_row', priority: 24, widthScale: 0.65, label: 'MTT 5 mg/mL',          anchorY: 'bottom', alignStop: 'center' },
+	{ id: 'dmso_bottle',          asset: 'dmso_bottle',          kind: 'bottle',    zone: 'shelf_row', priority: 25, widthScale: 0.7, label: 'DMSO',                anchorY: 'bottom', alignStop: 'center' },
+	{ id: 'carboplatin_stock',    asset: 'carboplatin_stock',    kind: 'bottle',    zone: 'shelf_row', priority: 26, widthScale: 0.7, label: 'Carboplatin 10 mM',     shortLabel: 'Carboplatin', anchorY: 'bottom', alignStop: 'right'  },
+	{ id: 'metformin_stock',      asset: 'metformin_stock',      kind: 'bottle',    zone: 'shelf_row', priority: 27, widthScale: 0.7, label: 'Metformin 1 M',        shortLabel: 'Metformin',   anchorY: 'bottom', alignStop: 'right'  },
 ];
 
 const HOOD_LAYOUT_RULES: SceneLayoutRules = {

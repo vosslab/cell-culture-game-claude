@@ -14,6 +14,14 @@ declare const SVG_DRUG_VIAL_RACK: string;
 declare const SVG_MULTICHANNEL_PIPETTE: string;
 declare const SVG_MICROSCOPE: string;
 declare const SVG_INCUBATOR: string;
+declare const SVG_CONICAL_15ML_RACK: string;
+declare const SVG_DILUTION_TUBE_RACK: string;
+declare const SVG_BIOHAZARD_DECANT: string;
+declare const SVG_MICROPIPETTE_RACK: string;
+declare const SVG_CENTRIFUGE: string;
+declare const SVG_WATER_BATH: string;
+declare const SVG_VORTEX: string;
+declare const SVG_CELL_COUNTER: string;
 
 // Legacy: cell-culture2.svg artwork (fallback, will be removed)
 declare const CELL_CULTURE_PLATE_SVG: string;
@@ -258,4 +266,140 @@ function getMicroscopeSvg(): string {
  */
 function getIncubatorSvg(): string {
 	return SVG_INCUBATOR;
+}
+
+// ============================================
+/**
+ * Gets the sterile water bottle SVG (reuses media bottle base with different label/color)
+ */
+function getSterileWaterSvg(): string {
+	const overlays: string[] = [
+		createLiquidOverlay("media_bottle", 0.75, "buffer", SVG_MEDIA_BOTTLE),
+		createDynamicLabel("media_bottle", "H2O", SVG_MEDIA_BOTTLE),
+	];
+	return composeSvg(SVG_MEDIA_BOTTLE, "sterile_water", overlays);
+}
+
+// ============================================
+/**
+ * Gets the PBS bottle SVG (reuses media bottle base with different label/color)
+ */
+function getPbsBottleSvg(): string {
+	const overlays: string[] = [
+		createLiquidOverlay("media_bottle", 0.75, "buffer", SVG_MEDIA_BOTTLE),
+		createDynamicLabel("media_bottle", "1x PBS", SVG_MEDIA_BOTTLE),
+	];
+	return composeSvg(SVG_MEDIA_BOTTLE, "pbs_bottle", overlays);
+}
+
+// ============================================
+/**
+ * Gets the 15 mL conical tube rack SVG (hand-drawn, static)
+ */
+function getConical15mlRackSvg(): string {
+	return SVG_CONICAL_15ML_RACK;
+}
+
+// ============================================
+/**
+ * Gets the 1.5 mL dilution tube rack SVG (hand-drawn, static)
+ */
+function getDilutionTubeRackSvg(): string {
+	return SVG_DILUTION_TUBE_RACK;
+}
+
+// ============================================
+/**
+ * Gets the MTT vial SVG (reuses media bottle base with different label/color)
+ */
+function getMttVialSvg(): string {
+	const overlays: string[] = [
+		createLiquidOverlay("media_bottle", 0.60, "drug", SVG_MEDIA_BOTTLE),
+		createDynamicLabel("media_bottle", "MTT", SVG_MEDIA_BOTTLE),
+	];
+	return composeSvg(SVG_MEDIA_BOTTLE, "mtt_vial", overlays);
+}
+
+// ============================================
+/**
+ * Gets the DMSO bottle SVG (reuses media bottle base with different label/color)
+ */
+function getDmsoBottleSvg(): string {
+	const overlays: string[] = [
+		createLiquidOverlay("media_bottle", 0.70, "buffer", SVG_MEDIA_BOTTLE),
+		createDynamicLabel("media_bottle", "DMSO", SVG_MEDIA_BOTTLE),
+	];
+	return composeSvg(SVG_MEDIA_BOTTLE, "dmso_bottle", overlays);
+}
+
+// ============================================
+/**
+ * Gets the carboplatin stock bottle SVG (reuses media bottle base with different label/color)
+ */
+function getCarboplatinStockSvg(): string {
+	const overlays: string[] = [
+		createLiquidOverlay("media_bottle", 0.60, "drug", SVG_MEDIA_BOTTLE),
+		createDynamicLabel("media_bottle", "Carboplatin", SVG_MEDIA_BOTTLE),
+	];
+	return composeSvg(SVG_MEDIA_BOTTLE, "carboplatin_stock", overlays);
+}
+
+// ============================================
+/**
+ * Gets the metformin stock bottle SVG (reuses media bottle base with different label/color)
+ */
+function getMetforminStockSvg(): string {
+	const overlays: string[] = [
+		createLiquidOverlay("media_bottle", 0.60, "drug", SVG_MEDIA_BOTTLE),
+		createDynamicLabel("media_bottle", "Metformin", SVG_MEDIA_BOTTLE),
+	];
+	return composeSvg(SVG_MEDIA_BOTTLE, "metformin_stock", overlays);
+}
+
+// ============================================
+/**
+ * Gets the micropipette rack SVG (hand-drawn, static)
+ */
+function getMicropipetteRackSvg(): string {
+	return SVG_MICROPIPETTE_RACK;
+}
+
+// ============================================
+/**
+ * Gets the biohazard decant bin SVG (hand-drawn, static)
+ */
+function getBiohazardDecanSvg(): string {
+	return SVG_BIOHAZARD_DECANT;
+}
+
+// ============================================
+/**
+ * Gets the benchtop centrifuge SVG (hand-drawn, static)
+ */
+function getCentrifugeSvg(): string {
+	return SVG_CENTRIFUGE;
+}
+
+// ============================================
+/**
+ * Gets the 37C water bath SVG (hand-drawn, static)
+ */
+function getWaterBathSvg(): string {
+	return SVG_WATER_BATH;
+}
+
+// ============================================
+/**
+ * Gets the vortex mixer SVG (hand-drawn, static)
+ */
+function getVortexSvg(): string {
+	return SVG_VORTEX;
+}
+
+// ============================================
+/**
+ * Gets the benchtop cell counter SVG (hand-drawn, static)
+ */
+function getCellCounterSvg(): string {
+	return SVG_CELL_COUNTER;
 }

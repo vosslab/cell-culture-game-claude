@@ -706,6 +706,119 @@ async function runTests(page) {
 			}
 		})();
 
+		// ---- test 24: depth tier back shrinks + raises ----
+		(function() {
+			var name = 'Depth back: item 0.80x wide and baseline - 4';
+			try {
+				var itMid = { id: 'a', asset: 'a', kind: 'bottle',
+				  zone: 'test', priority: 1, widthScale: 1.0,
+				  label: 'A', anchorY: 'bottom' };
+				var itBack = { id: 'b', asset: 'b', kind: 'bottle',
+				  zone: 'test', priority: 1, widthScale: 1.0,
+				  label: 'B', anchorY: 'bottom', depth: 'back' };
+				var spMap = {
+					a: { defaultWidth: 10, labelWidth: 5 },
+					b: { defaultWidth: 10, labelWidth: 5 },
+				};
+				var rules = makeRules({ baseline: 80, align: 'center' });
+				var layMid = computeSceneLayout([itMid], spMap, rules, 100, 100)[0];
+				var layBack = computeSceneLayout([itBack], spMap, rules, 100, 100)[0];
+				// Back should be 0.80x the width of mid.
+				var scaleOk = Math.abs(layBack.width / layMid.width - 0.80) < 0.01;
+				// Back baseline is zone.baseline + DEPTH_BASELINE_BACK (= -4),
+				// so a back-depth bottom-anchored item sits HIGHER than mid.
+				// layBack.y + layBack.height equals the effective baseline.
+				var backBaseline = layBack.y + layBack.height;
+				var midBaseline = layMid.y + layMid.height;
+				var baseOk = Math.abs((midBaseline - backBaseline) - 4) < 0.1;
+				tests.push({ name, pass: scaleOk && baseOk,
+					detail: 'scaleRatio=' + (layBack.width / layMid.width).toFixed(3)
+					+ ' midBase=' + midBaseline.toFixed(2)
+					+ ' backBase=' + backBaseline.toFixed(2) });
+			} catch (e) {
+				tests.push({ name, pass: false, detail: String(e) });
+			}
+		})();
+
+		// ---- test 25: depth tier front grows + lowers ----
+		(function() {
+			var name = 'Depth front: item 1.10x wide and baseline + 4';
+			try {
+				var itMid = { id: 'a', asset: 'a', kind: 'bottle',
+				  zone: 'test', priority: 1, widthScale: 1.0,
+				  label: 'A', anchorY: 'bottom' };
+				var itFront = { id: 'f', asset: 'f', kind: 'bottle',
+				  zone: 'test', priority: 1, widthScale: 1.0,
+				  label: 'F', anchorY: 'bottom', depth: 'front' };
+				var spMap = {
+					a: { defaultWidth: 10, labelWidth: 5 },
+					f: { defaultWidth: 10, labelWidth: 5 },
+				};
+				var rules = makeRules({ baseline: 80, align: 'center' });
+				var layMid = computeSceneLayout([itMid], spMap, rules, 100, 100)[0];
+				var layFront = computeSceneLayout([itFront], spMap, rules, 100, 100)[0];
+				var scaleOk = Math.abs(layFront.width / layMid.width - 1.10) < 0.01;
+				var frontBaseline = layFront.y + layFront.height;
+				var midBaseline = layMid.y + layMid.height;
+				var baseOk = Math.abs((frontBaseline - midBaseline) - 4) < 0.1;
+				tests.push({ name, pass: scaleOk && baseOk,
+					detail: 'scaleRatio=' + (layFront.width / layMid.width).toFixed(3)
+					+ ' midBase=' + midBaseline.toFixed(2)
+					+ ' frontBase=' + frontBaseline.toFixed(2) });
+			} catch (e) {
+				tests.push({ name, pass: false, detail: String(e) });
+			}
+		})();
+
+		// ---- test 26: no depth field = mid (behavior-neutral default) ----
+		(function() {
+			var name = 'Depth default: no field renders as mid';
+			try {
+				var it = { id: 'a', asset: 'a', kind: 'bottle',
+				  zone: 'test', priority: 1, widthScale: 1.0,
+				  label: 'A', anchorY: 'bottom' };
+				var spMap = { a: { defaultWidth: 10, labelWidth: 5 } };
+				var rules = makeRules({ baseline: 80, align: 'center' });
+				var lay = computeSceneLayout([it], spMap, rules, 100, 100)[0];
+				// mid width = defaultWidth * widthScale = 10 (no depth scale).
+				// mid baseline = zone.baseline = 80, so bottom-anchored bottom
+				// edge equals 80.
+				var widthOk = Math.abs(lay.width - 10) < 0.01;
+				var baseOk = Math.abs((lay.y + lay.height) - 80) < 0.1;
+				tests.push({ name, pass: widthOk && baseOk,
+					detail: 'width=' + lay.width.toFixed(2)
+					+ ' bottomEdge=' + (lay.y + lay.height).toFixed(2) });
+			} catch (e) {
+				tests.push({ name, pass: false, detail: String(e) });
+			}
+		})();
+
+		// ---- test 27: baselineOverride wins over depth offset ----
+		(function() {
+			var name = 'baselineOverride beats depth baseline offset';
+			try {
+				// A front-depth item with baselineOverride=52 should sit at
+				// baseline 52 exactly, NOT 52+4. Depth scale still applies
+				// to width (1.10x) because override only controls baseline.
+				var it = { id: 'f', asset: 'f', kind: 'flask',
+				  zone: 'test', priority: 1, widthScale: 1.0,
+				  label: 'F', anchorY: 'bottom', depth: 'front',
+				  baselineOverride: 52 };
+				var spMap = { f: { defaultWidth: 10, labelWidth: 5 } };
+				var rules = makeRules({ baseline: 80, align: 'center' });
+				var lay = computeSceneLayout([it], spMap, rules, 100, 100)[0];
+				// bottom-anchored so y + height = 52 exactly
+				var baseOk = Math.abs((lay.y + lay.height) - 52) < 0.1;
+				// width still reflects front's 1.10x multiplier
+				var widthOk = Math.abs(lay.width - 11) < 0.01;
+				tests.push({ name, pass: baseOk && widthOk,
+					detail: 'bottomEdge=' + (lay.y + lay.height).toFixed(2)
+					+ ' width=' + lay.width.toFixed(2) });
+			} catch (e) {
+				tests.push({ name, pass: false, detail: String(e) });
+			}
+		})();
+
 		// ---- test 23: sceneBounds clamp preserves cluster spacing ----
 		(function() {
 			var name = 'sceneBounds clamp: cluster translated as a unit';

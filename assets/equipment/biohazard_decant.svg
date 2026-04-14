@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" id="biohazard_decant" viewBox="0 0 50 70">
+	<!-- Biohazard decant bin: red container with biohazard trefoil symbol. -->
+	<defs>
+		<linearGradient id="bin_body" x1="0%" y1="0%" x2="100%" y2="0%">
+			<stop offset="0%" stop-color="#a51818"/>
+			<stop offset="50%" stop-color="#d93030"/>
+			<stop offset="100%" stop-color="#a51818"/>
+		</linearGradient>
+	</defs>
+
+	<!-- Bin body: trapezoid, wider at top -->
+	<g id="body">
+		<path d="M 6 20 L 10 66 Q 10 68 12 68 L 38 68 Q 40 68 40 66 L 44 20 Z" fill="url(#bin_body)" stroke="#5a0a0a" stroke-width="1.2"/>
+		<!-- Subtle highlight down one side -->
+		<path d="M 8 22 L 11 64 L 13 64 L 10 22 Z" fill="#ffffff" opacity="0.18"/>
+	</g>
+
+	<!-- Lid with hinge -->
+	<g id="lid">
+		<rect x="4" y="14" width="42" height="8" rx="1.5" fill="#8a1010" stroke="#3a0808" stroke-width="1"/>
+		<rect x="6" y="16" width="38" height="2" rx="0.5" fill="#a51818"/>
+		<!-- Flip-open hinge pin -->
+		<circle cx="4.5" cy="18" r="1.2" fill="#3a0808"/>
+	</g>
+
+	<!-- Biohazard trefoil symbol on the front -->
+	<!-- Three overlapping circles arranged as a trefoil, plus a central disk -->
+	<g id="biohazard" fill="#ffffff" stroke="#3a0808" stroke-width="0.8">
+		<!-- Top lobe -->
+		<circle cx="25" cy="34" r="5"/>
+		<!-- Lower-left lobe -->
+		<circle cx="20" cy="43" r="5"/>
+		<!-- Lower-right lobe -->
+		<circle cx="30" cy="43" r="5"/>
+		<!-- Central disk (knocks out the overlap region) -->
+		<circle cx="25" cy="39" r="2.4" fill="#d93030" stroke="none"/>
+	</g>
+
+	<!-- Biohazard inner dots on each lobe to hint at the real trefoil pattern -->
+	<g fill="#d93030">
+		<circle cx="25" cy="32" r="0.9"/>
+		<circle cx="18" cy="44" r="0.9"/>
+		<circle cx="32" cy="44" r="0.9"/>
+	</g>
+
+	<!-- BIOHAZARD text -->
+	<text x="25" y="58" text-anchor="middle" font-family="sans-serif" font-size="5" font-weight="700" fill="#ffffff">BIOHAZARD</text>
+</svg>

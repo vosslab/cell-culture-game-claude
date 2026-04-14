@@ -64,6 +64,20 @@ function getStaticSvg(assetId: string): string {
 		case 'waste_container': return SVG_WASTE_CONTAINER;
 		case 'microscope': return SVG_MICROSCOPE;
 		case 'incubator': return SVG_INCUBATOR;
+		case 'sterile_water': return SVG_MEDIA_BOTTLE;
+		case 'pbs_bottle': return SVG_MEDIA_BOTTLE;
+		case 'conical_15ml_rack': return SVG_CONICAL_15ML_RACK;
+		case 'dilution_tube_rack': return SVG_DILUTION_TUBE_RACK;
+		case 'mtt_vial': return SVG_MEDIA_BOTTLE;
+		case 'dmso_bottle': return SVG_MEDIA_BOTTLE;
+		case 'carboplatin_stock': return SVG_MEDIA_BOTTLE;
+		case 'metformin_stock': return SVG_MEDIA_BOTTLE;
+		case 'micropipette_rack': return SVG_MICROPIPETTE_RACK;
+		case 'biohazard_decant': return SVG_BIOHAZARD_DECANT;
+		case 'centrifuge': return SVG_CENTRIFUGE;
+		case 'water_bath': return SVG_WATER_BATH;
+		case 'vortex': return SVG_VORTEX;
+		case 'cell_counter': return SVG_CELL_COUNTER;
 		default: return '';
 	}
 }
@@ -88,6 +102,34 @@ const MIN_SCALE = 0.75;
 
 // Internal zone padding (%) to prevent items touching zone edges
 const ZONE_PADDING = 1;
+
+// ============================================
+// Depth tiers for scene items. back = parked on rear shelf (smaller and
+// higher in the scene), mid = normal working position (baseline as-is,
+// no scale change), front = active / pulled-forward (slightly larger and
+// slightly lower). depthScale multiplies item visual width; depthBaseline
+// is added to the zone's baseline (larger baseline = lower on screen).
+// back_shelf goes UP (baseline - 4), front goes DOWN (baseline + 4).
+const DEPTH_SCALE_BACK = 0.80;
+const DEPTH_SCALE_MID = 1.00;
+const DEPTH_SCALE_FRONT = 1.10;
+const DEPTH_BASELINE_BACK = -4;
+const DEPTH_BASELINE_MID = 0;
+const DEPTH_BASELINE_FRONT = 4;
+
+// ============================================
+function depthScaleFor(depth: string | undefined): number {
+	if (depth === 'back') return DEPTH_SCALE_BACK;
+	if (depth === 'front') return DEPTH_SCALE_FRONT;
+	return DEPTH_SCALE_MID;
+}
+
+// ============================================
+function depthBaselineOffsetFor(depth: string | undefined): number {
+	if (depth === 'back') return DEPTH_BASELINE_BACK;
+	if (depth === 'front') return DEPTH_BASELINE_FRONT;
+	return DEPTH_BASELINE_MID;
+}
 
 // ============================================
 // Verify the alignment-preservation invariant for a cluster of items.
@@ -204,7 +246,11 @@ function layoutZoneItems(
 	for (var i = 0; i < n; i++) {
 		var item = zoneItems[i];
 		var spec = specs[item.asset];
-		var visualW = spec.defaultWidth * item.widthScale;
+		// depth multiplier: back 0.80, mid 1.00, front 1.10.
+		// Applied to item.widthScale so downstream footprint and label math
+		// all see the depth-adjusted size consistently.
+		var depthScale = depthScaleFor(item.depth);
+		var visualW = spec.defaultWidth * item.widthScale * depthScale;
 		// estimate label width same way as layoutLabels()
 		var charW = item.label.length * AVG_CHAR_WIDTH_PCT;
 		var specLabelW = spec.labelWidth * item.widthScale;
@@ -356,8 +402,18 @@ function layoutZoneItems(
 		var aspectRatio = getAssetAspectRatio(item.asset);
 		var height = itemWidth * aspectRatio * (viewportW / viewportH);
 
-		// determine baseline for this item
-		var baseline = item.baselineOverride ?? zone.baseline;
+		// determine baseline for this item. Order of precedence:
+		//   1. item.baselineOverride (explicit per-item value wins)
+		//   2. zone.baseline + depth offset (back -4, mid 0, front +4)
+		// A manual baselineOverride is intentional and must not be nudged
+		// by depth; depth tiers only shift items that ride the zone
+		// baseline.
+		var baseline: number;
+		if (item.baselineOverride !== undefined) {
+			baseline = item.baselineOverride;
+		} else {
+			baseline = zone.baseline + depthBaselineOffsetFor(item.depth);
+		}
 		var anchorOffset = spec.anchorYOffset ?? 0;
 
 		// compute top position based on anchor mode
