@@ -58,12 +58,11 @@ function getCurrentDayId(): string {
 // Returns HTML for day ribbon + breadcrumb + current-step card + upcoming steps
 // ============================================
 function renderProtocolUI(): string {
-	const currentStepIndex = gameState.currentStep;
-	if (currentStepIndex < 0 || currentStepIndex >= PROTOCOL_STEPS.length) {
+	const currentStep = getCurrentStep();
+	if (!currentStep) {
 		return '';
 	}
 
-	const currentStep = PROTOCOL_STEPS[currentStepIndex];
 	const currentDayId = getCurrentDayId();
 
 	// Day ribbon with all three days
@@ -81,7 +80,7 @@ function renderProtocolUI(): string {
 	const stepCard = renderStepCard(currentStep);
 
 	// Upcoming steps (next 1-2)
-	const upcoming = renderUpcomingSteps(currentStepIndex);
+	const upcoming = renderUpcomingSteps(currentStep.id);
 
 	return dayRibbon + breadcrumb + stepCard + upcoming;
 }
@@ -144,20 +143,34 @@ function renderStepCard(step: ProtocolStep): string {
 }
 
 // ============================================
-// renderUpcomingSteps(currentStepIndex: number): string
-// Show next 1-2 upcoming steps at reduced opacity
+// renderUpcomingSteps(currentStepId: string): string
+// Show next 1-2 upcoming steps at reduced opacity.
+// Walks the nextId chain instead of array position.
 // ============================================
-function renderUpcomingSteps(currentStepIndex: number): string {
+function renderUpcomingSteps(currentStepId: string): string {
 	const maxUpcoming = 2;
 	let html = '<div class="protocol-upcoming">';
 
-	for (let offset = 1; offset <= maxUpcoming; offset++) {
-		const nextIdx = currentStepIndex + offset;
-		if (nextIdx >= PROTOCOL_STEPS.length) break;
+	// Walk the nextId chain to find upcoming steps
+	let upcomingCount = 0;
+	let nextId: string | null = null;
+	const currentStep = PROTOCOL_STEPS.find(s => s.id === currentStepId);
+	if (currentStep && typeof currentStep.nextId === 'string') {
+		nextId = currentStep.nextId;
+	}
 
-		const nextStep = PROTOCOL_STEPS[nextIdx];
+	while (nextId !== null && upcomingCount < maxUpcoming) {
+		const nextStep = PROTOCOL_STEPS.find(s => s.id === nextId);
+		if (!nextStep) break;
 		const actionText = escapeHtml(nextStep.action);
 		html += `<div class="upcoming-step">Next: ${actionText}</div>`;
+		// Advance to the step after nextStep
+		if (typeof nextStep.nextId === 'string') {
+			nextId = nextStep.nextId;
+		} else {
+			nextId = null;
+		}
+		upcomingCount++;
 	}
 
 	html += '</div>';

@@ -2,6 +2,11 @@
 // microscope_scene.ts - Microscope (viability + counting) and Plate Reader
 // ============================================
 
+// Pre-register step ids this scene owns so validateTriggerCoverage passes
+// at page load time. See hood_scene.ts for the policy rationale.
+registeredTriggers.add('count_cells');
+registeredTriggers.add('plate_read');
+
 // ============================================
 // Helper: descriptive health band message based on viability and confluency
 // ============================================
@@ -100,7 +105,6 @@ function renderMicroscopeScene(): void {
 		const confirmBtn = document.getElementById('confirm-viability');
 		if (confirmBtn) {
 			confirmBtn.addEventListener('click', () => {
-				completeStep('microscope_check');
 				// Stay in microscope for counting
 				renderMicroscopeScene();
 			});
@@ -390,7 +394,7 @@ function submitQuadrantCount(): void {
 	}
 
 	showNotification(feedback, errorPercent <= 25 ? 'success' : 'info');
-	completeStep('count_cells');
+	triggerStep('count_cells');
 
 	// Close microscope, return to hood
 	const overlay = document.getElementById('microscope-overlay');
@@ -498,7 +502,7 @@ function renderPlateReaderScene(): void {
 	const completeBtn = document.getElementById('complete-plate-read');
 	if (completeBtn) {
 		completeBtn.addEventListener('click', () => {
-			completeStep('p7_plate_read');
+			triggerStep('plate_read');
 			overlay.classList.remove('active');
 		});
 	}

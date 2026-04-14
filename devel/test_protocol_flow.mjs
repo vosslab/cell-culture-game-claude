@@ -264,6 +264,72 @@ async function runTests(page) {
 		});
 	}
 
+	// Test 13: Every step has a nextId field
+	try {
+		const validation = await page.evaluate(() => {
+			const issues = [];
+			for (let i = 0; i < PROTOCOL_STEPS.length; i++) {
+				const step = PROTOCOL_STEPS[i];
+				if (typeof step.nextId === 'undefined') {
+					issues.push(`Step ${i} (${step.id}): missing nextId`);
+				}
+			}
+			return issues;
+		});
+		const pass = validation.length === 0;
+		results.push({
+			name: 'Every step has a nextId field',
+			pass,
+			detail: pass ? 'ok' : validation.slice(0, 3).join('; '),
+		});
+	} catch (e) {
+		results.push({
+			name: 'Every step has a nextId field',
+			pass: false,
+			detail: String(e),
+		});
+	}
+
+	// Test 14: Following nextId from the first step visits all PROTOCOL_STEPS
+	try {
+		const validation = await page.evaluate(() => {
+			const visited = [];
+			let current = PROTOCOL_STEPS[0].id;
+			while (current !== null) {
+				visited.push(current);
+				const step = PROTOCOL_STEPS.find(s => s.id === current);
+				if (!step) return `Step '${current}' not found in PROTOCOL_STEPS`;
+				current = step.nextId;
+				if (typeof current === 'function') {
+					return 'nextId is a function (branching not yet used in chain check)';
+				}
+			}
+
+			// Check that all steps were visited
+			const allIds = new Set(PROTOCOL_STEPS.map(s => s.id));
+			const visitedIds = new Set(visited);
+
+			if (visited.length !== PROTOCOL_STEPS.length) {
+				const missing = Array.from(allIds).filter(id => !visitedIds.has(id));
+				return `Visited ${visited.length}/${PROTOCOL_STEPS.length}; missing: ${missing.join(', ')}`;
+			}
+
+			return null;
+		});
+		const pass = validation === null;
+		results.push({
+			name: `Following nextId visits all ${results.length > 0 ? 'PROTOCOL_STEPS' : 'steps'}`,
+			pass,
+			detail: pass ? 'ok' : validation,
+		});
+	} catch (e) {
+		results.push({
+			name: 'Following nextId visits all PROTOCOL_STEPS',
+			pass: false,
+			detail: String(e),
+		});
+	}
+
 	return results;
 }
 

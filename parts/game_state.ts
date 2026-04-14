@@ -3,7 +3,12 @@
 // ============================================
 
 interface GameState {
-	currentStep: number;
+	// State machine: activeStepId replaces currentStep (numeric index).
+	// Explicit tracking of protocol progress via id-based lookup.
+	activeStepId: string | null;
+	// Attempted completions of non-active steps (recorded separately from completedSteps).
+	// Allows scoring to distinguish correct-order progress from out-of-order clicks.
+	outOfOrderAttempts: string[];
 	flaskMediaMl: number;
 	flaskMediaAge: 'old' | 'fresh';
 	// 24-well plate state
@@ -52,6 +57,11 @@ interface GameState {
 	incubationTimingOk: boolean;
 }
 
+// CRITICAL: Persistence layer must serialize activeStepId, outOfOrderAttempts,
+// completedSteps, stepsInCorrectOrder, and stepsOutOfOrder. Any future save/load
+// implementation must include these fields or reloaded sessions will diverge from
+// in-memory protocol state.
+
 // ============================================
 function createWellPlate(): WellData[] {
 	const wells: WellData[] = [];
@@ -72,7 +82,8 @@ function createWellPlate(): WellData[] {
 // ============================================
 function createInitialGameState(): GameState {
 	return {
-		currentStep: 0,
+		activeStepId: PROTOCOL_STEPS[0].id,
+		outOfOrderAttempts: [],
 		flaskMediaMl: FLASK_STARTING_MEDIA_ML,
 		flaskMediaAge: 'old',
 		wellPlate: createWellPlate(),
@@ -116,6 +127,22 @@ function createInitialGameState(): GameState {
 let gameState: GameState = createInitialGameState();
 
 // ============================================
+// triggerStep registration and wrapper
+// ============================================
+// Runtime registration set: populated as scenes load and fire their handlers.
+// By the time the walkthrough runs, this set reflects every step id that
+// actually has a working click path. The startup validator validateTriggerCoverage()
+// diffs this set against PROTOCOL_STEPS for dead-step detection.
+//
+// Important: a trigger registers only when its code path actually runs.
+// Scenes whose first render fires every handler registration unconditionally
+// are fine; any scene that lazy-registers a handler (on hover, on drag-start,
+// etc.) must have that handler run once during the walkthrough for the check
+// to cover it. Since scenes render on page load and click-handler-setup
+// functions run on render, coverage is complete.
+const registeredTriggers: Set<string> = new Set();
+
+// ============================================
 function resetGame(): void {
 	// Close all modal overlays before resetting
 	const overlays = document.querySelectorAll('.modal-overlay');
@@ -127,43 +154,81 @@ function resetGame(): void {
 }
 
 // ============================================
+// The ONLY accessor for the current step. Direct indexing into PROTOCOL_STEPS
+// is forbidden -- it was the load-bearing pattern that created the M4
+// stuck-at-step-1 bug and is replaced here by an explicit lookup.
+// ============================================
 function getCurrentStep(): ProtocolStep | null {
-	if (gameState.currentStep >= PROTOCOL_STEPS.length) {
-		return null;
-	}
-	return PROTOCOL_STEPS[gameState.currentStep];
+	const id = gameState.activeStepId;
+	if (id === null) return null;
+	const step = PROTOCOL_STEPS.find(s => s.id === id);
+	if (!step) throw new Error(`activeStepId '${id}' not in PROTOCOL_STEPS`);
+	return step;
 }
 
 // ============================================
+// completeStep(stepId: string) - State machine transition
+//
+// Invariants:
+// - Idempotent: calling twice for same id is a no-op after first success
+// - Only active step advances state. Wrong-step calls record out-of-order
+//   attempt and do NOT mutate completedSteps or activeStepId
+// - Resolves nextId supporting both string and function forms
+// - When activeStepId becomes null, sets endTime and switches to results scene
+// ============================================
 function completeStep(stepId: string): void {
-	if (gameState.completedSteps.includes(stepId)) {
+	// Idempotent: already completed is a no-op
+	if (gameState.completedSteps.includes(stepId)) return;
+
+	const activeId = gameState.activeStepId;
+	if (activeId === null || stepId !== activeId) {
+		// Out-of-order attempt: record it, do NOT mark completed,
+		// do NOT advance activeStepId
+		gameState.outOfOrderAttempts.push(stepId);
+		gameState.stepsOutOfOrder++;
 		return;
 	}
 
-	// Check if this is the expected next step (for order scoring)
-	const expectedStep = getCurrentStep();
-	if (expectedStep && expectedStep.id === stepId) {
-		gameState.stepsInCorrectOrder++;
-	} else {
-		gameState.stepsOutOfOrder++;
+	const activeStep = PROTOCOL_STEPS.find(s => s.id === activeId);
+	if (!activeStep) {
+		throw new Error(`activeStepId '${activeId}' not in PROTOCOL_STEPS`);
 	}
 
+	gameState.stepsInCorrectOrder++;
 	gameState.completedSteps.push(stepId);
 
-	// Advance currentStep to the next uncompleted step
-	while (gameState.currentStep < PROTOCOL_STEPS.length &&
-		gameState.completedSteps.includes(PROTOCOL_STEPS[gameState.currentStep].id)) {
-		gameState.currentStep++;
-	}
+	// Resolve nextId: support both string and function forms
+	const next = typeof activeStep.nextId === 'function'
+		? activeStep.nextId(gameState)
+		: activeStep.nextId;
+	gameState.activeStepId = next;
 
-	// Check if protocol is complete
-	if (gameState.currentStep >= PROTOCOL_STEPS.length) {
+	if (gameState.activeStepId === null) {
 		gameState.endTime = Date.now();
 		gameState.activeScene = 'results';
 	}
 
 	showNotification('Completed: ' + getStepLabel(stepId));
 	renderGame();
+}
+
+// ============================================
+// triggerStep(stepId: string) - Wrapper for all scene code
+//
+// Every scene calls this instead of completeStep() directly.
+// Wraps in orphan check and runtime registration.
+// ============================================
+function triggerStep(stepId: string): void {
+	// Orphan check: stepId must be a real step. Fail loud at call time.
+	const known = PROTOCOL_STEPS.some(s => s.id === stepId);
+	if (!known) {
+		throw new Error('triggerStep called with unknown id: ' + stepId);
+	}
+	// Runtime registration: records that this scene has a live wiring
+	// path for stepId. validateTriggerCoverage() diffs this set against
+	// PROTOCOL_STEPS at page load to catch dead steps.
+	registeredTriggers.add(stepId);
+	completeStep(stepId);
 }
 
 // ============================================
@@ -358,3 +423,8 @@ function advanceDay(): void {
 function showNotification(message: string, type: string = 'info'): void {
 	// Implemented in ui_rendering.ts
 }
+
+// ============================================
+// Expose registeredTriggers on window for the walkthrough test
+// ============================================
+(window as any).__registeredTriggers = registeredTriggers;

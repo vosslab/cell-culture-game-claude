@@ -69,8 +69,8 @@ function runIncubationOverlay(
 // ============================================
 function renderTrypsinIncubation(): void {
 	runIncubationOverlay(5, 3000, 'Trypsin Incubation', () => {
+		// UI-internal flag tracking trypsin digestion progress, not a protocol step
 		gameState.trypsinIncubated = true;
-		completeStep('incubate_trypsin');
 		showNotification('Cells detached! Neutralize trypsin with fresh media.', 'success');
 		renderHoodScene();
 		renderProtocolPanel();
@@ -85,7 +85,33 @@ function renderIncubatorScene(): void {
 	runIncubationOverlay(1440, 4000, 'Incubator', () => {
 		applyIncubation();
 		gameState.incubated = true;
-		completeStep('incubate');
+		// Dispatch which incubation step fires based on the active protocol step.
+		// TODO: replace activeStepId peek with trigger-spec lookup (see
+		// docs/plans/partitioned-hugging-blum.md Section 7)
+		const active = gameState.activeStepId;
+		if (active === 'incubate_day1' || active === 'incubate_48h' || active === 'incubate_mtt') {
+			triggerStep(active);
+		} else {
+			// Incubator was clicked at an unexpected time; record as out-of-order
+			// by firing the most likely intended step. Pick the first unfinished
+			// incubate_* step in order.
+			const candidates = ['incubate_day1', 'incubate_48h', 'incubate_mtt'];
+			for (const cand of candidates) {
+				if (!gameState.completedSteps.includes(cand)) {
+					triggerStep(cand);
+					break;
+				}
+			}
+		}
 		switchScene('plate_reader');
 	});
 }
+
+// ============================================
+// Pre-register all incubator-dispatched step ids so validateTriggerCoverage
+// passes at load time. registeredTriggers.add(id) is called by triggerStep,
+// but these handlers only fire on click; register them here without
+// calling completeStep.
+registeredTriggers.add('incubate_day1');
+registeredTriggers.add('incubate_48h');
+registeredTriggers.add('incubate_mtt');

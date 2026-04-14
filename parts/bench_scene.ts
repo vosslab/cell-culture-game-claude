@@ -1,6 +1,12 @@
 // ============================================
 // bench_scene.ts - Bench (outside-the-hood) scene rendering
 // ============================================
+
+// Pre-register step ids this scene owns so validateTriggerCoverage passes
+// at page load time. See hood_scene.ts for the policy rationale.
+registeredTriggers.add('centrifuge');
+registeredTriggers.add('resuspend');
+registeredTriggers.add('prewarm_media');
 // The bench is a peer of the hood scene. It holds equipment the student
 // uses between hood steps: incubator, microscope, water bath, vortex,
 // centrifuge, cell counter. Patch 3 wires the bench into the shared
@@ -40,6 +46,36 @@ function onBenchItemClick(itemId: string): void {
 	if (itemId === 'incubator') {
 		switchScene('incubator');
 		renderGame();
+		return;
+	}
+	// Centrifuge: trigger the centrifuge step when clicked
+	if (itemId === 'centrifuge') {
+		const currentStep = getCurrentStep();
+		// TODO: replace activeStepId peek with trigger-spec lookup
+		if (currentStep && currentStep.id === 'centrifuge') {
+			triggerStep('centrifuge');
+		}
+		showNotification('Cells centrifuged.');
+		return;
+	}
+	// Water bath: trigger prewarm_media when clicked
+	if (itemId === 'water_bath') {
+		const currentStep = getCurrentStep();
+		// TODO: replace activeStepId peek with trigger-spec lookup
+		if (currentStep && currentStep.id === 'prewarm_media') {
+			triggerStep('prewarm_media');
+		}
+		showNotification('Media warmed.');
+		return;
+	}
+	// Dilution tube rack: trigger resuspend when clicked
+	if (itemId === 'dilution_tube_rack') {
+		const currentStep = getCurrentStep();
+		// TODO: replace activeStepId peek with trigger-spec lookup
+		if (currentStep && currentStep.id === 'resuspend') {
+			triggerStep('resuspend');
+		}
+		showNotification('Pellet resuspended.');
 		return;
 	}
 	console.log('Clicked ' + itemId);

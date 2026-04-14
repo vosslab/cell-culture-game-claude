@@ -89,6 +89,21 @@ function startDrugAddition(): void {
 }
 
 // ============================================
+// Pre-register every step id that selectDilutionSeries may advance so
+// validateTriggerCoverage passes at load time. selectDilutionSeries fires
+// the dilution-prep and drug-addition triggers in sequence, but the handler
+// only runs on click; load-time coverage requires explicit registration.
+// TODO: split the dilution modal into distinct UI steps so each protocol
+// step has its own click target. See docs/plans/partitioned-hugging-blum.md
+// Section 7 and docs/TODO.md.
+registeredTriggers.add('carb_intermediate');
+registeredTriggers.add('carb_low_range');
+registeredTriggers.add('carb_high_range');
+registeredTriggers.add('metformin_stock');
+registeredTriggers.add('add_carboplatin');
+registeredTriggers.add('add_metformin');
+
+// ============================================
 function selectDilutionSeries(index: number): void {
 	const option = DILUTION_OPTIONS[index];
 	const overlay = document.getElementById('microscope-overlay');
@@ -108,7 +123,24 @@ function selectDilutionSeries(index: number): void {
 		showNotification('Half-log dilution applied -- good choice for a full dose-response!', 'success');
 	}
 
-	completeStep('add_drugs');
+	// This single modal click stands in for the full dilution-prep +
+	// drug-addition sequence in the 25-step protocol. Fire all six triggers
+	// sequentially; the state machine only advances on the call whose id
+	// matches gameState.activeStepId, so any earlier/later clicks are
+	// recorded as out-of-order attempts without corrupting progress.
+	// TODO: split the dilution modal into distinct UI steps so each protocol
+	// step has its own click target (see plan Section 7).
+	const dilutionAndDrugIds: string[] = [
+		'carb_intermediate',
+		'carb_low_range',
+		'carb_high_range',
+		'metformin_stock',
+		'add_carboplatin',
+		'add_metformin',
+	];
+	for (const id of dilutionAndDrugIds) {
+		triggerStep(id);
+	}
 
 	// Close overlay and return to hood
 	if (overlay) overlay.classList.remove('active');

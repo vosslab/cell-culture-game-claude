@@ -15,15 +15,27 @@ const renderProtocolPanel = (): void => {
 	// One completed step of context above, the current step, and up to five
 	// upcoming steps. This keeps the sidebar scan-length short even with
 	// the 25-step M4 protocol.
+	// Now using id-based lookup instead of numeric index.
+	const currentStep = getCurrentStep();
+	const currentId = currentStep ? currentStep.id : null;
+
+	// Find the index of the current step for windowing (UI layout only)
+	let currentIndex = 0;
+	for (let i = 0; i < PROTOCOL_STEPS.length; i++) {
+		if (PROTOCOL_STEPS[i].id === currentId) {
+			currentIndex = i;
+			break;
+		}
+	}
+
 	const total = PROTOCOL_STEPS.length;
-	const current = gameState.currentStep;
-	const windowStart = Math.max(0, Math.min(current - 1, total - 7));
+	const windowStart = Math.max(0, Math.min(currentIndex - 1, total - 7));
 	const windowEnd = Math.min(total, windowStart + 7);
 
 	for (let index = windowStart; index < windowEnd; index++) {
 		const step = PROTOCOL_STEPS[index];
 		const isCompleted = gameState.completedSteps.includes(step.id);
-		const isCurrent = gameState.currentStep === index;
+		const isCurrent = step.id === currentId;
 
 		const li = document.createElement('li');
 		li.className = 'protocol-step';
@@ -237,6 +249,7 @@ const renderResultsScreen = (scoreResult: ScoreResult): void => {
 	const playAgainBtn = document.getElementById('play-again-btn') as HTMLButtonElement;
 	if (playAgainBtn) {
 		playAgainBtn.addEventListener('click', () => {
+			triggerStep('results');
 			resetGame();
 		});
 	}

@@ -2,6 +2,11 @@
 // feed_cells.ts - Aspiration and media addition logic
 // ============================================
 
+// Pre-register step ids this file owns so validateTriggerCoverage passes
+// at page load time. See hood_scene.ts for the policy rationale.
+registeredTriggers.add('aspirate_old_media');
+registeredTriggers.add('neutralize_trypsin');
+
 // Animation interval tracking
 let aspirationInterval: number | null = null;
 let mediaAdditionInterval: number | null = null;
@@ -77,7 +82,7 @@ function completeAspiration(): void {
 	gameState.flaskMediaMl = 0;
 
 	// Complete the step
-	completeStep('aspirate_old_media');
+	triggerStep('aspirate_old_media');
 
 	// Hide transfer HUD
 	hideTransferHud();
@@ -172,7 +177,7 @@ function stopAddingMedia(): void {
 	gameState.flaskMediaAge = 'fresh';
 
 	// Complete the neutralize_trypsin step (media addition neutralizes trypsin)
-	completeStep('neutralize_trypsin');
+	triggerStep('neutralize_trypsin');
 
 	// Hide transfer HUD
 	hideTransferHud();

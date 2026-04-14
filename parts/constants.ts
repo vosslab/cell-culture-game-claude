@@ -13,7 +13,7 @@ const DRUG_CONCENTRATION_LABELS: string[] = ['0 (ctrl)', '0.1', '0.5', '1', '5',
 // Protocol step definitions
 const PROTOCOL_STEPS: ProtocolStep[] = [
 	{
-		id: 'p0_spray_hood',
+		id: 'spray_hood',
 		label: 'Spray the hood with 70% ethanol',
 		action: 'Spray the hood with 70% ethanol',
 		why: 'Ethanol kills contaminants on the work surface before you start.',
@@ -27,9 +27,11 @@ const PROTOCOL_STEPS: ProtocolStep[] = [
 		scene: 'hood',
 		requiredAction: 'spray_ethanol',
 		targetItems: ['ethanol_bottle'],
+		nextId: 'aspirate_old_media',
+		trigger: { scene: 'hood', event: 'click:spray_ethanol' },
 	},
 	{
-		id: 'p1_aspirate_old_media',
+		id: 'aspirate_old_media',
 		label: 'Aspirate old media from the flask',
 		action: 'Aspirate old media from the flask',
 		why: 'Old media has waste and dead cells. Remove it before washing.',
@@ -44,9 +46,11 @@ const PROTOCOL_STEPS: ProtocolStep[] = [
 		scene: 'hood',
 		requiredAction: 'aspirate',
 		targetItems: ['flask', 'aspirating_pipette', 'waste_container'],
+		nextId: 'pbs_wash',
+		trigger: { scene: 'hood', event: 'click:aspirate' },
 	},
 	{
-		id: 'p1_pbs_wash',
+		id: 'pbs_wash',
 		label: 'Wash the flask with 4 mL PBS',
 		action: 'Wash the flask with 4 mL PBS',
 		why: 'PBS rinses off leftover serum that would block trypsin.',
@@ -61,9 +65,11 @@ const PROTOCOL_STEPS: ProtocolStep[] = [
 		scene: 'hood',
 		requiredAction: 'pbs_wash',
 		targetItems: ['flask', 'pbs_bottle', 'serological_pipette'],
+		nextId: 'add_trypsin',
+		trigger: { scene: 'hood', event: 'click:pbs_wash' },
 	},
 	{
-		id: 'p1_add_trypsin',
+		id: 'add_trypsin',
 		label: 'Add 3 mL trypsin to detach the cells',
 		action: 'Add 3 mL trypsin to detach the cells',
 		why: 'Trypsin breaks the bonds holding cells to the flask.',
@@ -77,9 +83,11 @@ const PROTOCOL_STEPS: ProtocolStep[] = [
 		scene: 'hood',
 		requiredAction: 'pipette_trypsin',
 		targetItems: ['flask', 'trypsin_bottle', 'serological_pipette'],
+		nextId: 'neutralize_trypsin',
+		trigger: { scene: 'hood', event: 'click:pipette_trypsin' },
 	},
 	{
-		id: 'p1_neutralize',
+		id: 'neutralize_trypsin',
 		label: 'Neutralize with 9 mL complete media',
 		action: 'Neutralize with 9 mL complete media',
 		why: 'Serum in the media stops trypsin before it damages cells.',
@@ -95,9 +103,11 @@ const PROTOCOL_STEPS: ProtocolStep[] = [
 		correctVolumeMl: 9,
 		toleranceMl: 1,
 		targetItems: ['flask', 'media_bottle', 'serological_pipette'],
+		nextId: 'centrifuge',
+		trigger: { scene: 'hood', event: 'click:pipette_media' },
 	},
 	{
-		id: 'p2_centrifuge',
+		id: 'centrifuge',
 		label: 'Spin cells down in the centrifuge',
 		action: 'Spin cells down in the centrifuge',
 		why: 'Spinning pulls cells into a pellet so you can resuspend at known density.',
@@ -111,9 +121,11 @@ const PROTOCOL_STEPS: ProtocolStep[] = [
 		scene: 'bench',
 		requiredAction: 'centrifuge',
 		targetItems: ['centrifuge', 'conical_15ml_rack'],
+		nextId: 'resuspend',
+		trigger: { scene: 'bench', event: 'click:centrifuge' },
 	},
 	{
-		id: 'p2_resuspend',
+		id: 'resuspend',
 		label: 'Resuspend pellet in 12 mL media',
 		action: 'Resuspend pellet in 12 mL media',
 		why: 'A known volume lets you calculate cells per mL for seeding.',
@@ -129,9 +141,11 @@ const PROTOCOL_STEPS: ProtocolStep[] = [
 		correctVolumeMl: 12,
 		toleranceMl: 1,
 		targetItems: ['flask', 'media_bottle', 'serological_pipette', 'waste_container'],
+		nextId: 'count_cells',
+		trigger: { scene: 'hood', event: 'click:resuspend' },
 	},
 	{
-		id: 'p2_count',
+		id: 'count_cells',
 		label: 'Count cells on the cell counter',
 		action: 'Count cells on the cell counter',
 		why: 'Cell count sets the seed density; wrong count ruins the dose response.',
@@ -145,9 +159,11 @@ const PROTOCOL_STEPS: ProtocolStep[] = [
 		scene: 'bench',
 		requiredAction: 'count_cells',
 		targetItems: ['cell_counter', 'dilution_tube_rack'],
+		nextId: 'seed_plate',
+		trigger: { scene: 'microscope', event: 'click:count_cells' },
 	},
 	{
-		id: 'p3_seed_plate',
+		id: 'seed_plate',
 		label: 'Seed 100 uL cell suspension per well',
 		action: 'Seed 100 uL cell suspension per well',
 		why: 'Seeds the 96-well plate at 2e4 cells per well for dosing tomorrow.',
@@ -161,9 +177,11 @@ const PROTOCOL_STEPS: ProtocolStep[] = [
 		scene: 'hood',
 		requiredAction: 'pipette_to_plate',
 		targetItems: ['well_plate', 'multichannel_pipette', 'flask'],
+		nextId: 'incubate_day1',
+		trigger: { scene: 'hood', event: 'click:pipette_to_plate' },
 	},
 	{
-		id: 'p3_incubate_day1',
+		id: 'incubate_day1',
 		label: 'Place plate in the 37C incubator overnight',
 		action: 'Place plate in the 37C incubator overnight',
 		why: 'Cells need ~24 h to attach and recover before drug dosing.',
@@ -177,9 +195,11 @@ const PROTOCOL_STEPS: ProtocolStep[] = [
 		scene: 'bench',
 		requiredAction: 'place_in_incubator',
 		targetItems: ['incubator', 'well_plate'],
+		nextId: 'carb_intermediate',
+		trigger: { scene: 'incubator', event: 'click:place_in_incubator' },
 	},
 	{
-		id: 'p4_carb_intermediate',
+		id: 'carb_intermediate',
 		label: 'Make Carboplatin 200 uM intermediate (20 uL + 980 uL)',
 		action: 'Make Carboplatin 200 uM intermediate (20 uL + 980 uL)',
 		why: 'Intermediate is the source for the low-dose working stocks.',
@@ -193,9 +213,11 @@ const PROTOCOL_STEPS: ProtocolStep[] = [
 		scene: 'hood',
 		requiredAction: 'dilute_carb_intermediate',
 		targetItems: ['carboplatin_stock', 'sterile_water', 'dilution_tube_rack'],
+		nextId: 'carb_low_range',
+		trigger: { scene: 'hood', event: 'modal_ok:carb_intermediate' },
 	},
 	{
-		id: 'p4_carb_low_range',
+		id: 'carb_low_range',
 		label: 'Make 5 low-range working stocks from the intermediate',
 		action: 'Make 5 low-range working stocks from the intermediate',
 		why: 'These give the 10 nM to 500 nM final concentrations for rows B-F.',
@@ -209,9 +231,11 @@ const PROTOCOL_STEPS: ProtocolStep[] = [
 		scene: 'hood',
 		requiredAction: 'dilute_carb_low',
 		targetItems: ['dilution_tube_rack', 'media_bottle'],
+		nextId: 'carb_high_range',
+		trigger: { scene: 'hood', event: 'modal_ok:carb_low_range' },
 	},
 	{
-		id: 'p4_carb_high_range',
+		id: 'carb_high_range',
 		label: 'Make 2 high-range working stocks from the 10 mM stock',
 		action: 'Make 2 high-range working stocks from the 10 mM stock',
 		why: 'These give the 5 uM and 25 uM final concentrations for rows G and H.',
@@ -225,9 +249,11 @@ const PROTOCOL_STEPS: ProtocolStep[] = [
 		scene: 'hood',
 		requiredAction: 'dilute_carb_high',
 		targetItems: ['carboplatin_stock', 'dilution_tube_rack', 'media_bottle'],
+		nextId: 'metformin_stock',
+		trigger: { scene: 'hood', event: 'modal_ok:carb_high_range' },
 	},
 	{
-		id: 'p4_metformin_stock',
+		id: 'metformin_stock',
 		label: 'Make Metformin 10 mM working stock (10 uL + 990 uL)',
 		action: 'Make Metformin 10 mM working stock (10 uL + 990 uL)',
 		why: 'Fresh metformin working stock is prepared on the day of treatment.',
@@ -241,9 +267,11 @@ const PROTOCOL_STEPS: ProtocolStep[] = [
 		scene: 'hood',
 		requiredAction: 'dilute_metformin',
 		targetItems: ['metformin_stock', 'sterile_water', 'dilution_tube_rack'],
+		nextId: 'prewarm_media',
+		trigger: { scene: 'hood', event: 'modal_ok:metformin_stock' },
 	},
 	{
-		id: 'p4_prewarm_media',
+		id: 'prewarm_media',
 		label: 'Pre-warm media adjustments in the 37C water bath',
 		action: 'Pre-warm media adjustments in the 37C water bath',
 		why: 'Cold media shocks cells and scatters the dose response.',
@@ -257,9 +285,11 @@ const PROTOCOL_STEPS: ProtocolStep[] = [
 		scene: 'bench',
 		requiredAction: 'prewarm',
 		targetItems: ['water_bath', 'media_bottle'],
+		nextId: 'media_adjust',
+		trigger: { scene: 'bench', event: 'click:prewarm' },
 	},
 	{
-		id: 'p5_media_adjust',
+		id: 'media_adjust',
 		label: 'Add media adjustment to each well',
 		action: 'Add media adjustment to each well',
 		why: 'Media adjustment keeps total volume at 100 uL after adding drugs.',
@@ -273,9 +303,11 @@ const PROTOCOL_STEPS: ProtocolStep[] = [
 		scene: 'hood',
 		requiredAction: 'media_adjust',
 		targetItems: ['well_plate', 'multichannel_pipette', 'media_bottle'],
+		nextId: 'add_carboplatin',
+		trigger: { scene: 'hood', event: 'click:media_adjust' },
 	},
 	{
-		id: 'p5_add_carboplatin',
+		id: 'add_carboplatin',
 		label: 'Add 5 uL carboplatin working stock per well (rows B-H)',
 		action: 'Add 5 uL carboplatin working stock per well (rows B-H)',
 		why: 'The 8-point dose series lets you compute an IC50 curve.',
@@ -289,9 +321,11 @@ const PROTOCOL_STEPS: ProtocolStep[] = [
 		scene: 'hood',
 		requiredAction: 'add_carboplatin',
 		targetItems: ['well_plate', 'multichannel_pipette', 'dilution_tube_rack'],
+		nextId: 'add_metformin',
+		trigger: { scene: 'hood', event: 'click:add_carboplatin' },
 	},
 	{
-		id: 'p5_add_metformin',
+		id: 'add_metformin',
 		label: 'Add 5 uL metformin working stock to columns 7-12',
 		action: 'Add 5 uL metformin working stock to columns 7-12',
 		why: 'Metformin sensitizes cells so the +metformin curve shifts left.',
@@ -305,9 +339,11 @@ const PROTOCOL_STEPS: ProtocolStep[] = [
 		scene: 'hood',
 		requiredAction: 'add_metformin',
 		targetItems: ['well_plate', 'multichannel_pipette', 'dilution_tube_rack'],
+		nextId: 'incubate_48h',
+		trigger: { scene: 'hood', event: 'click:add_metformin' },
 	},
 	{
-		id: 'p5_incubate_48h',
+		id: 'incubate_48h',
 		label: 'Incubate 48 h at 37C',
 		action: 'Incubate 48 h at 37C',
 		why: 'Drug exposure over 48 h lets cells die so viability differences appear.',
@@ -321,9 +357,11 @@ const PROTOCOL_STEPS: ProtocolStep[] = [
 		scene: 'bench',
 		requiredAction: 'place_in_incubator_48h',
 		targetItems: ['incubator', 'well_plate'],
+		nextId: 'add_mtt',
+		trigger: { scene: 'incubator', event: 'click:place_in_incubator_48h' },
 	},
 	{
-		id: 'p6_add_mtt',
+		id: 'add_mtt',
 		label: 'Add 25 uL 12 mM MTT per well',
 		action: 'Add 25 uL 12 mM MTT per well',
 		why: 'MTT is reduced to formazan only by live cells; the color shows viability.',
@@ -337,9 +375,11 @@ const PROTOCOL_STEPS: ProtocolStep[] = [
 		scene: 'hood',
 		requiredAction: 'add_mtt',
 		targetItems: ['well_plate', 'multichannel_pipette', 'mtt_vial'],
+		nextId: 'incubate_mtt',
+		trigger: { scene: 'hood', event: 'click:add_mtt' },
 	},
 	{
-		id: 'p6_incubate_mtt',
+		id: 'incubate_mtt',
 		label: 'Incubate 1.5 h at 37C',
 		action: 'Incubate 1.5 h at 37C',
 		why: 'Live cells need time to convert MTT into purple formazan crystals.',
@@ -353,9 +393,11 @@ const PROTOCOL_STEPS: ProtocolStep[] = [
 		scene: 'bench',
 		requiredAction: 'place_in_incubator_mtt',
 		targetItems: ['incubator', 'well_plate'],
+		nextId: 'decant_mtt',
+		trigger: { scene: 'incubator', event: 'click:place_in_incubator_mtt' },
 	},
 	{
-		id: 'p6_decant_mtt',
+		id: 'decant_mtt',
 		label: 'Decant MTT into the biohazard bin',
 		action: 'Decant MTT into the biohazard bin',
 		why: 'MTT is toxic. It must leave the plate before DMSO solubilization.',
@@ -369,9 +411,11 @@ const PROTOCOL_STEPS: ProtocolStep[] = [
 		scene: 'hood',
 		requiredAction: 'decant_mtt',
 		targetItems: ['well_plate', 'biohazard_decant'],
+		nextId: 'add_dmso',
+		trigger: { scene: 'hood', event: 'click:decant_mtt' },
 	},
 	{
-		id: 'p6_add_dmso',
+		id: 'add_dmso',
 		label: 'Add 200 uL DMSO per well and mix',
 		action: 'Add 200 uL DMSO per well and mix',
 		why: 'DMSO dissolves formazan so the plate reader can measure absorbance.',
@@ -385,9 +429,11 @@ const PROTOCOL_STEPS: ProtocolStep[] = [
 		scene: 'hood',
 		requiredAction: 'add_dmso',
 		targetItems: ['well_plate', 'multichannel_pipette', 'dmso_bottle'],
+		nextId: 'plate_read',
+		trigger: { scene: 'hood', event: 'click:add_dmso' },
 	},
 	{
-		id: 'p7_plate_read',
+		id: 'plate_read',
 		label: 'Read absorbance at 560 nm',
 		action: 'Read absorbance at 560 nm',
 		why: 'Formazan absorbs at 560 nm; more signal means more live cells.',
@@ -401,9 +447,11 @@ const PROTOCOL_STEPS: ProtocolStep[] = [
 		scene: 'plate_reader',
 		requiredAction: 'read_plate',
 		targetItems: ['well_plate'],
+		nextId: 'results',
+		trigger: { scene: 'plate_reader', event: 'click:read_plate' },
 	},
 	{
-		id: 'p7_results',
+		id: 'results',
 		label: 'Review dose-response curves',
 		action: 'Review dose-response curves',
 		why: 'Compare the carboplatin-only and +metformin curves to find IC50 shift.',
@@ -415,6 +463,8 @@ const PROTOCOL_STEPS: ProtocolStep[] = [
 		scene: 'plate_reader',
 		requiredAction: 'view_results',
 		targetItems: ['well_plate'],
+		nextId: null,
+		trigger: { scene: 'plate_reader', event: 'modal_close:results' },
 	},
 ];
 
@@ -446,6 +496,21 @@ const STAR_THRESHOLDS = {
 
 
 // Type definitions (used across all modules)
+
+// Trigger specification: documents the wiring intent (scene + event)
+// for each protocol step. Advisory in this pass; future refactors will
+// use this for step-driven trigger resolution.
+type TriggerSpec = {
+	scene: 'hood' | 'bench' | 'incubator' | 'microscope' | 'plate_reader';
+	event: string;
+};
+
+// Explicit successor in the state machine. String form for linear transitions,
+// function form reserved for future branching. null marks the final step.
+// When adding a future step between X and Y, change X.nextId to the new id
+// and point the new step's nextId at Y. Reordering is now local.
+type NextStep = string | null | ((state: GameState) => string | null);
+
 interface ProtocolStep {
 	id: string;
 	label: string;
@@ -461,6 +526,13 @@ interface ProtocolStep {
 	correctVolumeMl?: number;
 	toleranceMl?: number;
 	targetItems?: string[];
+	// Explicit successor for the state machine. null marks the final step.
+	// Function form is reserved for future branching; unused in this pass.
+	nextId: NextStep;
+	// Declarative wiring intent. Advisory in this pass -- actual wiring still
+	// goes through triggerStep() calls in scene handlers. Future refactors
+	// will use this for step-driven trigger resolution.
+	trigger: TriggerSpec | null;
 }
 
 

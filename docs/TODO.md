@@ -1,0 +1,3 @@
+# TODO
+
+- **Real-click UI walkthrough (follow-up to Stream D)**: The data-layer walkthrough in `devel/protocol_walkthrough.mjs` validates state transitions via direct `completeStep()` calls. A remaining gap is wiring verification: a trigger may be registered but attached to the wrong click target. Implement a third Playwright pass that clicks through all 25 steps via real UI interactions (click handlers, modals, drag targets) instead of calling the state machine directly. This will catch wiring-attached-to-wrong-element bugs. See [partitioned-hugging-blum.md](/Users/vosslab/.claude/plans/partitioned-hugging-blum.md) Section 6 for rationale. Acceptance: all 25 steps advance via UI clicks alone, no `page.evaluate(completeStep)` calls.
