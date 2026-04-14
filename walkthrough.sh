@@ -39,6 +39,14 @@ echo ""
 echo "Running real-click walkthrough..."
 node devel/protocol_walkthrough_ui.mjs "$@"
 
+# Target-handler audit: for every step, prove every item in
+# targetItems has an observable click handler. Guards against the
+# cell_counter / M4-stub class of bug where a highlighted target
+# produces a silent no-op.
+echo ""
+echo "Running target-handler audit..."
+node devel/test_target_handlers.mjs
+
 echo ""
 echo "Screenshots saved to:"
 echo "  build/walkthrough/      (data-layer pass)"

@@ -44,7 +44,7 @@ const HOOD_BOUNDS: SceneBounds = {
 // front_row [7-93]  baseline 68 -> left(ethanol) center(drug)
 //                                  right(waste, biohazard)
 //
-// As of M3 the microscope and incubator live on the bench scene
+// The microscope and incubator live on the bench scene
 // (parts/bench_config.ts). The former `outside` zone has been removed
 // and front_row reclaims the full hood interior width.
 //
@@ -58,8 +58,8 @@ const HOOD_ZONES: Record<string, ZoneDef> = {
 	// Hood interior back row: spans the full hood interior, tab-stop
 	// groups of 3 left / 1 center (flask) / 3 right (pipettes).
 	back_row:  { x0: 7,  x1: 93, baseline: 50, gap: 2, align: 'tab-stops' },
-	// Hood interior front row: three tab-stop groups. M3 removed the
-	// outside zone so this row reclaims the full hood interior width.
+	// Hood interior front row: three tab-stop groups, spanning the
+	// full hood interior width now that the outside zone is gone.
 	front_row: { x0: 7,  x1: 93, baseline: 68, gap: 2, align: 'tab-stops' },
 	// Shelf row above back_row: reagent storage for wash buffers, assay
 	// reagents, and drug stock solutions. Baseline 22 sits well above

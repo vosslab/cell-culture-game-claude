@@ -133,23 +133,35 @@ const STEP_RECIPES = {
 			{ fn: 'incubate_plate' },
 		],
 	},
-	// The dilution choice modal fires all six triggers in order:
-	// carb_intermediate, carb_low_range, carb_high_range, metformin_stock,
-	// add_carboplatin, add_metformin. So we drive it once on carb_intermediate,
-	// and the subsequent five steps are recorded as auto-advanced.
+	// Each dilution/drug step now has its own modal screen with a
+	// single advance interaction. carb_intermediate opens the modal
+	// via the multichannel + drug_vials + well_plate click chain;
+	// subsequent prep steps just click the next modal button while
+	// the modal stays open. The modal auto-closes after
+	// metformin_stock (next step is prewarm_media on the bench)
+	// and again after add_metformin (next step is incubate_48h).
 	carb_intermediate: {
 		scene: 'hood',
 		steps: [
 			{ click: '[data-item-id="multichannel_pipette"]' },
 			{ click: '[data-item-id="drug_vials"]' },
 			{ click: '[data-item-id="well_plate"]' },
+			{ modal: '.drug-modal-advance' },
+		],
+	},
+	carb_low_range: {
+		// Modal already open on the carb_low_range screen (three
+		// dilution-series options). Click the correct option.
+		steps: [
 			{ modal: '.dilution-choice[data-dilution-index="0"]' },
 		],
-		advancesTo: 'add_metformin',
 	},
-	carb_low_range: { auto: true },
-	carb_high_range: { auto: true },
-	metformin_stock: { auto: true },
+	carb_high_range: {
+		steps: [{ modal: '.drug-modal-advance' }],
+	},
+	metformin_stock: {
+		steps: [{ modal: '.drug-modal-advance' }],
+	},
 	prewarm_media: {
 		scene: 'bench',
 		steps: [{ click: '[data-item-id="water_bath"]' }],
@@ -163,18 +175,19 @@ const STEP_RECIPES = {
 		],
 	},
 	add_carboplatin: {
-		// Re-open the dilution choice modal; drug_treatment.ts branches
-		// on activeStepId and fires add_carboplatin + add_metformin.
+		// Re-open the modal; drug_treatment.ts renders the
+		// add_carboplatin screen because that is now the active step.
 		scene: 'hood',
 		steps: [
 			{ click: '[data-item-id="multichannel_pipette"]' },
 			{ click: '[data-item-id="drug_vials"]' },
 			{ click: '[data-item-id="well_plate"]' },
-			{ modal: '.dilution-choice[data-dilution-index="0"]' },
+			{ modal: '.drug-modal-advance' },
 		],
-		advancesTo: 'incubate_48h',
 	},
-	add_metformin: { auto: true },
+	add_metformin: {
+		steps: [{ modal: '.drug-modal-advance' }],
+	},
 	incubate_48h: {
 		scene: 'hood',
 		steps: [{ fn: 'incubate_plate' }],
@@ -539,33 +552,17 @@ async function main() {
 			const stepNum = String(i + 1).padStart(2, '0');
 			const step = await getActiveStep(page);
 
-			// Skip auto-advanced steps (e.g. dilution modal fires 6 triggers)
 			const recipe = STEP_RECIPES[expectedId];
 			if (!recipe) {
 				console.error(`[FAIL] no recipe for step "${expectedId}"`);
 				failed = true;
 				break;
 			}
-			if (recipe.auto) {
-				const completed = await getCompletedSteps(page);
-				if (completed.includes(expectedId)) {
-					console.log(`[${i + 1}/${allStepIds.length}] ${expectedId} (auto)`);
-					const fpath = path.join(screenshotDir, `${stepNum}_${expectedId}.png`);
-					await page.screenshot({ path: fpath });
-					results.push({ id: expectedId, status: 'auto' });
-					continue;
-				}
-				console.error(
-					`[FAIL] step "${expectedId}" expected auto-advance but is not completed`,
-				);
-				failed = true;
-				break;
-			}
 
-			// Treat already-completed steps as auto-advanced. This happens
-			// when an earlier recipe intentionally fires multiple triggers
-			// (the dilution modal collapsing 4 prep steps, or plate_read
-			// cascading into results).
+			// Defensive: treat already-completed steps as pre-completed.
+			// Should never fire now that the drug modal advances one
+			// step per click, but kept so unexpected cascades surface
+			// rather than failing on a false negative.
 			if (!step || step.id !== expectedId) {
 				const completed = await getCompletedSteps(page);
 				if (completed.includes(expectedId)) {

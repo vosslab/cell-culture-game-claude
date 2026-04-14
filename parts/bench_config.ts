@@ -3,9 +3,8 @@
 // ============================================
 // The bench sits outside the hood and holds equipment the student uses
 // between hood steps: centrifuge, water bath, vortex, cell counter,
-// microscope, incubator. Patch 3 ships the zone scaffolding and an empty
-// BENCH_SCENE_ITEMS array; M3 (Patch 8) lands the real items with
-// artwork sourced from OTHER_REPOS/bioicons/ where possible.
+// microscope, incubator. Artwork is sourced from
+// OTHER_REPOS/bioicons/ where possible.
 //
 // Zone design mirrors hood_config.ts so bench_scene.ts can reuse the
 // layout engine verbatim. All six instruments live in one row now; the
@@ -33,7 +32,7 @@ const BENCH_BOUNDS: SceneBounds = {
 // ============================================
 const BENCH_ZONES: Record<string, ZoneDef> = {
 	// Parked equipment: back shelf, small and high on screen. Unused
-	// in the current M3 bench layout but kept so future work can park
+	// in the current bench layout but kept so future work can park
 	// secondary equipment without adding a new zone.
 	back_shelf:  { x0: 5, x1: 95, baseline: 22, gap: 3, align: 'tab-stops' },
 	// Single working row: every bench instrument sits here, spread
@@ -41,7 +40,7 @@ const BENCH_ZONES: Record<string, ZoneDef> = {
 	mid_bench:   { x0: 5, x1: 95, baseline: 75, gap: 3, align: 'tab-stops' },
 };
 
-// M3: bench holds six items, all in a single working row. Left-to-right
+// Bench holds six items, all in a single working row. Left-to-right
 // order is workflow order: centrifuge first (after hood), then water
 // bath, cell counter, microscope, vortex, incubator (last, where the
 // plate lands overnight). Items below width 0.85 so six fit across.

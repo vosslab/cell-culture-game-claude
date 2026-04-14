@@ -14,7 +14,7 @@ const renderProtocolPanel = (): void => {
 	// Windowed view: show at most 7 steps centered on the current step.
 	// One completed step of context above, the current step, and up to five
 	// upcoming steps. This keeps the sidebar scan-length short even with
-	// the 25-step M4 protocol.
+	// the 25-step protocol.
 	// Now using id-based lookup instead of numeric index.
 	const currentStep = getCurrentStep();
 	const currentId = currentStep ? currentStep.id : null;

@@ -140,7 +140,7 @@ export function computeScore(state: GameState, totalSteps: number): ScoreResult 
 }
 
 // ============================================
-// M6 replacement: negative-deduction star scoring
+// Negative-deduction star scoring
 // ============================================
 // Replaces the weighted-category approach with a simpler 5-star system.
 // Start at 5 stars and lose one per penalty condition.

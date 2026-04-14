@@ -5,21 +5,16 @@
 // Pre-register step ids this scene owns so validateTriggerCoverage passes
 // at page load time. See hood_scene.ts for the policy rationale.
 registeredTriggers.add('centrifuge');
-registeredTriggers.add('resuspend');
 registeredTriggers.add('prewarm_media');
 // The bench is a peer of the hood scene. It holds equipment the student
 // uses between hood steps: incubator, microscope, water bath, vortex,
-// centrifuge, cell counter. Patch 3 wires the bench into the shared
-// layout engine via parts/bench_config.ts (BENCH_SCENE_ITEMS is empty
-// until M3 Patch 8).
+// centrifuge, cell counter. The bench wires into the shared layout
+// engine via parts/bench_config.ts.
 // ============================================
 
 // ============================================
 // getBenchItemSvgHtml - bench-only equivalent of getItemSvgHtml() in
-// hood_scene.ts. Bench items land in M3, so this switch is empty for
-// Patch 3 and falls back to the hood lookup for items that (in future)
-// may live on either scene (microscope, incubator after they migrate
-// from the hood).
+// hood_scene.ts.
 function getBenchItemSvgHtml(itemId: string): string {
 	switch (itemId) {
 		case 'microscope': return getMicroscopeSvg();
@@ -33,10 +28,9 @@ function getBenchItemSvgHtml(itemId: string): string {
 }
 
 // ============================================
-// Click handler for bench items. M3 ships minimal behavior:
-// microscope/incubator open their existing modal overlays, and the
-// four bench-only instruments log to the console (full interaction in
-// M4).
+// Click handler for bench items. Microscope/incubator open their
+// modal overlays; the remaining instruments advance their matching
+// protocol step when the active step calls for them.
 function onBenchItemClick(itemId: string): void {
 	if (itemId === 'microscope') {
 		// Serological pipette loaded with sample: use this click to load
@@ -109,18 +103,28 @@ function onBenchItemClick(itemId: string): void {
 		showNotification('Media warmed.');
 		return;
 	}
-	// Dilution tube rack: trigger resuspend when clicked
-	if (itemId === 'dilution_tube_rack') {
-		const currentStep = getCurrentStep();
-		// TODO: replace activeStepId peek with trigger-spec lookup
-		if (currentStep && currentStep.id === 'resuspend') {
-			triggerStep('resuspend');
+	// Cell counter: counting UI lives in the microscope overlay
+	// (manual hemocytometer + quadrant counts). Routing here lets
+	// the visibly-highlighted cell_counter target on the bench
+	// actually advance count_cells. Mirror the microscope branch's
+	// sample-load side effect so hemocytometerLoaded flips and the
+	// downstream serological + flask click in the hood routes to
+	// "load cells for plate transfer" instead of looping back to
+	// "load sample for counting". switchScene already renders; do
+	// not call renderGame() after it.
+	if (itemId === 'cell_counter') {
+		if (gameState.selectedTool === 'serological_pipette_with_sample') {
+			gameState.selectedTool = null;
+			gameState.hemocytometerLoaded = true;
+			showNotification(
+				'Sample mixed with trypan blue and loaded onto hemocytometer.',
+				'success',
+			);
 		}
-		showNotification('Pellet resuspended.');
+		switchScene('microscope');
 		return;
 	}
-	console.log('Clicked ' + itemId);
-	showNotification(getBenchItemLabel(itemId) + ' (interaction lands in M4)');
+	showNotification(getBenchItemLabel(itemId));
 }
 
 // ============================================

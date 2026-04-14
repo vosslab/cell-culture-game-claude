@@ -52,7 +52,7 @@ interface GameState {
 	// Day state machine
 	day: 'day1_seed' | 'day1_wait' | 'day2_treat' | 'day2_wait' | 'day4_readout';
 	seenPartIntros: string[];
-	// M5 protocol fidelity counters
+	// Protocol fidelity counters
 	dilutionErrors: number;
 	plateMapErrors: number;
 	mttTechniqueErrors: number;
@@ -158,7 +158,7 @@ function resetGame(): void {
 
 // ============================================
 // The ONLY accessor for the current step. Direct indexing into PROTOCOL_STEPS
-// is forbidden -- it was the load-bearing pattern that created the M4
+// is forbidden -- it was the load-bearing pattern behind the
 // stuck-at-step-1 bug and is replaced here by an explicit lookup.
 // ============================================
 function getCurrentStep(): ProtocolStep | null {
@@ -273,10 +273,8 @@ function resolveItemDepth(
 	if (item.depth) return item.depth;
 
 	// Auto-depth is OPT-IN via the `group` field. An item without a group
-	// tag keeps the pre-depth behavior ('mid'). This means Patch 2 lands
-	// the resolver machinery but changes no pixels until M2/M3 tags items
-	// with groups. Once an item is groupable, it participates in
-	// front-promote-on-target and back-park-on-idle.
+	// tag keeps the default behavior ('mid'). Once an item is groupable,
+	// it participates in front-promote-on-target and back-park-on-idle.
 	if (!item.group) return 'mid';
 
 	// No active step -> default to mid (current rendering).

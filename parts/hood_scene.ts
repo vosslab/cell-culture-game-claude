@@ -467,16 +467,24 @@ function onItemClick(itemId: string): void {
 		return;
 	}
 
-	// Serological pipette -> flask (with fresh media): load sample for hemocytometer or plate
+	// Serological pipette -> flask (with fresh media): load sample for hemocytometer or plate.
+	// The branch is gated on whether count_cells has completed, NOT on
+	// the legacy `hemocytometerLoaded` flag. Using completedSteps makes
+	// the state machine the single source of truth: once count_cells is
+	// in completedSteps, every subsequent serological+flask click loads
+	// cells for plate transfer, regardless of whether the student ever
+	// walked the hood's "load sample" sub-flow (they might have clicked
+	// the bench cell_counter or microscope directly).
 	if (tool === 'serological_pipette' && itemId === 'flask' && gameState.flaskMediaAge === 'fresh') {
-		if (!gameState.hemocytometerLoaded) {
-			// First: load sample for hemocytometer
+		const countDone = gameState.completedSteps.indexOf('count_cells') >= 0;
+		if (!countDone) {
+			// Pre-count: load sample for hemocytometer.
 			gameState.selectedTool = 'serological_pipette_with_sample';
 			showNotification('Cell sample loaded. Click the microscope to load the hemocytometer.');
 			renderHoodScene();
 			return;
 		}
-		// After counting: load cells for plate transfer
+		// Post-count: load cells for plate transfer.
 		gameState.selectedTool = 'serological_pipette_with_cells';
 		showNotification('Loaded cell suspension. Click the 24-well plate to transfer.');
 		renderHoodScene();

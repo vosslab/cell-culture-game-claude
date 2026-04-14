@@ -8,8 +8,8 @@ import { createInitialGameState, GAME_CONFIG } from "./core/engine";
 import type { GameState, Action, Step } from "./core/types";
 
 // Re-export engine and types so the legacy UI modules can access them
-// during the transition period (M3-M4). These exports will be removed
-// once UI is fully migrated to ui/ in M5.
+// during the transition period. These exports will be removed once
+// the UI is fully migrated to ui/.
 export { createInitialGameState, GAME_CONFIG } from "./core/engine";
 export { computeScore } from "./core/scoring";
 export {
