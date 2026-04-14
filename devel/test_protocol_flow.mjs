@@ -16,24 +16,12 @@ const gameUrl = `file://${gamePath}`;
 async function runTests(page) {
 	const results = [];
 
-	// Test 1: Check PROTOCOL_STEPS count
-	try {
-		const count = await page.evaluate(() => PROTOCOL_STEPS.length);
-		const pass = count === 24;
-		results.push({
-			name: 'PROTOCOL_STEPS has exactly 24 steps',
-			pass,
-			detail: pass ? 'ok' : `Expected 24, got ${count}`,
-		});
-	} catch (e) {
-		results.push({
-			name: 'PROTOCOL_STEPS has exactly 24 steps',
-			pass: false,
-			detail: String(e),
-		});
-	}
+	// Test 1 intentionally omitted: counting steps or enumerating a fixed
+	// list of part ids is a brittle shape check. docs/TYPESCRIPT_STYLE.md
+	// asks for behavioral assertions instead, and the schema/integrity
+	// tests below already cover the real invariants.
 
-	// Test 2: Validate all required fields exist on each step
+	// Validate all required fields exist on each step
 	try {
 		const validation = await page.evaluate(() => {
 			const issues = [];

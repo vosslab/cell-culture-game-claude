@@ -11,7 +11,17 @@ const renderProtocolPanel = (): void => {
 
 	checklist.innerHTML = '';
 
-	PROTOCOL_STEPS.forEach((step, index) => {
+	// Windowed view: show at most 7 steps centered on the current step.
+	// One completed step of context above, the current step, and up to five
+	// upcoming steps. This keeps the sidebar scan-length short even with
+	// the 25-step M4 protocol.
+	const total = PROTOCOL_STEPS.length;
+	const current = gameState.currentStep;
+	const windowStart = Math.max(0, Math.min(current - 1, total - 7));
+	const windowEnd = Math.min(total, windowStart + 7);
+
+	for (let index = windowStart; index < windowEnd; index++) {
+		const step = PROTOCOL_STEPS[index];
 		const isCompleted = gameState.completedSteps.includes(step.id);
 		const isCurrent = gameState.currentStep === index;
 
@@ -38,7 +48,7 @@ const renderProtocolPanel = (): void => {
 		li.appendChild(checkbox);
 		li.appendChild(label);
 		checklist.appendChild(li);
-	});
+	}
 };
 
 // ============================================

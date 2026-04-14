@@ -13,13 +13,29 @@ const DRUG_CONCENTRATION_LABELS: string[] = ['0 (ctrl)', '0.1', '0.5', '1', '5',
 // Protocol step definitions
 const PROTOCOL_STEPS: ProtocolStep[] = [
 	{
+		id: 'p0_spray_hood',
+		label: 'Spray the hood with 70% ethanol',
+		action: 'Spray the hood with 70% ethanol',
+		why: 'Ethanol kills contaminants on the work surface before you start.',
+		partId: 'part1_split',
+		dayId: 'day1',
+		stepIndex: 1,
+		requiredItems: ['ethanol_bottle'],
+		errorHints: {
+			skipped: 'Always spray the hood before starting. Contaminants wreck experiments.',
+		},
+		scene: 'hood',
+		requiredAction: 'spray_ethanol',
+		targetItems: ['ethanol_bottle'],
+	},
+	{
 		id: 'p1_aspirate_old_media',
 		label: 'Aspirate old media from the flask',
 		action: 'Aspirate old media from the flask',
 		why: 'Old media has waste and dead cells. Remove it before washing.',
 		partId: 'part1_split',
 		dayId: 'day1',
-		stepIndex: 1,
+		stepIndex: 2,
 		requiredItems: ['flask', 'aspirating_pipette', 'waste_container'],
 		errorHints: {
 			wrong_tool: 'Aspirating pipette is the correct tool. Serological will splash media.',
@@ -36,7 +52,7 @@ const PROTOCOL_STEPS: ProtocolStep[] = [
 		why: 'PBS rinses off leftover serum that would block trypsin.',
 		partId: 'part1_split',
 		dayId: 'day1',
-		stepIndex: 2,
+		stepIndex: 3,
 		requiredItems: ['flask', 'pbs_bottle', 'serological_pipette'],
 		errorHints: {
 			wrong_reagent: 'PBS is the wash buffer. Media will stop trypsin from working.',
@@ -53,7 +69,7 @@ const PROTOCOL_STEPS: ProtocolStep[] = [
 		why: 'Trypsin breaks the bonds holding cells to the flask.',
 		partId: 'part1_split',
 		dayId: 'day1',
-		stepIndex: 3,
+		stepIndex: 4,
 		requiredItems: ['flask', 'trypsin_bottle', 'serological_pipette'],
 		errorHints: {
 			volume_off: 'Use 3 mL of trypsin. Too much stresses the cells.',
@@ -69,7 +85,7 @@ const PROTOCOL_STEPS: ProtocolStep[] = [
 		why: 'Serum in the media stops trypsin before it damages cells.',
 		partId: 'part1_split',
 		dayId: 'day1',
-		stepIndex: 4,
+		stepIndex: 5,
 		requiredItems: ['flask', 'media_bottle', 'serological_pipette'],
 		errorHints: {
 			volume_off: 'Use 3x the trypsin volume of media (9 mL) so trypsin is fully neutralized.',
@@ -104,7 +120,7 @@ const PROTOCOL_STEPS: ProtocolStep[] = [
 		partId: 'part2_count',
 		dayId: 'day1',
 		stepIndex: 2,
-		requiredItems: ['flask', 'media_bottle', 'serological_pipette'],
+		requiredItems: ['flask', 'media_bottle', 'serological_pipette', 'waste_container'],
 		errorHints: {
 			volume_off: 'Use 12 mL so 100 uL per well gives 2e4 cells per well after counting.',
 		},
@@ -112,7 +128,7 @@ const PROTOCOL_STEPS: ProtocolStep[] = [
 		requiredAction: 'resuspend',
 		correctVolumeMl: 12,
 		toleranceMl: 1,
-		targetItems: ['flask', 'media_bottle', 'serological_pipette'],
+		targetItems: ['flask', 'media_bottle', 'serological_pipette', 'waste_container'],
 	},
 	{
 		id: 'p2_count',
