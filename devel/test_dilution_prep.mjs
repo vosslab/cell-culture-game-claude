@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * test_dilution_prep.mjs - Playwright tests for dilution preparation functions.
  * Opens cell_culture_game.html and validates prepareCarbIntermediate, prepareCarbLowRange,

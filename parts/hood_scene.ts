@@ -3,6 +3,29 @@
 // ============================================
 
 //============================================
+// Bridge functions for M1.5.C: map legacy selectedTool tokens to synthetic heldLiquid
+//============================================
+function deriveHeldLiquid(selectedTool: string | null): { tool: string | null; liquid: string | null; volumeMl: number; colorKey: string | null } {
+	if (!selectedTool) return { tool: null, liquid: null, volumeMl: 0, colorKey: null };
+	const map: Record<string, { liquid: string; volumeMl: number; colorKey: string }> = {
+		'serological_pipette_with_pbs':     { liquid: 'pbs',     volumeMl: 4,  colorKey: 'pbs' },
+		'serological_pipette_with_trypsin': { liquid: 'trypsin', volumeMl: 3,  colorKey: 'trypsin' },
+		'serological_pipette_with_media':   { liquid: 'media',   volumeMl: 9,  colorKey: 'media' },
+		'serological_pipette_with_sample':  { liquid: 'cells',   volumeMl: 1,  colorKey: 'cells' },
+		'serological_pipette_with_cells':   { liquid: 'cells',   volumeMl: 12, colorKey: 'cells' },
+	};
+	const hit = map[selectedTool];
+	if (hit) return { tool: 'serological_pipette', liquid: hit.liquid, volumeMl: hit.volumeMl, colorKey: hit.colorKey };
+	return { tool: selectedTool, liquid: null, volumeMl: 0, colorKey: null };
+}
+
+function canonicalTool(selectedTool: string | null): string | null {
+	if (!selectedTool) return null;
+	const i = selectedTool.indexOf('_with_');
+	return i >= 0 ? selectedTool.substring(0, i) : selectedTool;
+}
+
+//============================================
 // Return the id of the first pipette-kind target item for a step, or
 // null if the step has no pipette target. Used by the toolbar hint to
 // tell the student which tool to pick up first when they are not yet
@@ -310,6 +333,143 @@ function renderHoodScene(): void {
 
 // ============================================
 function onItemClick(itemId: string): void {
+	// M1.5.C: Route clicks through interaction_resolver for steps with allowedInteractions
+	const activeStep = getCurrentStep();
+	if (activeStep && activeStep.allowedInteractions) {
+		const heldLiquid = deriveHeldLiquid(gameState.selectedTool);
+		const cleanTool = canonicalTool(gameState.selectedTool);
+		const result = resolveInteraction({
+			selectedTool: cleanTool,
+			clickedItem: itemId,
+			activeStep: activeStep,
+			heldLiquid: heldLiquid,
+		});
+		if (result.kind === 'load') {
+			// Set legacy _with_X token from result so existing downstream code keeps working.
+			const legacyToken = result.resultLiquid === 'pbs'     ? 'serological_pipette_with_pbs'
+						  : result.resultLiquid === 'trypsin' ? 'serological_pipette_with_trypsin'
+						  : result.resultLiquid === 'media'   ? 'serological_pipette_with_media'
+						  : result.resultLiquid === 'cells'   ? 'serological_pipette_with_cells'
+						  : null;
+			if (legacyToken) {
+				gameState.selectedTool = legacyToken;
+				let notification = 'Loaded ' + result.resultLiquid + '.';
+				if (result.resultLiquid === 'pbs') notification = 'PBS loaded into pipette. Click the flask to rinse.';
+				if (result.resultLiquid === 'trypsin') notification = 'Loaded trypsin-EDTA. Click the flask to add.';
+				if (result.resultLiquid === 'media') notification = 'Media warmed to 37 degrees C and loaded into pipette. Click the flask.';
+				if (result.resultLiquid === 'cells') notification = 'Loaded cell suspension. Click the 24-well plate to transfer.';
+				showNotification(notification);
+				renderGame();
+				return;
+			}
+			// Unknown liquid; fall through to legacy.
+		} else if (result.kind === 'discharge') {
+			// For discharge, dispatch based on the event name to call
+			// the appropriate handler logic.
+			if (activeStep && activeStep.id && result.event) {
+				if (result.event === 'spray_ethanol') {
+					gameState.hoodSprayed = true;
+					triggerStep(activeStep.id);
+					showNotification('Sprayed hood with 70% ethanol.', 'success');
+					gameState.selectedTool = null;
+					renderHoodScene();
+					renderProtocolPanel();
+					renderScoreDisplay();
+					return;
+				}
+				if (result.event === 'aspirate') {
+					gameState.selectedTool = null;
+					startAspiration();
+					renderHoodScene();
+					renderProtocolPanel();
+					renderScoreDisplay();
+					return;
+				}
+				if (result.event === 'pbs_wash') {
+					gameState.selectedTool = null;
+					gameState.flaskMediaAge = 'fresh';
+					triggerStep(activeStep.id);
+					showNotification('Flask rinsed with PBS.', 'success');
+					renderHoodScene();
+					renderProtocolPanel();
+					renderScoreDisplay();
+					return;
+				}
+				if (result.event === 'pipette_trypsin') {
+					gameState.selectedTool = null;
+					gameState.trypsinAdded = true;
+					triggerStep(activeStep.id);
+					showNotification('Trypsin added to flask. Incubate 3-5 min at 37C.', 'success');
+					renderHoodScene();
+					renderProtocolPanel();
+					renderScoreDisplay();
+					return;
+				}
+				if (result.event === 'pipette_media') {
+					gameState.selectedTool = null;
+					if (gameState.trypsinIncubated && !gameState.trypsinNeutralized) {
+						gameState.trypsinNeutralized = true;
+					}
+					startAddingMedia();
+					renderHoodScene();
+					renderProtocolPanel();
+					renderScoreDisplay();
+					return;
+				}
+				if (result.event === 'pipette_to_plate') {
+					gameState.selectedTool = null;
+					gameState.wellPlate.forEach(well => {
+						well.hasCells = true;
+					});
+					gameState.cellsTransferred = true;
+					triggerStep(activeStep.id);
+					showNotification('Cells transferred to all 24 wells.', 'success');
+					renderHoodScene();
+					renderProtocolPanel();
+					renderScoreDisplay();
+					return;
+				}
+				if (result.event === 'centrifuge') {
+					gameState.flaskMediaMl = 0;
+					gameState.flaskMediaAge = 'old';
+					triggerStep(activeStep.id);
+					showNotification('Cells centrifuged.', 'success');
+					return;
+				}
+				if (result.event === 'prewarm') {
+					triggerStep(activeStep.id);
+					showNotification('Media warmed.', 'success');
+					return;
+				}
+				if (result.event === 'media_adjust') {
+					gameState.selectedTool = null;
+					triggerStep(activeStep.id);
+					showNotification('Media adjusted for all wells.', 'success');
+					renderHoodScene();
+					renderProtocolPanel();
+					renderScoreDisplay();
+					return;
+				}
+				if (result.event === 'resuspend') {
+					gameState.selectedTool = null;
+					startAddingMedia();
+					renderHoodScene();
+					renderProtocolPanel();
+					renderScoreDisplay();
+					return;
+				}
+			}
+			// Fallback: reset tool and re-render
+			gameState.selectedTool = canonicalTool(gameState.selectedTool);
+			renderGame();
+			return;
+		} else if (result.kind === 'error') {
+			showNotification(result.hint);
+			return;
+		}
+		// result.kind === 'no-op': fall through to the existing legacy if-ladder.
+	}
+
 	// If no tool selected, pick up this item
 	if (!gameState.selectedTool) {
 		// Ethanol bottle sprays immediately

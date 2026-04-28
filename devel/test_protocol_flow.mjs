@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * test_protocol_flow.mjs - Playwright tests for protocol flow and game state.
  * Validates PROTOCOL_STEPS, gameState.day, computeWellViability, and renderProtocolUI.

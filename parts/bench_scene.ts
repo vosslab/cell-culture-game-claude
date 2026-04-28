@@ -30,10 +30,89 @@ function getBenchItemSvgHtml(itemId: string): string {
 }
 
 // ============================================
+// Bridge functions for M1.5.C: mirror hood_scene's bridge functions
+//============================================
+function deriveHeldLiquid(selectedTool: string | null): { tool: string | null; liquid: string | null; volumeMl: number; colorKey: string | null } {
+	if (!selectedTool) return { tool: null, liquid: null, volumeMl: 0, colorKey: null };
+	const map: Record<string, { liquid: string; volumeMl: number; colorKey: string }> = {
+		'serological_pipette_with_pbs':     { liquid: 'pbs',     volumeMl: 4,  colorKey: 'pbs' },
+		'serological_pipette_with_trypsin': { liquid: 'trypsin', volumeMl: 3,  colorKey: 'trypsin' },
+		'serological_pipette_with_media':   { liquid: 'media',   volumeMl: 9,  colorKey: 'media' },
+		'serological_pipette_with_sample':  { liquid: 'cells',   volumeMl: 1,  colorKey: 'cells' },
+		'serological_pipette_with_cells':   { liquid: 'cells',   volumeMl: 12, colorKey: 'cells' },
+	};
+	const hit = map[selectedTool];
+	if (hit) return { tool: 'serological_pipette', liquid: hit.liquid, volumeMl: hit.volumeMl, colorKey: hit.colorKey };
+	return { tool: selectedTool, liquid: null, volumeMl: 0, colorKey: null };
+}
+
+function canonicalTool(selectedTool: string | null): string | null {
+	if (!selectedTool) return null;
+	const i = selectedTool.indexOf('_with_');
+	return i >= 0 ? selectedTool.substring(0, i) : selectedTool;
+}
+
+// ============================================
 // Click handler for bench items. Microscope/incubator open their
 // modal overlays; the remaining instruments advance their matching
 // protocol step when the active step calls for them.
 function onBenchItemClick(itemId: string): void {
+	// M1.5.C: Route clicks through interaction_resolver for steps with allowedInteractions
+	const activeStep = getCurrentStep();
+	if (activeStep && activeStep.allowedInteractions) {
+		const heldLiquid = deriveHeldLiquid(gameState.selectedTool);
+		const cleanTool = canonicalTool(gameState.selectedTool);
+		const result = resolveInteraction({
+			selectedTool: cleanTool,
+			clickedItem: itemId,
+			activeStep: activeStep,
+			heldLiquid: heldLiquid,
+		});
+		if (result.kind === 'load') {
+			// Set legacy _with_X token from result so existing downstream code keeps working.
+			const legacyToken = result.resultLiquid === 'pbs'     ? 'serological_pipette_with_pbs'
+						  : result.resultLiquid === 'trypsin' ? 'serological_pipette_with_trypsin'
+						  : result.resultLiquid === 'media'   ? 'serological_pipette_with_media'
+						  : result.resultLiquid === 'cells'   ? 'serological_pipette_with_cells'
+						  : null;
+			if (legacyToken) {
+				gameState.selectedTool = legacyToken;
+				let notification = 'Loaded ' + result.resultLiquid + '.';
+				if (result.resultLiquid === 'pbs') notification = 'PBS loaded into pipette. Click the flask to rinse.';
+				if (result.resultLiquid === 'trypsin') notification = 'Loaded trypsin-EDTA. Click the flask to add.';
+				if (result.resultLiquid === 'media') notification = 'Media warmed to 37 degrees C and loaded into pipette. Click the flask.';
+				if (result.resultLiquid === 'cells') notification = 'Loaded cell suspension. Click the 24-well plate to transfer.';
+				showNotification(notification);
+				renderGame();
+				return;
+			}
+			// Unknown liquid; fall through to legacy.
+		} else if (result.kind === 'discharge') {
+			// For discharge, dispatch based on the event name
+			if (activeStep && activeStep.id && result.event) {
+				if (result.event === 'centrifuge') {
+					gameState.flaskMediaMl = 0;
+					gameState.flaskMediaAge = 'old';
+					triggerStep(activeStep.id);
+					showNotification('Cells centrifuged.', 'success');
+					return;
+				}
+				if (result.event === 'prewarm') {
+					triggerStep(activeStep.id);
+					showNotification('Media warmed.', 'success');
+					return;
+				}
+			}
+			// Fallback: reset tool and re-render
+			gameState.selectedTool = canonicalTool(gameState.selectedTool);
+			renderGame();
+			return;
+		} else if (result.kind === 'error') {
+			showNotification(result.hint);
+			return;
+		}
+		// result.kind === 'no-op': fall through to the existing legacy if-ladder.
+	}
 	if (itemId === 'microscope') {
 		// Serological pipette loaded with sample: use this click to load
 		// the hemocytometer with trypan-blue-stained cells, then open the

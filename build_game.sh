@@ -8,11 +8,17 @@ OUTPUT="cell_culture_game.html"
 TEMP_JS="_temp_bundle.js"
 TEMP_TS="_temp_all.ts"
 
+# Generate protocol_data.ts and inventory_data.ts from content/<protocol>/*.yaml
+echo "Generating protocol data from YAML..."
+python3 tools/build_protocol_data.py
+
 # Concatenate all TypeScript files in dependency order, then compile
 TS_FILES=(
 	"$PARTS_DIR/style_constants.ts"
 	"$PARTS_DIR/scene_types.ts"
 	"$PARTS_DIR/asset_specs.ts"
+	"$PARTS_DIR/protocol_data.ts"
+	"$PARTS_DIR/inventory_data.ts"
 	"$PARTS_DIR/hood_config.ts"
 	"$PARTS_DIR/bench_config.ts"
 	"$PARTS_DIR/layout_engine.ts"
@@ -23,6 +29,8 @@ TS_FILES=(
 	"$PARTS_DIR/game_state.ts"
 	"$PARTS_DIR/cell_model.ts"
 	"$PARTS_DIR/mtt_readout.ts"
+	"$PARTS_DIR/step_dispatch.ts"
+	"$PARTS_DIR/interaction_resolver.ts"
 	"$PARTS_DIR/svg_overlays.ts"
 	"$PARTS_DIR/svg_assets.ts"
 	"$PARTS_DIR/ui_rendering.ts"
@@ -112,6 +120,15 @@ for f in "${TS_FILES[@]}"; do
 		echo "" >> "$TEMP_TS"
 	fi
 done
+
+# Remove import/export statements to make globals available
+# Convert "import { ... } from './...';" to nothing
+# Convert "export const X = ..." to "const X = ..."
+sed -i.bak 's/^import {.*} from.*;//g' "$TEMP_TS"
+sed -i.bak 's/^export const /const /g' "$TEMP_TS"
+sed -i.bak 's/^export interface /interface /g' "$TEMP_TS"
+sed -i.bak 's/^export type /type /g' "$TEMP_TS"
+rm -f "$TEMP_TS.bak"
 
 # Compile TypeScript to JavaScript (strip types only, no module system)
 # Strip TypeScript types only, no module wrapping (keeps all declarations global)

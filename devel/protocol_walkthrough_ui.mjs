@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * protocol_walkthrough_ui.mjs - Real-click protocol walkthrough
  *

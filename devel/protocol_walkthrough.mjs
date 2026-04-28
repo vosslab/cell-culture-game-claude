@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * protocol_walkthrough.mjs - Two-pass protocol walkthrough test
  *

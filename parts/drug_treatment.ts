@@ -105,16 +105,11 @@ registeredTriggers.add('metformin_stock');
 registeredTriggers.add('add_carboplatin');
 registeredTriggers.add('add_metformin');
 
-// Steps owned by this modal, in nextId order. Used by rerender to
-// decide whether to stay open or close.
-const MODAL_OWNED_STEPS: string[] = [
-	'carb_intermediate',
-	'carb_low_range',
-	'carb_high_range',
-	'metformin_stock',
-	'add_carboplatin',
-	'add_metformin',
-];
+// Steps owned by this modal, in protocol order. Derived from PROTOCOL_STEPS
+// with modal.owner === 'drug_treatment'. Used by rerender to decide whether
+// to stay open or close.
+const MODAL_OWNED_STEPS: string[] = getModalOwnedSteps('drug_treatment')
+	.map((step: ProtocolStep) => step.id);
 
 // ============================================
 // Public entry point. Called from the hood click chain

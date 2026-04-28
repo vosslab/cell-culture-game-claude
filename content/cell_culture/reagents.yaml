@@ -1,0 +1,55 @@
+reagents:
+  media:
+    label: "Complete media"
+    colorKey: media
+    displayColor: "#f7a6b8"
+
+  pbs:
+    label: "1x PBS"
+    colorKey: pbs
+    displayColor: "#b8e5ff"
+
+  trypsin:
+    label: "Trypsin-EDTA"
+    colorKey: trypsin
+    displayColor: "#ffe082"
+
+  cells:
+    label: "Cell suspension"
+    colorKey: cells
+    displayColor: "#f3d6a2"
+
+  drug:
+    label: "Drug working stock"
+    colorKey: drug
+    displayColor: "#d8b4ff"
+
+  mtt:
+    label: "MTT reagent"
+    colorKey: mtt
+    displayColor: "#fff59d"
+
+  dmso:
+    label: "DMSO"
+    colorKey: dmso
+    displayColor: "#e0e0e0"
+
+  ethanol:
+    label: "70% Ethanol"
+    colorKey: ethanol
+    displayColor: "#ffd700"
+
+  water:
+    label: "Sterile Water"
+    colorKey: water
+    displayColor: "#e8f4f8"
+
+  carboplatin:
+    label: "Carboplatin"
+    colorKey: carboplatin
+    displayColor: "#d0b0ff"
+
+  metformin:
+    label: "Metformin"
+    colorKey: metformin
+    displayColor: "#b0e0ff"

@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * test_scoring.mjs - Playwright tests for scoring.ts calculateScore function.
  * Opens cell_culture_game.html and validates protocol-fidelity scoring with

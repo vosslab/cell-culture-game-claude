@@ -3002,6 +3002,481 @@ const ASSET_SPECS = {
   vortex: { defaultWidth: 8, labelWidth: 6 },
   cell_counter: { defaultWidth: 12, labelWidth: 8 }
 };
+const PROTOCOL_STEPS = [
+  {
+    action: "Spray the hood with 70% ethanol",
+    allowedInteractions: [{ actor: "ethanol_bottle", event: "spray_ethanol", target: "hood_surface" }],
+    dayId: "day1",
+    errorHints: { skipped: "Always spray the hood before starting. Contaminants wreck experiments." },
+    id: "spray_hood",
+    label: "Spray the hood with 70% ethanol",
+    nextId: "aspirate_old_media",
+    partId: "part1_split",
+    requiredAction: "spray_ethanol",
+    requiredItems: ["ethanol_bottle"],
+    scene: "hood",
+    stepIndex: 1,
+    targetItems: ["ethanol_bottle"],
+    trigger: { event: "click:spray_ethanol", scene: "hood" },
+    why: "Ethanol kills contaminants on the work surface before you start."
+  },
+  {
+    action: "Aspirate old media from the flask",
+    allowedInteractions: [{ actor: "aspirating_pipette", event: "aspirate", source: "flask", target: "waste_container" }],
+    dayId: "day1",
+    errorHints: { missed_waste: "Waste went somewhere it should not. Route it to the vacuum waste.", wrong_tool: "Aspirating pipette is the correct tool. Serological will splash media." },
+    id: "aspirate_old_media",
+    label: "Aspirate old media from the flask",
+    nextId: "pbs_wash",
+    partId: "part1_split",
+    requiredAction: "aspirate",
+    requiredItems: ["flask", "aspirating_pipette", "waste_container"],
+    scene: "hood",
+    stepIndex: 2,
+    targetItems: ["flask", "aspirating_pipette", "waste_container"],
+    trigger: { event: "click:aspirate", scene: "hood" },
+    why: "Old media has waste and dead cells. Remove it before washing."
+  },
+  {
+    action: "Wash the flask with 4 mL PBS",
+    allowedInteractions: [{ actor: "serological_pipette", liquid: "pbs", result: { heldLiquid: { colorKey: "pbs", liquid: "pbs", tool: "serological_pipette", volumeMl: 4 } }, source: "pbs_bottle", volumeMl: 4 }, { actor: "serological_pipette", consumesVolumeMl: 4, event: "pbs_wash", liquid: "pbs", target: "flask" }],
+    dayId: "day1",
+    errorHints: { volume_off: "Use about 4 mL of PBS so the whole surface is rinsed.", wrong_reagent: "PBS is the wash buffer. Media will stop trypsin from working." },
+    id: "pbs_wash",
+    label: "Wash the flask with 4 mL PBS",
+    nextId: "add_trypsin",
+    partId: "part1_split",
+    requiredAction: "pbs_wash",
+    requiredItems: ["flask", "pbs_bottle", "serological_pipette"],
+    scene: "hood",
+    stepIndex: 3,
+    targetItems: ["flask", "pbs_bottle", "serological_pipette"],
+    trigger: { event: "click:pbs_wash", scene: "hood" },
+    why: "PBS rinses off leftover serum that would block trypsin."
+  },
+  {
+    action: "Add 3 mL trypsin to detach the cells",
+    allowedInteractions: [{ actor: "serological_pipette", liquid: "trypsin", result: { heldLiquid: { colorKey: "trypsin", liquid: "trypsin", tool: "serological_pipette", volumeMl: 3 } }, source: "trypsin_bottle", volumeMl: 3 }, { actor: "serological_pipette", consumesVolumeMl: 3, event: "pipette_trypsin", liquid: "trypsin", target: "flask" }],
+    dayId: "day1",
+    errorHints: { volume_off: "Use 3 mL of trypsin. Too much stresses the cells." },
+    id: "add_trypsin",
+    label: "Add 3 mL trypsin to detach the cells",
+    nextId: "neutralize_trypsin",
+    partId: "part1_split",
+    requiredAction: "pipette_trypsin",
+    requiredItems: ["flask", "trypsin_bottle", "serological_pipette"],
+    scene: "hood",
+    stepIndex: 4,
+    targetItems: ["flask", "trypsin_bottle", "serological_pipette"],
+    trigger: { event: "click:pipette_trypsin", scene: "hood" },
+    why: "Trypsin breaks the bonds holding cells to the flask."
+  },
+  {
+    action: "Neutralize with 9 mL complete media",
+    allowedInteractions: [{ actor: "serological_pipette", liquid: "media", result: { heldLiquid: { colorKey: "media", liquid: "media", tool: "serological_pipette", volumeMl: 9 } }, source: "media_bottle", volumeMl: 9 }, { actor: "serological_pipette", consumesVolumeMl: 9, event: "pipette_media", liquid: "media", target: "flask" }],
+    correctVolumeMl: 9,
+    dayId: "day1",
+    errorHints: { volume_off: "Use 3x the trypsin volume of media (9 mL) so trypsin is fully neutralized." },
+    id: "neutralize_trypsin",
+    label: "Neutralize with 9 mL complete media",
+    nextId: "centrifuge",
+    partId: "part1_split",
+    requiredAction: "pipette_media",
+    requiredItems: ["flask", "media_bottle", "serological_pipette"],
+    scene: "hood",
+    stepIndex: 5,
+    targetItems: ["flask", "media_bottle", "serological_pipette"],
+    toleranceMl: 1,
+    trigger: { event: "click:pipette_media", scene: "hood" },
+    why: "Serum in the media stops trypsin before it damages cells."
+  },
+  {
+    action: "Spin cells down in the centrifuge",
+    allowedInteractions: [{ actor: "flask", event: "centrifuge", target: "centrifuge" }],
+    dayId: "day1",
+    errorHints: { wrong_tube: "Use a 15 mL conical tube so the pellet is easy to see." },
+    id: "centrifuge",
+    label: "Spin cells down in the centrifuge",
+    nextId: "resuspend",
+    partId: "part2_count",
+    requiredAction: "centrifuge",
+    requiredItems: ["centrifuge", "conical_15ml_rack"],
+    scene: "bench",
+    stepIndex: 1,
+    targetItems: ["centrifuge", "conical_15ml_rack"],
+    trigger: { event: "click:centrifuge", scene: "bench" },
+    why: "Spinning pulls cells into a pellet so you can resuspend at known density."
+  },
+  {
+    action: "Resuspend pellet in 12 mL media",
+    allowedInteractions: [{ actor: "serological_pipette", liquid: "media", result: { heldLiquid: { colorKey: "media", liquid: "media", tool: "serological_pipette", volumeMl: 10 } }, source: "media_bottle", volumeMl: 10 }, { actor: "serological_pipette", consumesVolumeMl: 10, event: "resuspend", liquid: "media", target: "flask" }],
+    correctVolumeMl: 12,
+    dayId: "day1",
+    errorHints: { volume_off: "Use 12 mL so 100 uL per well gives 2e4 cells per well after counting." },
+    id: "resuspend",
+    label: "Resuspend pellet in 12 mL media",
+    nextId: "count_cells",
+    partId: "part2_count",
+    requiredAction: "resuspend",
+    requiredItems: ["flask", "media_bottle", "serological_pipette", "waste_container"],
+    scene: "hood",
+    stepIndex: 2,
+    targetItems: ["flask", "media_bottle", "serological_pipette", "waste_container"],
+    toleranceMl: 1,
+    trigger: { event: "click:resuspend", scene: "hood" },
+    why: "A known volume lets you calculate cells per mL for seeding."
+  },
+  {
+    action: "Count cells on the cell counter",
+    dayId: "day1",
+    errorHints: { low_viability: "Viability under 90% means dead cells dominate. Re-split and retry." },
+    id: "count_cells",
+    label: "Count cells on the cell counter",
+    modal: { owner: "microscope", screen: "count_cells" },
+    nextId: "seed_plate",
+    partId: "part2_count",
+    requiredAction: "count_cells",
+    requiredItems: ["cell_counter", "dilution_tube_rack"],
+    scene: "bench",
+    stepIndex: 3,
+    targetItems: ["cell_counter"],
+    why: "Cell count sets the seed density; wrong count ruins the dose response."
+  },
+  {
+    action: "Seed 100 uL cell suspension per well",
+    allowedInteractions: [{ actor: "serological_pipette", liquid: "cells", result: { heldLiquid: { colorKey: "cells", liquid: "cells", tool: "serological_pipette", volumeMl: 10 } }, source: "flask", volumeMl: 10 }, { actor: "serological_pipette", consumesVolumeMl: 10, event: "pipette_to_plate", liquid: "cells", target: "well_plate" }],
+    dayId: "day1",
+    errorHints: { wrong_volume: "Seed 100 uL per well. Less means sparse wells and noisy readings." },
+    id: "seed_plate",
+    label: "Seed 100 uL cell suspension per well",
+    nextId: "incubate_day1",
+    partId: "part3_seed",
+    requiredAction: "pipette_to_plate",
+    requiredItems: ["well_plate", "serological_pipette", "flask"],
+    scene: "hood",
+    stepIndex: 1,
+    targetItems: ["well_plate", "serological_pipette", "flask"],
+    trigger: { event: "click:pipette_to_plate", scene: "hood" },
+    why: "Seeds the 96-well plate at 2e4 cells per well for dosing tomorrow."
+  },
+  {
+    action: "Place plate in the 37C incubator overnight",
+    dayId: "day1",
+    errorHints: { skipped: "The plate must incubate overnight before treatment." },
+    id: "incubate_day1",
+    isIncubation: true,
+    label: "Place plate in the 37C incubator overnight",
+    nextId: "carb_intermediate",
+    partId: "part3_seed",
+    requiredAction: "place_in_incubator",
+    requiredItems: ["incubator", "well_plate"],
+    scene: "bench",
+    stepIndex: 2,
+    targetItems: ["incubator", "well_plate"],
+    trigger: { event: "click:place_in_incubator", scene: "incubator" },
+    why: "Cells need ~24 h to attach and recover before drug dosing."
+  },
+  {
+    action: "Make Carboplatin 200 uM intermediate (20 uL + 980 uL)",
+    dayId: "day2",
+    errorHints: { volume_off: "Use 20 uL drug and 980 uL media. Wrong ratios break the dose series." },
+    id: "carb_intermediate",
+    label: "Make Carboplatin 200 uM intermediate (20 uL + 980 uL)",
+    modal: { owner: "drug_treatment", screen: "carb_intermediate" },
+    nextId: "carb_low_range",
+    partId: "part4_dilute",
+    requiredAction: "dilute_carb_intermediate",
+    requiredItems: ["carboplatin_stock", "sterile_water", "dilution_tube_rack"],
+    scene: "hood",
+    stepIndex: 1,
+    targetItems: ["multichannel_pipette", "drug_vials", "well_plate"],
+    why: "Intermediate is the source for the low-dose working stocks."
+  },
+  {
+    action: "Make 5 low-range working stocks from the intermediate",
+    dayId: "day2",
+    errorHints: { wrong_count: "You need 5 low-range working stocks, one per row B-F." },
+    id: "carb_low_range",
+    label: "Make 5 low-range working stocks from the intermediate",
+    modal: { owner: "drug_treatment", screen: "carb_low_range" },
+    nextId: "carb_high_range",
+    partId: "part4_dilute",
+    requiredAction: "dilute_carb_low",
+    requiredItems: ["dilution_tube_rack", "media_bottle"],
+    scene: "hood",
+    stepIndex: 2,
+    targetItems: ["dilution_tube_rack", "media_bottle"],
+    why: "These give the 10 nM to 500 nM final concentrations for rows B-F."
+  },
+  {
+    action: "Make 2 high-range working stocks from the 10 mM stock",
+    dayId: "day2",
+    errorHints: { wrong_count: "You need 2 high-range working stocks (rows G and H)." },
+    id: "carb_high_range",
+    label: "Make 2 high-range working stocks from the 10 mM stock",
+    modal: { owner: "drug_treatment", screen: "carb_high_range" },
+    nextId: "metformin_stock",
+    partId: "part4_dilute",
+    requiredAction: "dilute_carb_high",
+    requiredItems: ["carboplatin_stock", "dilution_tube_rack", "media_bottle"],
+    scene: "hood",
+    stepIndex: 3,
+    targetItems: ["carboplatin_stock", "dilution_tube_rack", "media_bottle"],
+    why: "These give the 5 uM and 25 uM final concentrations for rows G and H."
+  },
+  {
+    action: "Make Metformin 10 mM working stock (10 uL + 990 uL)",
+    dayId: "day2",
+    errorHints: { volume_off: "Use 10 uL stock and 990 uL media for a 10 mM working stock." },
+    id: "metformin_stock",
+    label: "Make Metformin 10 mM working stock (10 uL + 990 uL)",
+    modal: { owner: "drug_treatment", screen: "metformin_stock" },
+    nextId: "prewarm_media",
+    partId: "part4_dilute",
+    requiredAction: "dilute_metformin",
+    requiredItems: ["metformin_stock", "sterile_water", "dilution_tube_rack"],
+    scene: "hood",
+    stepIndex: 4,
+    targetItems: ["metformin_stock", "sterile_water", "dilution_tube_rack"],
+    why: "Fresh metformin working stock is prepared on the day of treatment."
+  },
+  {
+    action: "Pre-warm media adjustments in the 37C water bath",
+    dayId: "day2",
+    errorHints: { skipped: "Warm the media before adding to cells or you will kill some wells." },
+    id: "prewarm_media",
+    label: "Pre-warm media adjustments in the 37C water bath",
+    nextId: "media_adjust",
+    partId: "part4_dilute",
+    requiredAction: "prewarm",
+    requiredItems: ["water_bath", "media_bottle"],
+    scene: "bench",
+    stepIndex: 5,
+    targetItems: ["water_bath"],
+    trigger: { event: "click:prewarm", scene: "bench" },
+    why: "Cold media shocks cells and scatters the dose response."
+  },
+  {
+    action: "Add media adjustment to each well",
+    dayId: "day2",
+    errorHints: { wrong_volume: "Columns 1-6 row A need 100 uL; rows B-H need 95 uL. Columns 7-12 subtract 10 uL." },
+    id: "media_adjust",
+    label: "Add media adjustment to each well",
+    nextId: "add_carboplatin",
+    partId: "part5_treat",
+    requiredAction: "media_adjust",
+    requiredItems: ["well_plate", "multichannel_pipette", "media_bottle"],
+    scene: "hood",
+    stepIndex: 1,
+    targetItems: ["well_plate", "multichannel_pipette", "media_bottle"],
+    trigger: { event: "click:media_adjust", scene: "hood" },
+    why: "Media adjustment keeps total volume at 100 uL after adding drugs."
+  },
+  {
+    action: "Add 5 uL carboplatin working stock per well (rows B-H)",
+    dayId: "day2",
+    errorHints: { wrong_volume: "Add 5 uL per well. Row A stays drug-free as a control." },
+    id: "add_carboplatin",
+    label: "Add 5 uL carboplatin working stock per well (rows B-H)",
+    modal: { owner: "drug_treatment", screen: "add_carboplatin" },
+    nextId: "add_metformin",
+    partId: "part5_treat",
+    requiredAction: "add_carboplatin",
+    requiredItems: ["well_plate", "multichannel_pipette", "dilution_tube_rack"],
+    scene: "hood",
+    stepIndex: 2,
+    targetItems: ["multichannel_pipette", "drug_vials", "well_plate"],
+    why: "The 8-point dose series lets you compute an IC50 curve."
+  },
+  {
+    action: "Add 5 uL metformin working stock to columns 7-12",
+    dayId: "day2",
+    errorHints: { wrong_cols: "Metformin only goes in columns 7-12. Columns 1-6 stay carboplatin only." },
+    id: "add_metformin",
+    label: "Add 5 uL metformin working stock to columns 7-12",
+    modal: { owner: "drug_treatment", screen: "add_metformin" },
+    nextId: "incubate_48h",
+    partId: "part5_treat",
+    requiredAction: "add_metformin",
+    requiredItems: ["well_plate", "multichannel_pipette", "dilution_tube_rack"],
+    scene: "hood",
+    stepIndex: 3,
+    targetItems: ["well_plate", "multichannel_pipette", "dilution_tube_rack"],
+    why: "Metformin sensitizes cells so the +metformin curve shifts left."
+  },
+  {
+    action: "Incubate 48 h at 37C",
+    dayId: "day2",
+    errorHints: { skipped: "The plate must incubate 48 h before MTT readout." },
+    id: "incubate_48h",
+    isIncubation: true,
+    label: "Incubate 48 h at 37C",
+    nextId: "add_mtt",
+    partId: "part5_treat",
+    requiredAction: "place_in_incubator_48h",
+    requiredItems: ["incubator", "well_plate"],
+    scene: "bench",
+    stepIndex: 4,
+    targetItems: ["incubator", "well_plate"],
+    trigger: { event: "click:place_in_incubator_48h", scene: "incubator" },
+    why: "Drug exposure over 48 h lets cells die so viability differences appear."
+  },
+  {
+    action: "Add 25 uL 12 mM MTT per well",
+    dayId: "day4",
+    errorHints: { wrong_volume: "Add 25 uL MTT for a 1.5 mM final concentration." },
+    id: "add_mtt",
+    label: "Add 25 uL 12 mM MTT per well",
+    nextId: "incubate_mtt",
+    partId: "part6_mtt",
+    requiredAction: "add_mtt",
+    requiredItems: ["well_plate", "multichannel_pipette", "mtt_vial"],
+    scene: "hood",
+    stepIndex: 1,
+    targetItems: ["well_plate", "multichannel_pipette", "mtt_vial"],
+    trigger: { event: "click:add_mtt", scene: "hood" },
+    why: "MTT is reduced to formazan only by live cells; the color shows viability."
+  },
+  {
+    action: "Incubate 1.5 h at 37C",
+    dayId: "day4",
+    errorHints: { skipped: "The MTT must incubate 1.5 h or the signal is too weak." },
+    id: "incubate_mtt",
+    isIncubation: true,
+    label: "Incubate 1.5 h at 37C",
+    nextId: "decant_mtt",
+    partId: "part6_mtt",
+    requiredAction: "place_in_incubator_mtt",
+    requiredItems: ["incubator", "well_plate"],
+    scene: "bench",
+    stepIndex: 2,
+    targetItems: ["incubator", "well_plate"],
+    trigger: { event: "click:place_in_incubator_mtt", scene: "incubator" },
+    why: "Live cells need time to convert MTT into purple formazan crystals."
+  },
+  {
+    action: "Decant MTT into the biohazard bin",
+    dayId: "day4",
+    errorHints: { wrong_waste: "MTT goes into the biohazard bin, not the vacuum waste." },
+    id: "decant_mtt",
+    label: "Decant MTT into the biohazard bin",
+    nextId: "add_dmso",
+    partId: "part6_mtt",
+    requiredAction: "decant_mtt",
+    requiredItems: ["well_plate", "biohazard_decant"],
+    scene: "hood",
+    stepIndex: 3,
+    targetItems: ["well_plate", "biohazard_decant"],
+    trigger: { event: "click:decant_mtt", scene: "hood" },
+    why: "MTT is toxic. It must leave the plate before DMSO solubilization."
+  },
+  {
+    action: "Add 200 uL DMSO per well and mix",
+    dayId: "day4",
+    errorHints: { wrong_volume: "Add 200 uL DMSO per well and pipette up and down 10 times." },
+    id: "add_dmso",
+    label: "Add 200 uL DMSO per well and mix",
+    nextId: "plate_read",
+    partId: "part6_mtt",
+    requiredAction: "add_dmso",
+    requiredItems: ["well_plate", "multichannel_pipette", "dmso_bottle"],
+    scene: "hood",
+    stepIndex: 4,
+    targetItems: ["well_plate", "multichannel_pipette", "dmso_bottle"],
+    trigger: { event: "click:add_dmso", scene: "hood" },
+    why: "DMSO dissolves formazan so the plate reader can measure absorbance."
+  },
+  {
+    action: "Read absorbance at 560 nm",
+    dayId: "day4",
+    errorHints: { wrong_wavelength: "Read at 560 nm. Other wavelengths miss the formazan peak." },
+    id: "plate_read",
+    label: "Read absorbance at 560 nm",
+    modal: { owner: "plate_reader", screen: "plate_read" },
+    nextId: "results",
+    partId: "part7_read",
+    requiredAction: "read_plate",
+    requiredItems: ["well_plate"],
+    scene: "plate_reader",
+    stepIndex: 1,
+    targetItems: ["well_plate"],
+    why: "Formazan absorbs at 560 nm; more signal means more live cells."
+  },
+  {
+    action: "Review dose-response curves",
+    dayId: "day4",
+    errorHints: {},
+    id: "results",
+    label: "Review dose-response curves",
+    modal: { owner: "plate_reader", screen: "results" },
+    nextId: null,
+    partId: "part7_read",
+    requiredAction: "view_results",
+    requiredItems: ["well_plate"],
+    scene: "plate_reader",
+    stepIndex: 2,
+    targetItems: ["well_plate"],
+    why: "Compare the carboplatin-only and +metformin curves to find IC50 shift."
+  }
+];
+const PROTOCOL_PARTS = {
+  part1_split: { dayId: "day1", id: "part1_split", label: "Part 1: Split" },
+  part2_count: { dayId: "day1", id: "part2_count", label: "Part 2: Count" },
+  part3_seed: { dayId: "day1", id: "part3_seed", label: "Part 3: Seed" },
+  part4_dilute: { dayId: "day2", id: "part4_dilute", label: "Part 4: Dilute" },
+  part5_treat: { dayId: "day2", id: "part5_treat", label: "Part 5: Treat" },
+  part6_mtt: { dayId: "day4", id: "part6_mtt", label: "Part 6: MTT" },
+  part7_read: { dayId: "day4", id: "part7_read", label: "Part 7: Read" }
+};
+const PROTOCOL_DAYS = {
+  day1: { id: "day1", label: "Day 1" },
+  day2: { id: "day2", label: "Day 2" },
+  day4: { id: "day4", label: "Day 4" }
+};
+const EQUIPMENT = {
+  serological_pipette: { allowedLiquids: ["media", "pbs", "trypsin", "cells"], asset: "sero_pipette", capacityMl: 10, label: "Serological pipette", liquidCapable: true, role: "transfer_tool", scene: "hood" },
+  aspirating_pipette: { allowedLiquids: ["media"], asset: "aspirating_pipette", capacityMl: 10, label: "Aspirating pipette", liquidCapable: true, role: "aspirate_tool", scene: "hood" },
+  multichannel_pipette: { allowedLiquids: ["media", "mtt", "dmso"], asset: "multichannel_pipette", capacityMl: 300, label: "Multichannel pipette", liquidCapable: true, role: "transfer_tool", scene: "hood" },
+  flask: { allowedLiquids: ["media", "trypsin", "cells"], asset: "t75_flask", capacityMl: 20, label: "T-75 Flask", liquidCapable: true, role: "cell_container", scene: "hood" },
+  well_plate: { allowedLiquids: ["media", "cells", "mtt", "dmso", "carboplatin", "metformin"], asset: "well_plate_24", capacityMl: 1, label: "24-Well Plate", liquidCapable: true, role: "culture_vessel", scene: "hood" },
+  media_bottle: { allowedLiquids: ["media"], asset: "media_bottle", capacityMl: 500, contains: "media", label: "Complete media", liquidCapable: true, role: "reagent_source", scene: "hood" },
+  pbs_bottle: { allowedLiquids: ["pbs"], asset: "pbs_bottle", capacityMl: 500, contains: "pbs", label: "1x PBS", liquidCapable: true, role: "reagent_source", scene: "hood" },
+  trypsin_bottle: { allowedLiquids: ["trypsin"], asset: "media_bottle", capacityMl: 500, contains: "trypsin", label: "Trypsin-EDTA", liquidCapable: true, role: "reagent_source", scene: "hood" },
+  ethanol_bottle: { allowedLiquids: ["ethanol"], asset: "ethanol_spray", capacityMl: 500, contains: "ethanol", label: "70% Ethanol", liquidCapable: true, role: "reagent_source", scene: "hood" },
+  sterile_water: { allowedLiquids: ["water"], asset: "media_bottle", capacityMl: 500, contains: "water", label: "Sterile Water", liquidCapable: true, role: "reagent_source", scene: "hood" },
+  dmso_bottle: { allowedLiquids: ["dmso"], asset: "media_bottle", capacityMl: 500, contains: "dmso", label: "DMSO", liquidCapable: true, role: "reagent_source", scene: "hood" },
+  mtt_vial: { allowedLiquids: ["mtt"], asset: "media_bottle", capacityMl: 500, contains: "mtt", label: "MTT 5 mg/mL", liquidCapable: true, role: "modal_tool", scene: "hood" },
+  carboplatin_stock: { allowedLiquids: ["carboplatin"], asset: "media_bottle", capacityMl: 500, contains: "carboplatin", label: "Carboplatin 10 mM", liquidCapable: true, role: "reagent_source", scene: "hood" },
+  metformin_stock: { allowedLiquids: ["metformin"], asset: "media_bottle", capacityMl: 500, contains: "metformin", label: "Metformin 1 M", liquidCapable: true, role: "reagent_source", scene: "hood" },
+  micropipette_rack: { asset: "micropipette_rack", label: "P20/P200/P1000", role: "decoration", scene: "hood", visualOnly: true },
+  drug_vials: { asset: "drug_vial_rack", label: "Drug Dilutions", role: "decoration", scene: "hood" },
+  conical_15ml_rack: { asset: "conical_15ml_rack", label: "15 mL Tubes", role: "decoration", scene: "hood" },
+  dilution_tube_rack: { asset: "dilution_tube_rack", label: "1.5 mL Tubes", role: "decoration", scene: "hood" },
+  waste_container: { asset: "waste_container", label: "Waste", role: "waste_target", scene: "hood" },
+  biohazard_decant: { asset: "biohazard_decant", label: "Biohazard", role: "waste_target", scene: "hood" },
+  centrifuge: { asset: "centrifuge", label: "Centrifuge", role: "instrument", scene: "bench" },
+  water_bath: { asset: "water_bath", label: "37C Water Bath", role: "instrument", scene: "bench" },
+  cell_counter: { asset: "cell_counter", label: "Cell Counter", role: "instrument", scene: "bench" },
+  microscope: { asset: "microscope", label: "Microscope", role: "instrument", scene: "bench" },
+  vortex: { asset: "vortex", label: "Vortex", role: "instrument", scene: "bench" },
+  incubator: { asset: "incubator", label: "Incubator", role: "instrument", scene: "bench" },
+  plate_reader: { asset: "plate_reader", label: "Plate Reader", role: "instrument", scene: "bench" },
+  hood_surface: { label: "Hood work surface", role: "virtual_target", scene: "virtual" },
+  professor: { asset: "angry_professor", label: "Professor", role: "decoration", scene: "overlay", visualOnly: true }
+};
+const REAGENTS = {
+  media: { colorKey: "media", displayColor: "#f7a6b8", label: "Complete media" },
+  pbs: { colorKey: "pbs", displayColor: "#b8e5ff", label: "1x PBS" },
+  trypsin: { colorKey: "trypsin", displayColor: "#ffe082", label: "Trypsin-EDTA" },
+  cells: { colorKey: "cells", displayColor: "#f3d6a2", label: "Cell suspension" },
+  drug: { colorKey: "drug", displayColor: "#d8b4ff", label: "Drug working stock" },
+  mtt: { colorKey: "mtt", displayColor: "#fff59d", label: "MTT reagent" },
+  dmso: { colorKey: "dmso", displayColor: "#e0e0e0", label: "DMSO" },
+  ethanol: { colorKey: "ethanol", displayColor: "#ffd700", label: "70% Ethanol" },
+  water: { colorKey: "water", displayColor: "#e8f4f8", label: "Sterile Water" },
+  carboplatin: { colorKey: "carboplatin", displayColor: "#d0b0ff", label: "Carboplatin" },
+  metformin: { colorKey: "metformin", displayColor: "#b0e0ff", label: "Metformin" }
+};
 const HOOD_BOUNDS = {
   left: 1,
   right: 99,
@@ -3676,462 +4151,6 @@ const PLATE_ROWS = 8;
 const PLATE_COLS = 12;
 const DRUG_CONCENTRATIONS_UM = [0, 0.1, 0.5, 1, 5, 10];
 const DRUG_CONCENTRATION_LABELS = ["0 (ctrl)", "0.1", "0.5", "1", "5", "10"];
-const PROTOCOL_STEPS = [
-  {
-    id: "spray_hood",
-    label: "Spray the hood with 70% ethanol",
-    action: "Spray the hood with 70% ethanol",
-    why: "Ethanol kills contaminants on the work surface before you start.",
-    partId: "part1_split",
-    dayId: "day1",
-    stepIndex: 1,
-    requiredItems: ["ethanol_bottle"],
-    errorHints: {
-      skipped: "Always spray the hood before starting. Contaminants wreck experiments."
-    },
-    scene: "hood",
-    requiredAction: "spray_ethanol",
-    targetItems: ["ethanol_bottle"],
-    nextId: "aspirate_old_media",
-    trigger: { scene: "hood", event: "click:spray_ethanol" }
-  },
-  {
-    id: "aspirate_old_media",
-    label: "Aspirate old media from the flask",
-    action: "Aspirate old media from the flask",
-    why: "Old media has waste and dead cells. Remove it before washing.",
-    partId: "part1_split",
-    dayId: "day1",
-    stepIndex: 2,
-    requiredItems: ["flask", "aspirating_pipette", "waste_container"],
-    errorHints: {
-      wrong_tool: "Aspirating pipette is the correct tool. Serological will splash media.",
-      missed_waste: "Waste went somewhere it should not. Route it to the vacuum waste."
-    },
-    scene: "hood",
-    requiredAction: "aspirate",
-    targetItems: ["flask", "aspirating_pipette", "waste_container"],
-    nextId: "pbs_wash",
-    trigger: { scene: "hood", event: "click:aspirate" }
-  },
-  {
-    id: "pbs_wash",
-    label: "Wash the flask with 4 mL PBS",
-    action: "Wash the flask with 4 mL PBS",
-    why: "PBS rinses off leftover serum that would block trypsin.",
-    partId: "part1_split",
-    dayId: "day1",
-    stepIndex: 3,
-    requiredItems: ["flask", "pbs_bottle", "serological_pipette"],
-    errorHints: {
-      wrong_reagent: "PBS is the wash buffer. Media will stop trypsin from working.",
-      volume_off: "Use about 4 mL of PBS so the whole surface is rinsed."
-    },
-    scene: "hood",
-    requiredAction: "pbs_wash",
-    targetItems: ["flask", "pbs_bottle", "serological_pipette"],
-    nextId: "add_trypsin",
-    trigger: { scene: "hood", event: "click:pbs_wash" }
-  },
-  {
-    id: "add_trypsin",
-    label: "Add 3 mL trypsin to detach the cells",
-    action: "Add 3 mL trypsin to detach the cells",
-    why: "Trypsin breaks the bonds holding cells to the flask.",
-    partId: "part1_split",
-    dayId: "day1",
-    stepIndex: 4,
-    requiredItems: ["flask", "trypsin_bottle", "serological_pipette"],
-    errorHints: {
-      volume_off: "Use 3 mL of trypsin. Too much stresses the cells."
-    },
-    scene: "hood",
-    requiredAction: "pipette_trypsin",
-    targetItems: ["flask", "trypsin_bottle", "serological_pipette"],
-    nextId: "neutralize_trypsin",
-    trigger: { scene: "hood", event: "click:pipette_trypsin" }
-  },
-  {
-    id: "neutralize_trypsin",
-    label: "Neutralize with 9 mL complete media",
-    action: "Neutralize with 9 mL complete media",
-    why: "Serum in the media stops trypsin before it damages cells.",
-    partId: "part1_split",
-    dayId: "day1",
-    stepIndex: 5,
-    requiredItems: ["flask", "media_bottle", "serological_pipette"],
-    errorHints: {
-      volume_off: "Use 3x the trypsin volume of media (9 mL) so trypsin is fully neutralized."
-    },
-    scene: "hood",
-    requiredAction: "pipette_media",
-    correctVolumeMl: 9,
-    toleranceMl: 1,
-    targetItems: ["flask", "media_bottle", "serological_pipette"],
-    nextId: "centrifuge",
-    trigger: { scene: "hood", event: "click:pipette_media" }
-  },
-  {
-    id: "centrifuge",
-    label: "Spin cells down in the centrifuge",
-    action: "Spin cells down in the centrifuge",
-    why: "Spinning pulls cells into a pellet so you can resuspend at known density.",
-    partId: "part2_count",
-    dayId: "day1",
-    stepIndex: 1,
-    requiredItems: ["centrifuge", "conical_15ml_rack"],
-    errorHints: {
-      wrong_tube: "Use a 15 mL conical tube so the pellet is easy to see."
-    },
-    scene: "bench",
-    requiredAction: "centrifuge",
-    targetItems: ["centrifuge", "conical_15ml_rack"],
-    nextId: "resuspend",
-    trigger: { scene: "bench", event: "click:centrifuge" }
-  },
-  {
-    id: "resuspend",
-    label: "Resuspend pellet in 12 mL media",
-    action: "Resuspend pellet in 12 mL media",
-    why: "A known volume lets you calculate cells per mL for seeding.",
-    partId: "part2_count",
-    dayId: "day1",
-    stepIndex: 2,
-    requiredItems: ["flask", "media_bottle", "serological_pipette", "waste_container"],
-    errorHints: {
-      volume_off: "Use 12 mL so 100 uL per well gives 2e4 cells per well after counting."
-    },
-    scene: "hood",
-    requiredAction: "resuspend",
-    correctVolumeMl: 12,
-    toleranceMl: 1,
-    targetItems: ["flask", "media_bottle", "serological_pipette", "waste_container"],
-    nextId: "count_cells",
-    trigger: { scene: "hood", event: "click:resuspend" }
-  },
-  {
-    id: "count_cells",
-    label: "Count cells on the cell counter",
-    action: "Count cells on the cell counter",
-    why: "Cell count sets the seed density; wrong count ruins the dose response.",
-    partId: "part2_count",
-    dayId: "day1",
-    stepIndex: 3,
-    requiredItems: ["cell_counter", "dilution_tube_rack"],
-    errorHints: {
-      low_viability: "Viability under 90% means dead cells dominate. Re-split and retry."
-    },
-    scene: "bench",
-    requiredAction: "count_cells",
-    targetItems: ["cell_counter"],
-    nextId: "seed_plate",
-    trigger: { scene: "microscope", event: "click:count_cells" }
-  },
-  {
-    id: "seed_plate",
-    label: "Seed 100 uL cell suspension per well",
-    action: "Seed 100 uL cell suspension per well",
-    why: "Seeds the 96-well plate at 2e4 cells per well for dosing tomorrow.",
-    partId: "part3_seed",
-    dayId: "day1",
-    stepIndex: 1,
-    requiredItems: ["well_plate", "serological_pipette", "flask"],
-    errorHints: {
-      wrong_volume: "Seed 100 uL per well. Less means sparse wells and noisy readings."
-    },
-    scene: "hood",
-    requiredAction: "pipette_to_plate",
-    targetItems: ["well_plate", "serological_pipette", "flask"],
-    nextId: "incubate_day1",
-    trigger: { scene: "hood", event: "click:pipette_to_plate" }
-  },
-  {
-    id: "incubate_day1",
-    label: "Place plate in the 37C incubator overnight",
-    action: "Place plate in the 37C incubator overnight",
-    why: "Cells need ~24 h to attach and recover before drug dosing.",
-    partId: "part3_seed",
-    dayId: "day1",
-    stepIndex: 2,
-    requiredItems: ["incubator", "well_plate"],
-    errorHints: {
-      skipped: "The plate must incubate overnight before treatment."
-    },
-    scene: "bench",
-    requiredAction: "place_in_incubator",
-    targetItems: ["incubator", "well_plate"],
-    nextId: "carb_intermediate",
-    trigger: { scene: "incubator", event: "click:place_in_incubator" }
-  },
-  {
-    id: "carb_intermediate",
-    label: "Make Carboplatin 200 uM intermediate (20 uL + 980 uL)",
-    action: "Make Carboplatin 200 uM intermediate (20 uL + 980 uL)",
-    why: "Intermediate is the source for the low-dose working stocks.",
-    partId: "part4_dilute",
-    dayId: "day2",
-    stepIndex: 1,
-    requiredItems: ["carboplatin_stock", "sterile_water", "dilution_tube_rack"],
-    errorHints: {
-      volume_off: "Use 20 uL drug and 980 uL media. Wrong ratios break the dose series."
-    },
-    scene: "hood",
-    requiredAction: "dilute_carb_intermediate",
-    targetItems: ["multichannel_pipette", "drug_vials", "well_plate"],
-    nextId: "carb_low_range",
-    trigger: { scene: "hood", event: "modal_ok:carb_intermediate" }
-  },
-  {
-    id: "carb_low_range",
-    label: "Make 5 low-range working stocks from the intermediate",
-    action: "Make 5 low-range working stocks from the intermediate",
-    why: "These give the 10 nM to 500 nM final concentrations for rows B-F.",
-    partId: "part4_dilute",
-    dayId: "day2",
-    stepIndex: 2,
-    requiredItems: ["dilution_tube_rack", "media_bottle"],
-    errorHints: {
-      wrong_count: "You need 5 low-range working stocks, one per row B-F."
-    },
-    scene: "hood",
-    requiredAction: "dilute_carb_low",
-    targetItems: ["dilution_tube_rack", "media_bottle"],
-    nextId: "carb_high_range",
-    trigger: { scene: "hood", event: "modal_ok:carb_low_range" }
-  },
-  {
-    id: "carb_high_range",
-    label: "Make 2 high-range working stocks from the 10 mM stock",
-    action: "Make 2 high-range working stocks from the 10 mM stock",
-    why: "These give the 5 uM and 25 uM final concentrations for rows G and H.",
-    partId: "part4_dilute",
-    dayId: "day2",
-    stepIndex: 3,
-    requiredItems: ["carboplatin_stock", "dilution_tube_rack", "media_bottle"],
-    errorHints: {
-      wrong_count: "You need 2 high-range working stocks (rows G and H)."
-    },
-    scene: "hood",
-    requiredAction: "dilute_carb_high",
-    targetItems: ["carboplatin_stock", "dilution_tube_rack", "media_bottle"],
-    nextId: "metformin_stock",
-    trigger: { scene: "hood", event: "modal_ok:carb_high_range" }
-  },
-  {
-    id: "metformin_stock",
-    label: "Make Metformin 10 mM working stock (10 uL + 990 uL)",
-    action: "Make Metformin 10 mM working stock (10 uL + 990 uL)",
-    why: "Fresh metformin working stock is prepared on the day of treatment.",
-    partId: "part4_dilute",
-    dayId: "day2",
-    stepIndex: 4,
-    requiredItems: ["metformin_stock", "sterile_water", "dilution_tube_rack"],
-    errorHints: {
-      volume_off: "Use 10 uL stock and 990 uL media for a 10 mM working stock."
-    },
-    scene: "hood",
-    requiredAction: "dilute_metformin",
-    targetItems: ["metformin_stock", "sterile_water", "dilution_tube_rack"],
-    nextId: "prewarm_media",
-    trigger: { scene: "hood", event: "modal_ok:metformin_stock" }
-  },
-  {
-    id: "prewarm_media",
-    label: "Pre-warm media adjustments in the 37C water bath",
-    action: "Pre-warm media adjustments in the 37C water bath",
-    why: "Cold media shocks cells and scatters the dose response.",
-    partId: "part4_dilute",
-    dayId: "day2",
-    stepIndex: 5,
-    requiredItems: ["water_bath", "media_bottle"],
-    errorHints: {
-      skipped: "Warm the media before adding to cells or you will kill some wells."
-    },
-    scene: "bench",
-    requiredAction: "prewarm",
-    targetItems: ["water_bath"],
-    nextId: "media_adjust",
-    trigger: { scene: "bench", event: "click:prewarm" }
-  },
-  {
-    id: "media_adjust",
-    label: "Add media adjustment to each well",
-    action: "Add media adjustment to each well",
-    why: "Media adjustment keeps total volume at 100 uL after adding drugs.",
-    partId: "part5_treat",
-    dayId: "day2",
-    stepIndex: 1,
-    requiredItems: ["well_plate", "multichannel_pipette", "media_bottle"],
-    errorHints: {
-      wrong_volume: "Columns 1-6 row A need 100 uL; rows B-H need 95 uL. Columns 7-12 subtract 10 uL."
-    },
-    scene: "hood",
-    requiredAction: "media_adjust",
-    targetItems: ["well_plate", "multichannel_pipette", "media_bottle"],
-    nextId: "add_carboplatin",
-    trigger: { scene: "hood", event: "click:media_adjust" }
-  },
-  {
-    id: "add_carboplatin",
-    label: "Add 5 uL carboplatin working stock per well (rows B-H)",
-    action: "Add 5 uL carboplatin working stock per well (rows B-H)",
-    why: "The 8-point dose series lets you compute an IC50 curve.",
-    partId: "part5_treat",
-    dayId: "day2",
-    stepIndex: 2,
-    requiredItems: ["well_plate", "multichannel_pipette", "dilution_tube_rack"],
-    errorHints: {
-      wrong_volume: "Add 5 uL per well. Row A stays drug-free as a control."
-    },
-    scene: "hood",
-    requiredAction: "add_carboplatin",
-    targetItems: ["multichannel_pipette", "drug_vials", "well_plate"],
-    nextId: "add_metformin",
-    trigger: { scene: "hood", event: "click:add_carboplatin" }
-  },
-  {
-    id: "add_metformin",
-    label: "Add 5 uL metformin working stock to columns 7-12",
-    action: "Add 5 uL metformin working stock to columns 7-12",
-    why: "Metformin sensitizes cells so the +metformin curve shifts left.",
-    partId: "part5_treat",
-    dayId: "day2",
-    stepIndex: 3,
-    requiredItems: ["well_plate", "multichannel_pipette", "dilution_tube_rack"],
-    errorHints: {
-      wrong_cols: "Metformin only goes in columns 7-12. Columns 1-6 stay carboplatin only."
-    },
-    scene: "hood",
-    requiredAction: "add_metformin",
-    targetItems: ["well_plate", "multichannel_pipette", "dilution_tube_rack"],
-    nextId: "incubate_48h",
-    trigger: { scene: "hood", event: "click:add_metformin" }
-  },
-  {
-    id: "incubate_48h",
-    label: "Incubate 48 h at 37C",
-    action: "Incubate 48 h at 37C",
-    why: "Drug exposure over 48 h lets cells die so viability differences appear.",
-    partId: "part5_treat",
-    dayId: "day2",
-    stepIndex: 4,
-    requiredItems: ["incubator", "well_plate"],
-    errorHints: {
-      skipped: "The plate must incubate 48 h before MTT readout."
-    },
-    scene: "bench",
-    requiredAction: "place_in_incubator_48h",
-    targetItems: ["incubator", "well_plate"],
-    nextId: "add_mtt",
-    trigger: { scene: "incubator", event: "click:place_in_incubator_48h" }
-  },
-  {
-    id: "add_mtt",
-    label: "Add 25 uL 12 mM MTT per well",
-    action: "Add 25 uL 12 mM MTT per well",
-    why: "MTT is reduced to formazan only by live cells; the color shows viability.",
-    partId: "part6_mtt",
-    dayId: "day4",
-    stepIndex: 1,
-    requiredItems: ["well_plate", "multichannel_pipette", "mtt_vial"],
-    errorHints: {
-      wrong_volume: "Add 25 uL MTT for a 1.5 mM final concentration."
-    },
-    scene: "hood",
-    requiredAction: "add_mtt",
-    targetItems: ["well_plate", "multichannel_pipette", "mtt_vial"],
-    nextId: "incubate_mtt",
-    trigger: { scene: "hood", event: "click:add_mtt" }
-  },
-  {
-    id: "incubate_mtt",
-    label: "Incubate 1.5 h at 37C",
-    action: "Incubate 1.5 h at 37C",
-    why: "Live cells need time to convert MTT into purple formazan crystals.",
-    partId: "part6_mtt",
-    dayId: "day4",
-    stepIndex: 2,
-    requiredItems: ["incubator", "well_plate"],
-    errorHints: {
-      skipped: "The MTT must incubate 1.5 h or the signal is too weak."
-    },
-    scene: "bench",
-    requiredAction: "place_in_incubator_mtt",
-    targetItems: ["incubator", "well_plate"],
-    nextId: "decant_mtt",
-    trigger: { scene: "incubator", event: "click:place_in_incubator_mtt" }
-  },
-  {
-    id: "decant_mtt",
-    label: "Decant MTT into the biohazard bin",
-    action: "Decant MTT into the biohazard bin",
-    why: "MTT is toxic. It must leave the plate before DMSO solubilization.",
-    partId: "part6_mtt",
-    dayId: "day4",
-    stepIndex: 3,
-    requiredItems: ["well_plate", "biohazard_decant"],
-    errorHints: {
-      wrong_waste: "MTT goes into the biohazard bin, not the vacuum waste."
-    },
-    scene: "hood",
-    requiredAction: "decant_mtt",
-    targetItems: ["well_plate", "biohazard_decant"],
-    nextId: "add_dmso",
-    trigger: { scene: "hood", event: "click:decant_mtt" }
-  },
-  {
-    id: "add_dmso",
-    label: "Add 200 uL DMSO per well and mix",
-    action: "Add 200 uL DMSO per well and mix",
-    why: "DMSO dissolves formazan so the plate reader can measure absorbance.",
-    partId: "part6_mtt",
-    dayId: "day4",
-    stepIndex: 4,
-    requiredItems: ["well_plate", "multichannel_pipette", "dmso_bottle"],
-    errorHints: {
-      wrong_volume: "Add 200 uL DMSO per well and pipette up and down 10 times."
-    },
-    scene: "hood",
-    requiredAction: "add_dmso",
-    targetItems: ["well_plate", "multichannel_pipette", "dmso_bottle"],
-    nextId: "plate_read",
-    trigger: { scene: "hood", event: "click:add_dmso" }
-  },
-  {
-    id: "plate_read",
-    label: "Read absorbance at 560 nm",
-    action: "Read absorbance at 560 nm",
-    why: "Formazan absorbs at 560 nm; more signal means more live cells.",
-    partId: "part7_read",
-    dayId: "day4",
-    stepIndex: 1,
-    requiredItems: ["well_plate"],
-    errorHints: {
-      wrong_wavelength: "Read at 560 nm. Other wavelengths miss the formazan peak."
-    },
-    scene: "plate_reader",
-    requiredAction: "read_plate",
-    targetItems: ["well_plate"],
-    nextId: "results",
-    trigger: { scene: "plate_reader", event: "click:read_plate" }
-  },
-  {
-    id: "results",
-    label: "Review dose-response curves",
-    action: "Review dose-response curves",
-    why: "Compare the carboplatin-only and +metformin curves to find IC50 shift.",
-    partId: "part7_read",
-    dayId: "day4",
-    stepIndex: 2,
-    requiredItems: ["well_plate"],
-    errorHints: {},
-    scene: "plate_reader",
-    requiredAction: "view_results",
-    targetItems: ["well_plate"],
-    nextId: null,
-    trigger: { scene: "plate_reader", event: "modal_close:results" }
-  }
-];
 const FLASK_MAX_VOLUME_ML = 20;
 const FLASK_STARTING_MEDIA_ML = 12;
 const FRESH_MEDIA_TARGET_ML = 15;
@@ -4747,6 +4766,122 @@ function runMttReadout() {
   gameState.plateReadComplete = true;
 }
 registeredTriggers.add("results");
+function findStepById(id) {
+  for (const step of PROTOCOL_STEPS) {
+    if (step.id === id) {
+      return step;
+    }
+  }
+  return null;
+}
+function getModalOwnedSteps(owner) {
+  const result = [];
+  for (const step of PROTOCOL_STEPS) {
+    if (step.modal) {
+      if (!owner || step.modal.owner === owner) {
+        result.push(step);
+      }
+    }
+  }
+  return result;
+}
+function getIncubationSteps() {
+  const result = [];
+  for (const step of PROTOCOL_STEPS) {
+    if (step.isIncubation === true) {
+      result.push(step);
+    }
+  }
+  return result;
+}
+function getStepsForScene(scene) {
+  const result = [];
+  for (const step of PROTOCOL_STEPS) {
+    if (step.scene === scene) {
+      result.push(step);
+    }
+  }
+  return result;
+}
+function getStepIdsRequiringTrigger() {
+  const result = [];
+  for (const step of PROTOCOL_STEPS) {
+    if (step.trigger) {
+      result.push(step.id);
+    }
+  }
+  return result;
+}
+function isModalOwnedStep(stepId) {
+  const step = findStepById(stepId);
+  return step !== null && step.modal !== void 0;
+}
+function isIncubationStep(stepId) {
+  const step = findStepById(stepId);
+  return step !== null && step.isIncubation === true;
+}
+function getModalOwnerForStep(stepId) {
+  const step = findStepById(stepId);
+  if (step && step.modal) {
+    return step.modal.owner;
+  }
+  return null;
+}
+function resolveInteraction(args) {
+  if (!args.activeStep) {
+    return { kind: "no-op" };
+  }
+  if (!args.activeStep.allowedInteractions || args.activeStep.allowedInteractions.length === 0) {
+    return { kind: "no-op" };
+  }
+  for (let i = 0; i < args.activeStep.allowedInteractions.length; i++) {
+    const interaction = args.activeStep.allowedInteractions[i];
+    if (interaction.source && interaction.target) {
+      if (interaction.actor === args.selectedTool && interaction.event && (args.clickedItem === interaction.source || args.clickedItem === interaction.target)) {
+        return {
+          kind: "discharge",
+          event: interaction.event,
+          target: interaction.target,
+          consumesVolumeMl: interaction.consumesVolumeMl ?? 0
+        };
+      }
+    } else if (interaction.source && !interaction.target) {
+      if (interaction.actor === args.selectedTool && args.clickedItem === interaction.source && interaction.result && interaction.result.heldLiquid) {
+        const r = interaction.result.heldLiquid;
+        return {
+          kind: "load",
+          resultActor: r.tool,
+          resultLiquid: r.liquid,
+          volumeMl: r.volumeMl,
+          colorKey: r.colorKey
+        };
+      }
+    } else if (!interaction.source && interaction.target) {
+      if (interaction.actor === args.selectedTool && args.clickedItem === interaction.target) {
+        if (interaction.liquid) {
+          if (!args.heldLiquid || args.heldLiquid.liquid !== interaction.liquid) {
+            continue;
+          }
+        }
+        return {
+          kind: "discharge",
+          event: interaction.event ?? "",
+          target: interaction.target,
+          consumesVolumeMl: interaction.consumesVolumeMl ?? 0
+        };
+      }
+      if (!args.selectedTool && interaction.actor === args.clickedItem && interaction.target) {
+        return {
+          kind: "discharge",
+          event: interaction.event ?? "",
+          target: interaction.target,
+          consumesVolumeMl: 0
+        };
+      }
+    }
+  }
+  return { kind: "no-op" };
+}
 function parseAnchorBounds(svgString, equipmentId, anchorId) {
   const prefixedId = equipmentId + "__" + anchorId;
   const rectPattern = new RegExp(
@@ -5469,6 +5604,24 @@ const renderToolbar = () => {
   html += "</div>";
   return html;
 };
+function deriveHeldLiquid(selectedTool) {
+  if (!selectedTool) return { tool: null, liquid: null, volumeMl: 0, colorKey: null };
+  const map = {
+    "serological_pipette_with_pbs": { liquid: "pbs", volumeMl: 4, colorKey: "pbs" },
+    "serological_pipette_with_trypsin": { liquid: "trypsin", volumeMl: 3, colorKey: "trypsin" },
+    "serological_pipette_with_media": { liquid: "media", volumeMl: 9, colorKey: "media" },
+    "serological_pipette_with_sample": { liquid: "cells", volumeMl: 1, colorKey: "cells" },
+    "serological_pipette_with_cells": { liquid: "cells", volumeMl: 12, colorKey: "cells" }
+  };
+  const hit = map[selectedTool];
+  if (hit) return { tool: "serological_pipette", liquid: hit.liquid, volumeMl: hit.volumeMl, colorKey: hit.colorKey };
+  return { tool: selectedTool, liquid: null, volumeMl: 0, colorKey: null };
+}
+function canonicalTool(selectedTool) {
+  if (!selectedTool) return null;
+  const i = selectedTool.indexOf("_with_");
+  return i >= 0 ? selectedTool.substring(0, i) : selectedTool;
+}
 function getStartingToolForStep(step) {
   if (!step.targetItems) return null;
   for (const itemId of step.targetItems) {
@@ -5709,6 +5862,131 @@ function renderHoodScene() {
   }
 }
 function onItemClick(itemId) {
+  const activeStep = getCurrentStep();
+  if (activeStep && activeStep.allowedInteractions) {
+    const heldLiquid = deriveHeldLiquid(gameState.selectedTool);
+    const cleanTool = canonicalTool(gameState.selectedTool);
+    const result = resolveInteraction({
+      selectedTool: cleanTool,
+      clickedItem: itemId,
+      activeStep,
+      heldLiquid
+    });
+    if (result.kind === "load") {
+      const legacyToken = result.resultLiquid === "pbs" ? "serological_pipette_with_pbs" : result.resultLiquid === "trypsin" ? "serological_pipette_with_trypsin" : result.resultLiquid === "media" ? "serological_pipette_with_media" : result.resultLiquid === "cells" ? "serological_pipette_with_cells" : null;
+      if (legacyToken) {
+        gameState.selectedTool = legacyToken;
+        let notification = "Loaded " + result.resultLiquid + ".";
+        if (result.resultLiquid === "pbs") notification = "PBS loaded into pipette. Click the flask to rinse.";
+        if (result.resultLiquid === "trypsin") notification = "Loaded trypsin-EDTA. Click the flask to add.";
+        if (result.resultLiquid === "media") notification = "Media warmed to 37 degrees C and loaded into pipette. Click the flask.";
+        if (result.resultLiquid === "cells") notification = "Loaded cell suspension. Click the 24-well plate to transfer.";
+        showNotification(notification);
+        renderGame();
+        return;
+      }
+    } else if (result.kind === "discharge") {
+      if (activeStep && activeStep.id && result.event) {
+        if (result.event === "spray_ethanol") {
+          gameState.hoodSprayed = true;
+          triggerStep(activeStep.id);
+          showNotification("Sprayed hood with 70% ethanol.", "success");
+          gameState.selectedTool = null;
+          renderHoodScene();
+          renderProtocolPanel();
+          renderScoreDisplay();
+          return;
+        }
+        if (result.event === "aspirate") {
+          gameState.selectedTool = null;
+          startAspiration();
+          renderHoodScene();
+          renderProtocolPanel();
+          renderScoreDisplay();
+          return;
+        }
+        if (result.event === "pbs_wash") {
+          gameState.selectedTool = null;
+          gameState.flaskMediaAge = "fresh";
+          triggerStep(activeStep.id);
+          showNotification("Flask rinsed with PBS.", "success");
+          renderHoodScene();
+          renderProtocolPanel();
+          renderScoreDisplay();
+          return;
+        }
+        if (result.event === "pipette_trypsin") {
+          gameState.selectedTool = null;
+          gameState.trypsinAdded = true;
+          triggerStep(activeStep.id);
+          showNotification("Trypsin added to flask. Incubate 3-5 min at 37C.", "success");
+          renderHoodScene();
+          renderProtocolPanel();
+          renderScoreDisplay();
+          return;
+        }
+        if (result.event === "pipette_media") {
+          gameState.selectedTool = null;
+          if (gameState.trypsinIncubated && !gameState.trypsinNeutralized) {
+            gameState.trypsinNeutralized = true;
+          }
+          startAddingMedia();
+          renderHoodScene();
+          renderProtocolPanel();
+          renderScoreDisplay();
+          return;
+        }
+        if (result.event === "pipette_to_plate") {
+          gameState.selectedTool = null;
+          gameState.wellPlate.forEach((well) => {
+            well.hasCells = true;
+          });
+          gameState.cellsTransferred = true;
+          triggerStep(activeStep.id);
+          showNotification("Cells transferred to all 24 wells.", "success");
+          renderHoodScene();
+          renderProtocolPanel();
+          renderScoreDisplay();
+          return;
+        }
+        if (result.event === "centrifuge") {
+          gameState.flaskMediaMl = 0;
+          gameState.flaskMediaAge = "old";
+          triggerStep(activeStep.id);
+          showNotification("Cells centrifuged.", "success");
+          return;
+        }
+        if (result.event === "prewarm") {
+          triggerStep(activeStep.id);
+          showNotification("Media warmed.", "success");
+          return;
+        }
+        if (result.event === "media_adjust") {
+          gameState.selectedTool = null;
+          triggerStep(activeStep.id);
+          showNotification("Media adjusted for all wells.", "success");
+          renderHoodScene();
+          renderProtocolPanel();
+          renderScoreDisplay();
+          return;
+        }
+        if (result.event === "resuspend") {
+          gameState.selectedTool = null;
+          startAddingMedia();
+          renderHoodScene();
+          renderProtocolPanel();
+          renderScoreDisplay();
+          return;
+        }
+      }
+      gameState.selectedTool = canonicalTool(gameState.selectedTool);
+      renderGame();
+      return;
+    } else if (result.kind === "error") {
+      showNotification(result.hint);
+      return;
+    }
+  }
   if (!gameState.selectedTool) {
     if (itemId === "ethanol_bottle") {
       gameState.hoodSprayed = true;
@@ -6102,7 +6380,71 @@ function getBenchItemSvgHtml(itemId) {
       return "";
   }
 }
+function deriveHeldLiquid(selectedTool) {
+  if (!selectedTool) return { tool: null, liquid: null, volumeMl: 0, colorKey: null };
+  const map = {
+    "serological_pipette_with_pbs": { liquid: "pbs", volumeMl: 4, colorKey: "pbs" },
+    "serological_pipette_with_trypsin": { liquid: "trypsin", volumeMl: 3, colorKey: "trypsin" },
+    "serological_pipette_with_media": { liquid: "media", volumeMl: 9, colorKey: "media" },
+    "serological_pipette_with_sample": { liquid: "cells", volumeMl: 1, colorKey: "cells" },
+    "serological_pipette_with_cells": { liquid: "cells", volumeMl: 12, colorKey: "cells" }
+  };
+  const hit = map[selectedTool];
+  if (hit) return { tool: "serological_pipette", liquid: hit.liquid, volumeMl: hit.volumeMl, colorKey: hit.colorKey };
+  return { tool: selectedTool, liquid: null, volumeMl: 0, colorKey: null };
+}
+function canonicalTool(selectedTool) {
+  if (!selectedTool) return null;
+  const i = selectedTool.indexOf("_with_");
+  return i >= 0 ? selectedTool.substring(0, i) : selectedTool;
+}
 function onBenchItemClick(itemId) {
+  const activeStep = getCurrentStep();
+  if (activeStep && activeStep.allowedInteractions) {
+    const heldLiquid = deriveHeldLiquid(gameState.selectedTool);
+    const cleanTool = canonicalTool(gameState.selectedTool);
+    const result = resolveInteraction({
+      selectedTool: cleanTool,
+      clickedItem: itemId,
+      activeStep,
+      heldLiquid
+    });
+    if (result.kind === "load") {
+      const legacyToken = result.resultLiquid === "pbs" ? "serological_pipette_with_pbs" : result.resultLiquid === "trypsin" ? "serological_pipette_with_trypsin" : result.resultLiquid === "media" ? "serological_pipette_with_media" : result.resultLiquid === "cells" ? "serological_pipette_with_cells" : null;
+      if (legacyToken) {
+        gameState.selectedTool = legacyToken;
+        let notification = "Loaded " + result.resultLiquid + ".";
+        if (result.resultLiquid === "pbs") notification = "PBS loaded into pipette. Click the flask to rinse.";
+        if (result.resultLiquid === "trypsin") notification = "Loaded trypsin-EDTA. Click the flask to add.";
+        if (result.resultLiquid === "media") notification = "Media warmed to 37 degrees C and loaded into pipette. Click the flask.";
+        if (result.resultLiquid === "cells") notification = "Loaded cell suspension. Click the 24-well plate to transfer.";
+        showNotification(notification);
+        renderGame();
+        return;
+      }
+    } else if (result.kind === "discharge") {
+      if (activeStep && activeStep.id && result.event) {
+        if (result.event === "centrifuge") {
+          gameState.flaskMediaMl = 0;
+          gameState.flaskMediaAge = "old";
+          triggerStep(activeStep.id);
+          showNotification("Cells centrifuged.", "success");
+          return;
+        }
+        if (result.event === "prewarm") {
+          triggerStep(activeStep.id);
+          showNotification("Media warmed.", "success");
+          return;
+        }
+      }
+      gameState.selectedTool = canonicalTool(gameState.selectedTool);
+      renderGame();
+      return;
+    } else if (result.kind === "error") {
+      showNotification(result.hint);
+      return;
+    }
+  }
   if (itemId === "microscope") {
     if (gameState.selectedTool === "serological_pipette_with_sample") {
       gameState.selectedTool = null;
@@ -6454,14 +6796,7 @@ registeredTriggers.add("carb_high_range");
 registeredTriggers.add("metformin_stock");
 registeredTriggers.add("add_carboplatin");
 registeredTriggers.add("add_metformin");
-const MODAL_OWNED_STEPS = [
-  "carb_intermediate",
-  "carb_low_range",
-  "carb_high_range",
-  "metformin_stock",
-  "add_carboplatin",
-  "add_metformin"
-];
+const MODAL_OWNED_STEPS = getModalOwnedSteps("drug_treatment").map((step) => step.id);
 function startDrugAddition() {
   const overlay = document.getElementById("microscope-overlay");
   if (!overlay) return;
@@ -6633,10 +6968,10 @@ function renderIncubatorScene() {
     applyIncubation();
     gameState.incubated = true;
     const active = gameState.activeStepId;
-    if (active === "incubate_day1" || active === "incubate_48h" || active === "incubate_mtt") {
+    if (active && isIncubationStep(active)) {
       triggerStep(active);
     } else {
-      const candidates = ["incubate_day1", "incubate_48h", "incubate_mtt"];
+      const candidates = getIncubationSteps().map((step) => step.id);
       for (const cand of candidates) {
         if (!gameState.completedSteps.includes(cand)) {
           triggerStep(cand);

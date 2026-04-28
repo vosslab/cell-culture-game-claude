@@ -1,0 +1,235 @@
+items:
+  # Hood items - pipettes and tools
+  serological_pipette:
+    label: "Serological pipette"
+    role: transfer_tool
+    asset: sero_pipette
+    scene: hood
+    liquidCapable: true
+    capacityMl: 10
+    allowedLiquids: [media, pbs, trypsin, cells]
+
+  aspirating_pipette:
+    label: "Aspirating pipette"
+    role: aspirate_tool
+    asset: aspirating_pipette
+    scene: hood
+    liquidCapable: true
+    capacityMl: 10
+    allowedLiquids: [media]
+
+  multichannel_pipette:
+    label: "Multichannel pipette"
+    role: transfer_tool
+    asset: multichannel_pipette
+    scene: hood
+    liquidCapable: true
+    capacityMl: 300
+    allowedLiquids: [media, mtt, dmso]
+
+  # Hood items - culture and reagent containers
+  flask:
+    label: "T-75 Flask"
+    role: cell_container
+    asset: t75_flask
+    scene: hood
+    liquidCapable: true
+    capacityMl: 20
+    allowedLiquids: [media, trypsin, cells]
+
+  well_plate:
+    label: "24-Well Plate"
+    role: culture_vessel
+    asset: well_plate_24
+    scene: hood
+    liquidCapable: true
+    capacityMl: 1
+    allowedLiquids: [media, cells, mtt, dmso, carboplatin, metformin]
+
+  # Hood items - reagent sources (bottles)
+  media_bottle:
+    label: "Complete media"
+    role: reagent_source
+    asset: media_bottle
+    scene: hood
+    liquidCapable: true
+    capacityMl: 500
+    allowedLiquids: [media]
+    contains: media
+
+  pbs_bottle:
+    label: "1x PBS"
+    role: reagent_source
+    asset: pbs_bottle
+    scene: hood
+    liquidCapable: true
+    capacityMl: 500
+    allowedLiquids: [pbs]
+    contains: pbs
+
+  trypsin_bottle:
+    label: "Trypsin-EDTA"
+    role: reagent_source
+    asset: media_bottle
+    scene: hood
+    liquidCapable: true
+    capacityMl: 500
+    allowedLiquids: [trypsin]
+    contains: trypsin
+
+  ethanol_bottle:
+    label: "70% Ethanol"
+    role: reagent_source
+    asset: ethanol_spray
+    scene: hood
+    liquidCapable: true
+    capacityMl: 500
+    allowedLiquids: [ethanol]
+    contains: ethanol
+
+  sterile_water:
+    label: "Sterile Water"
+    role: reagent_source
+    asset: media_bottle
+    scene: hood
+    liquidCapable: true
+    capacityMl: 500
+    allowedLiquids: [water]
+    contains: water
+
+  dmso_bottle:
+    label: "DMSO"
+    role: reagent_source
+    asset: media_bottle
+    scene: hood
+    liquidCapable: true
+    capacityMl: 500
+    allowedLiquids: [dmso]
+    contains: dmso
+
+  mtt_vial:
+    label: "MTT 5 mg/mL"
+    role: modal_tool
+    asset: media_bottle
+    scene: hood
+    liquidCapable: true
+    capacityMl: 500
+    allowedLiquids: [mtt]
+    contains: mtt
+
+  # Hood items - drug stock bottles
+  carboplatin_stock:
+    label: "Carboplatin 10 mM"
+    role: reagent_source
+    asset: media_bottle
+    scene: hood
+    liquidCapable: true
+    capacityMl: 500
+    allowedLiquids: [carboplatin]
+    contains: carboplatin
+
+  metformin_stock:
+    label: "Metformin 1 M"
+    role: reagent_source
+    asset: media_bottle
+    scene: hood
+    liquidCapable: true
+    capacityMl: 500
+    allowedLiquids: [metformin]
+    contains: metformin
+
+  # Hood items - racks and containers
+  micropipette_rack:
+    label: "P20/P200/P1000"
+    role: decoration
+    asset: micropipette_rack
+    scene: hood
+    visualOnly: true
+
+  drug_vials:
+    label: "Drug Dilutions"
+    role: decoration
+    asset: drug_vial_rack
+    scene: hood
+
+  conical_15ml_rack:
+    label: "15 mL Tubes"
+    role: decoration
+    asset: conical_15ml_rack
+    scene: hood
+
+  dilution_tube_rack:
+    label: "1.5 mL Tubes"
+    role: decoration
+    asset: dilution_tube_rack
+    scene: hood
+
+  # Hood items - waste containers
+  waste_container:
+    label: "Waste"
+    role: waste_target
+    asset: waste_container
+    scene: hood
+
+  biohazard_decant:
+    label: "Biohazard"
+    role: waste_target
+    asset: biohazard_decant
+    scene: hood
+
+  # Bench items - equipment
+  centrifuge:
+    label: "Centrifuge"
+    role: instrument
+    asset: centrifuge
+    scene: bench
+
+  water_bath:
+    label: "37C Water Bath"
+    role: instrument
+    asset: water_bath
+    scene: bench
+
+  cell_counter:
+    label: "Cell Counter"
+    role: instrument
+    asset: cell_counter
+    scene: bench
+
+  microscope:
+    label: "Microscope"
+    role: instrument
+    asset: microscope
+    scene: bench
+
+  vortex:
+    label: "Vortex"
+    role: instrument
+    asset: vortex
+    scene: bench
+
+  incubator:
+    label: "Incubator"
+    role: instrument
+    asset: incubator
+    scene: bench
+
+  plate_reader:
+    label: "Plate Reader"
+    role: instrument
+    asset: plate_reader
+    scene: bench
+
+  # Virtual targets
+  hood_surface:
+    label: "Hood work surface"
+    role: virtual_target
+    scene: virtual
+
+  # Overlay decoration
+  professor:
+    label: "Professor"
+    role: decoration
+    asset: angry_professor
+    scene: overlay
+    visualOnly: true

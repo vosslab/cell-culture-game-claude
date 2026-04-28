@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * test_plate_96.mjs - Playwright tests for plate_96 functions.
  * Opens cell_culture_game.html and validates PLATE_96 constants,

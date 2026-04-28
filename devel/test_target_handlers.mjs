@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * test_target_handlers.mjs - Highlighted-target click audit
  *

@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * test_bench_layout.mjs - Playwright smoke check for the bench scene.
  * Opens the game, clicks the To Bench nav button, verifies the bench

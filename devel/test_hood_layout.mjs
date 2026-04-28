@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * test_hood_layout.mjs - Playwright visual verification for hood scene layout.
  * Opens the game, starts it, screenshots the hood scene, and runs layout checks.

@@ -109,13 +109,13 @@ function renderIncubatorScene(): void {
 		// TODO: replace activeStepId peek with trigger-spec lookup (see
 		// docs/plans/partitioned-hugging-blum.md Section 7)
 		const active = gameState.activeStepId;
-		if (active === 'incubate_day1' || active === 'incubate_48h' || active === 'incubate_mtt') {
+		if (active && isIncubationStep(active)) {
 			triggerStep(active);
 		} else {
 			// Incubator was clicked at an unexpected time; record as out-of-order
 			// by firing the most likely intended step. Pick the first unfinished
 			// incubate_* step in order.
-			const candidates = ['incubate_day1', 'incubate_48h', 'incubate_mtt'];
+			const candidates = getIncubationSteps().map((step: ProtocolStep) => step.id);
 			for (const cand of candidates) {
 				if (!gameState.completedSteps.includes(cand)) {
 					triggerStep(cand);

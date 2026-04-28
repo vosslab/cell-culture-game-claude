@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * test_layout_engine.mjs - Playwright unit tests for the layout engine.
  * Opens cell_culture_game.html and calls computeSceneLayout() with synthetic data.
