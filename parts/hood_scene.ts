@@ -121,6 +121,7 @@ function renderHoodScene(): void {
 		&& currentStepData.targetItems) {
 		activeTargets = currentStepData.targetItems;
 	}
+	const nextPulseTarget = activeTargets.length > 0 ? activeTargets[0] : null;
 
 	// Build items and labels in one pass into separate layer strings
 	let itemsHtml = '';
@@ -131,11 +132,12 @@ function renderHoodScene(): void {
 		const isSelected = gameState.selectedTool === item.id;
 		const isTarget = activeTargets.indexOf(item.id) >= 0;
 		const activeClass = isTarget && !isSelected ? ' is-active' : '';
+		const pulseClass = item.id === nextPulseTarget && isTarget && !isSelected ? ' is-next-target' : '';
 		const selectedClass = isSelected ? ' is-selected' : '';
 		const svgHtml = getItemSvgHtml(item.id);
 
 		// Item div: coordinates inline, classes handle visual states
-		itemsHtml += '<div class="hood-item' + activeClass + selectedClass + '"';
+		itemsHtml += '<div class="hood-item' + activeClass + pulseClass + selectedClass + '"';
 		itemsHtml += ' data-item-id="' + item.id + '"';
 		itemsHtml += ' tabindex="0" role="button"';
 		itemsHtml += ' aria-label="' + item.tooltip + '"';
@@ -731,6 +733,21 @@ function getAvailableActions(): string[] {
 			break;
 		case 'aspirate_old_media':
 			actions.push('Pick up the aspirating pipette, then click the flask');
+			break;
+		case 'carb_intermediate':
+			actions.push('Pick up the multichannel pipette, click the drug vials, click the 24-well plate, then click Prepare intermediate stock');
+			break;
+		case 'carb_low_range':
+			actions.push('Click the Half-log dilution option in the carboplatin modal');
+			break;
+		case 'carb_high_range':
+			actions.push('Click Prepare high-range stocks in the carboplatin modal');
+			break;
+		case 'metformin_stock':
+			actions.push('Click Prepare metformin stock in the metformin modal');
+			break;
+		case 'add_carboplatin':
+			actions.push('Pick up the multichannel pipette, click the drug vials, click the 24-well plate, then click Add carboplatin');
 			break;
 		case 'add_fresh_media':
 			actions.push('Pick up the serological pipette, click the media bottle, then click the flask');

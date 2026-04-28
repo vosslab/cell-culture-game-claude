@@ -19,6 +19,7 @@ const ASSET_SPECS: Record<string, AssetSpec> = {
 	waste_container:      { defaultWidth: 7,  labelWidth: 5,  },
 	microscope:           { defaultWidth: 8,  labelWidth: 7,  },
 	incubator:            { defaultWidth: 10, labelWidth: 6,  },
+	plate_reader:         { defaultWidth: 12, labelWidth: 8,  },
 	sterile_water:        { defaultWidth: 7,  labelWidth: 5,  },
 	pbs_bottle:           { defaultWidth: 7,  labelWidth: 5,  },
 	conical_15ml_rack:    { defaultWidth: 8,  labelWidth: 5,  },

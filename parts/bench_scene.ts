@@ -6,9 +6,10 @@
 // at page load time. See hood_scene.ts for the policy rationale.
 registeredTriggers.add('centrifuge');
 registeredTriggers.add('prewarm_media');
+registeredTriggers.add('plate_read');
 // The bench is a peer of the hood scene. It holds equipment the student
 // uses between hood steps: incubator, microscope, water bath, vortex,
-// centrifuge, cell counter. The bench wires into the shared layout
+// centrifuge, cell counter, plate reader. The bench wires into the shared layout
 // engine via parts/bench_config.ts.
 // ============================================
 
@@ -19,6 +20,7 @@ function getBenchItemSvgHtml(itemId: string): string {
 	switch (itemId) {
 		case 'microscope': return getMicroscopeSvg();
 		case 'incubator': return getIncubatorSvg();
+		case 'plate_reader': return getPlateReaderSvg();
 		case 'centrifuge': return getCentrifugeSvg();
 		case 'water_bath': return getWaterBathSvg();
 		case 'vortex': return getVortexSvg();
@@ -74,6 +76,15 @@ function onBenchItemClick(itemId: string): void {
 			return;
 		}
 		switchScene('incubator');
+		return;
+	}
+	if (itemId === 'plate_reader') {
+		const currentStep = getCurrentStep();
+		if (currentStep && (currentStep.id === 'plate_read' || currentStep.id === 'results')) {
+			switchScene('plate_reader');
+			return;
+		}
+		showNotification('The plate reader is ready for the readout step.');
 		return;
 	}
 	// Centrifuge: trigger the centrifuge step when clicked

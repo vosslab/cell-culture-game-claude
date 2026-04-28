@@ -53,6 +53,20 @@ function getCurrentDayId(): string {
 	return 'day1';
 }
 
+function getStepBubbleText(step: ProtocolStep): string {
+	const action = step.action;
+	if (action.indexOf('Make ') === 0) {
+		return 'Prepare ' + action.slice(5);
+	}
+	if (action.indexOf('Add ') === 0) {
+		return action;
+	}
+	if (action.indexOf('Place ') === 0) {
+		return action;
+	}
+	return action;
+}
+
 // ============================================
 // renderProtocolUI(): string
 // Returns HTML for day ribbon + breadcrumb + current-step card + upcoming steps
@@ -81,8 +95,18 @@ function renderProtocolUI(): string {
 
 	// Upcoming steps (next 1-2)
 	const upcoming = renderUpcomingSteps(currentStep.id);
+	const stepBubble = `
+		<div class="protocol-step-bubble">
+			<div class="protocol-step-bubble-image" aria-hidden="true">${SVG_ANGRY_PROFESSOR}</div>
+			<div class="protocol-step-bubble-copy">
+				<div class="protocol-step-bubble-label">Next step</div>
+				<div class="protocol-step-bubble-text">${escapeHtml(getStepBubbleText(currentStep))}</div>
+				<div class="protocol-step-bubble-subtext">${escapeHtml(currentStep.why)}</div>
+			</div>
+		</div>
+	`;
 
-	return dayRibbon + breadcrumb + stepCard + upcoming;
+	return stepBubble + dayRibbon + breadcrumb + stepCard + upcoming;
 }
 
 // ============================================

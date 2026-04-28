@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 120">
+  <rect x="18" y="28" width="124" height="72" rx="10" fill="#6d7f8a" stroke="#3f4a52" stroke-width="4"/>
+  <rect x="28" y="38" width="104" height="48" rx="6" fill="#eff4f7" stroke="#c6d2d8" stroke-width="2"/>
+  <rect x="46" y="78" width="68" height="10" rx="4" fill="#3f4a52"/>
+  <rect x="26" y="18" width="16" height="12" rx="3" fill="#3f4a52"/>
+  <rect x="118" y="18" width="16" height="12" rx="3" fill="#3f4a52"/>
+  <circle cx="56" cy="94" r="4" fill="#4caf50"/>
+  <circle cx="74" cy="94" r="4" fill="#ffca28"/>
+  <circle cx="92" cy="94" r="4" fill="#ef5350"/>
+  <text x="80" y="58" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#3f4a52">Plate Reader</text>
+  <text x="80" y="72" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="#607d8b">MTT 560 nm</text>
+</svg>

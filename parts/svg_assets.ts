@@ -14,6 +14,7 @@ declare const SVG_DRUG_VIAL_RACK: string;
 declare const SVG_MULTICHANNEL_PIPETTE: string;
 declare const SVG_MICROSCOPE: string;
 declare const SVG_INCUBATOR: string;
+declare const SVG_PLATE_READER: string;
 declare const SVG_CONICAL_15ML_RACK: string;
 declare const SVG_DILUTION_TUBE_RACK: string;
 declare const SVG_BIOHAZARD_DECANT: string;
@@ -22,6 +23,7 @@ declare const SVG_CENTRIFUGE: string;
 declare const SVG_WATER_BATH: string;
 declare const SVG_VORTEX: string;
 declare const SVG_CELL_COUNTER: string;
+declare const SVG_ANGRY_PROFESSOR: string;
 
 // Legacy: cell-culture2.svg artwork (fallback, will be removed)
 declare const CELL_CULTURE_PLATE_SVG: string;
@@ -298,6 +300,10 @@ function getMicroscopeSvg(): string {
  */
 function getIncubatorSvg(): string {
 	return SVG_INCUBATOR;
+}
+
+function getPlateReaderSvg(): string {
+	return SVG_PLATE_READER;
 }
 
 // ============================================

@@ -223,6 +223,16 @@
 ## 2026-04-08
 
 ### Additions and New Features
+- Added a protocol-step bubble with `assets/equipment/angry_professor.svg` above the step guide so the sidebar can show the current next-step instruction in a visual speech callout.
+- Added explicit dilution-prep toolbar cues for `carb_intermediate`, `carb_low_range`, `carb_high_range`, and `metformin_stock` so the hood banner now tells students to use the multichannel pipette and drug-vials path instead of showing only the step title.
+### Behavior or Interface Changes
+- Shortened the protocol bubble copy to an imperative phrase plus a one-line explanation, and added a pulsing `is-next-target` highlight so the next clickable hood item stands out more clearly.
+### Behavior or Interface Changes
+- Changed `carb_intermediate` `targetItems` to `multichannel_pipette`, `drug_vials`, and `well_plate` so the green step-11 highlights now match the click path the student actually needs to follow.
+- Clarified the toolbar guidance for steps 11-14 so the hood banner now names the exact modal action to click: prepare intermediate stock, choose the half-log dilution, prepare high-range stocks, and prepare metformin stock.
+- Changed `add_carboplatin` `targetItems` to `multichannel_pipette`, `drug_vials`, and `well_plate` so step 17 highlights now match the real click path instead of pointing at the dilution rack.
+- Added a permanent `plate_reader` item to the bench scene so the readout instrument is visible on the bench at all times and can open the plate-reader overlay when step 24 is active.
+- Added `plate_reader` asset wiring to `parts/asset_specs.ts` and `parts/svg_assets.ts` so the bench scene can size and render the permanent reader without crashing.
 - Added trypsin digestion steps to protocol: `add_trypsin`, `incubate_trypsin`, `neutralize_trypsin` between aspirate and microscope check, with trypsin bottle in hood scene (`parts/constants.ts`, `parts/hood_scene.ts`, `parts/game_state.ts`, `parts/svg_assets.ts`)
 - Added manual cell counting to hemocytometer: players click each corner quadrant and enter their live cell count, which is compared against actual for accuracy feedback (`ui/overlays.ts`, `parts/microscope_scene.ts`)
 - Added close confirmation on microscope overlay when quadrant counting is partially complete (`ui/overlays.ts`)
