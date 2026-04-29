@@ -1,5 +1,27 @@
 # Changelog
 
+## 2026-04-29
+
+### Additions and New Features
+- Integrated Servier Medical Art bioicons across all equipment items. Copied 20 Servier SVGs from OTHER_REPOS/bioicons/static/icons/cc-by-3.0/{Microbiology,Lab_apparatus,Chemistry}/Servier/ into assets/equipment/ with anchor system injected. New assets: t75_flask_v5.svg (culture-flask-filled-lid, Servier professional flask), media_bottle.svg (bottle-medium-pink), pbs_bottle.svg (recolored pink->light blue #b8e5ff), trypsin_bottle.svg (bottle-medium-orange), dmso_bottle.svg (recolored green->gray #e0e0e0), sterile_water_bottle.svg (recolored pink->pale blue #eaf6ff), falcon_15ml.svg (falcon-15ml-empty), falcon_50ml.svg (falcon-50ml-empty), mtt_vial.svg (tube-screwcap-closed-orange), centrifuge.svg (lab centrifuge), incubator.svg (lab incubator), microscope.svg (lab microscope), plate_reader.svg (spectrophotometer), water_bath.svg (bath_filled), vortex.svg (agitator), multichannel_pipette.svg (micropipette-multi), tip_box.svg (pipette-box), cell_counter.svg (cell-culture-equipment-1). All recolored bottles and non-liquid items have anchor_label and overlay_root. Liquid-bearing items have full anchor system (anchor_liquid_clip, anchor_liquid_bounds). Servier attribution footer added to parts/body.html: "Servier Medical Art icons by Servier (https://smart.servier.com/), licensed under CC-BY-3.0. Sourced via bioicons.com (https://bioicons.com/)."
+- Created docs/THIRD_PARTY_ASSETS.md documenting all 20 Servier SVG imports with source file -> destination file mapping, license (CC-BY-3.0), modifications (anchors + recoloring), and attribution boilerplate. Organized by collection (Microbiology, Lab_apparatus, Chemistry) per source directory structure.
+
+### Behavior or Interface Changes
+- OQ-5 decision (2026-04-29): switched default flask from t75_flask_v4.svg (user's hand-drawn variant) to t75_flask_v5.svg (Servier culture-flask-filled-lid). Updated parts/svg_assets.ts:getFlaskSvg() comment to reference new default and document Servier provenance. Both assets remain in assets/equipment/ for reference; t75_flask.svg now contains v5 content (Servier professional flask with 3D perspective and detailed cap).
+- OQ-3 dramatic widthScale ratios applied in parts/asset_specs.ts: centrifuge 1.6, water_bath 1.5, incubator 1.4, plate_reader 1.2, cell_counter 1.0, microscope 0.9, vortex 0.5 (widths-only; heights unchanged). Ratios represent approximate relative physical sizes of real lab equipment. Bench layout tested with node devel/test_layout_metrics.mjs: all items fit within 1280x720 viewport with <45% empty space and professor card positioning unaffected.
+
+### Decisions and Failures
+- OQ-2 top-left professor positioning confirmed during Servier asset integration. No layout collisions observed across all 25 walkthrough steps with new, larger-scale Servier equipment.
+- OQ-3 widths-only dramatic ratios (1.6:1.5:1.4:1.2:1.0:0.9:0.5) applied without scaling factors. Layout tested stable; no overflow at 1280x720.
+- OQ-5 Servier culture-flask-filled-lid chosen as new default (high fidelity, professional appearance). t75_flask_v4 retained as legacy backup. Switch enables cohesive Servier bioicon visual system across all equipment.
+
+### Developer Tests and Notes
+- Walkthrough maintained 25/25 completion throughout asset integration. Built after each batch (bottles, equipment, pipettes) to ensure no asset reference regressions.
+- node devel/test_layout_metrics.mjs passed: 3 viewports tested (1280x720, 1440x900, 1920x1080); all assertions pass; professor width within spec; bench occupancy >=65%.
+- node devel/test_target_handlers.mjs passed: 41/41 audits green (all step interactions working with new asset SVGs).
+- All 20 Servier SVGs validated for anchor presence (anchor_liquid_clip, anchor_label, overlay_root) before commit. Recoloring verified via SVG source inspection; no UV-8 conversions needed.
+- Legacy asset files (_legacy, _old) kept for reference; untracked _new temporary files left as build artifacts (not committed).
+
 ## 2026-04-28
 
 ### Additions and New Features

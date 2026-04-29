@@ -1,0 +1,25 @@
+<svg viewBox="0 0 60 70" xmlns="http://www.w3.org/2000/svg">
+  <!-- Plastic tip box (square, compact) -->
+  <defs>
+    <linearGradient id="tipBoxGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#e3f2fd;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#bbdefb;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Box body -->
+  <rect x="8" y="10" width="44" height="45" fill="url(#tipBoxGrad)" stroke="#1976d2" stroke-width="1.5" rx="2"/>
+
+  <!-- Lid line -->
+  <line x1="8" y1="18" x2="52" y2="18" stroke="#1976d2" stroke-width="1"/>
+
+  <!-- Tip tips visible inside (subtle) -->
+  <line x1="15" y1="25" x2="15" y2="40" stroke="#64b5f6" stroke-width="0.5"/>
+  <line x1="22" y1="25" x2="22" y2="38" stroke="#64b5f6" stroke-width="0.5"/>
+  <line x1="29" y1="25" x2="29" y2="40" stroke="#64b5f6" stroke-width="0.5"/>
+  <line x1="36" y1="25" x2="36" y2="38" stroke="#64b5f6" stroke-width="0.5"/>
+  <line x1="43" y1="25" x2="43" y2="40" stroke="#64b5f6" stroke-width="0.5"/>
+
+  <!-- Label area -->
+  <text x="30" y="60" font-family="Arial,sans-serif" font-size="7" fill="#333" text-anchor="middle">Tips</text>
+</svg>

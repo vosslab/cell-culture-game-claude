@@ -91,9 +91,9 @@ function getHoodBackgroundSvg(): string {
  * @param mediaLevel - fill level from 0 to 1
  * @param mediaColor - color of media: 'old' (yellow-orange) or 'fresh' (pink-orange)
  *
- * OQ-5 decided: Using t75_flask_v4.svg (user's hand-drawn variant, polished).
- * Features: horizontal T-flask with angled neck, blue cap, pink media, yellow vent.
- * SVG anchors and polygon nodes aligned; tight viewBox around geometry only.
+ * OQ-5 decided 2026-04-29: Using t75_flask_v5.svg (Servier culture-flask-filled-lid).
+ * Features: professional Servier bioicon with 3D perspective, multiple color regions, detailed cap.
+ * SVG anchors for liquid, label, and overlay regions added.
  */
 function getFlaskSvg(mediaLevel: number, mediaColor: string): string {
 	// map old color convention to typed ColorRole
