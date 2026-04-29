@@ -182,6 +182,9 @@ renderGame = function(): void {
 	renderProtocolPanel();
 	renderScoreDisplay();
 	renderMeters();
+
+	// Render professor overlay every frame
+	renderProfessorOverlay();
 };
 
 // ============================================
@@ -195,6 +198,9 @@ document.addEventListener('DOMContentLoaded', () => {
 		throw new Error('Protocol validation failed:\n' + protocolErrors.join('\n'));
 	}
 	gameState = createInitialGameState();
+
+	// Create professor overlay (done once at start, then updated each renderGame)
+	createProfessorOverlay();
 
 	// Check if welcome overlay should be shown (skip for repeat visitors)
 	const welcomeOverlay = document.getElementById('welcome-overlay');

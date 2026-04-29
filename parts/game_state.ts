@@ -2,6 +2,13 @@
 // game_state.ts - State machine and protocol tracking
 // ============================================
 
+interface HeldLiquid {
+	tool: string;        // item id of the held tool
+	liquid: string;      // reagent id
+	volumeMl: number;    // volume in milliliters
+	colorKey: string;    // color role for rendering
+}
+
 interface GameState {
 	// State machine: activeStepId replaces currentStep (numeric index).
 	// Explicit tracking of protocol progress via id-based lookup.
@@ -49,6 +56,8 @@ interface GameState {
 	pipetteVolumeMl: number;
 	isDragging: boolean;
 	dragItem: string | null;
+	// Held liquid state: tracks what liquid is loaded in the current tool
+	heldLiquid: HeldLiquid | null;
 	// Day state machine
 	day: 'day1_seed' | 'day1_wait' | 'day2_treat' | 'day2_wait' | 'day4_readout';
 	seenPartIntros: string[];
@@ -57,6 +66,8 @@ interface GameState {
 	plateMapErrors: number;
 	mttTechniqueErrors: number;
 	incubationTimingOk: boolean;
+	professorMood: 'neutral' | 'pleased' | 'annoyed';
+	professorMoodSetAt: number;
 }
 
 // CRITICAL: Persistence layer must serialize activeStepId, outOfOrderAttempts,
@@ -117,12 +128,15 @@ function createInitialGameState(): GameState {
 		pipetteVolumeMl: 0,
 		isDragging: false,
 		dragItem: null,
+		heldLiquid: null,
 		day: 'day1_seed',
 		seenPartIntros: [],
 		dilutionErrors: 0,
 		plateMapErrors: 0,
 		mttTechniqueErrors: 0,
 		incubationTimingOk: true,
+		professorMood: 'neutral',
+		professorMoodSetAt: Date.now(),
 	};
 }
 

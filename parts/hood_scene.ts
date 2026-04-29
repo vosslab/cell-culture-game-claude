@@ -99,7 +99,13 @@ function getItemSvgHtml(itemId: string): string {
 		case 'media_bottle': return getMediaBottleSvg();
 		case 'trypsin_bottle': return getTrypsinBottleSvg();
 		case 'aspirating_pipette': return getAspiratingPipetteSvg();
-		case 'serological_pipette': return getSeroPipetteSvg();
+		case 'serological_pipette':
+			if (gameState.heldLiquid && gameState.heldLiquid.tool === 'serological_pipette') {
+				const reagent = REAGENTS[gameState.heldLiquid.liquid];
+				const color = reagent ? reagent.displayColor : COLOR_MAP[gameState.heldLiquid.colorKey as ColorRole] || '#cccccc';
+				return getSeroPipetteSvg(gameState.heldLiquid.volumeMl, color);
+			}
+			return getSeroPipetteSvg();
 		case 'waste_container': return getWasteContainerSvg();
 		case 'drug_vials': return getDrugVialsSvg();
 		case 'multichannel_pipette': return getMultichannelPipetteSvg();
@@ -345,11 +351,26 @@ function onItemClick(itemId: string): void {
 			heldLiquid: heldLiquid,
 		});
 		if (result.kind === 'load') {
+			// Update heldLiquid with the loaded liquid
+			if (result.resultActor && result.resultLiquid && result.resultVolumeMl) {
+				// Get the color key from REAGENTS if available
+				const reagent = REAGENTS[result.resultLiquid];
+				const colorKey = reagent ? reagent.colorKey : result.resultLiquid;
+				gameState.heldLiquid = {
+					tool: result.resultActor,
+					liquid: result.resultLiquid,
+					volumeMl: result.resultVolumeMl,
+					colorKey: colorKey,
+				};
+			}
 			// Set legacy _with_X token from result so existing downstream code keeps working.
-			const legacyToken = result.resultLiquid === 'pbs'     ? 'serological_pipette_with_pbs'
-						  : result.resultLiquid === 'trypsin' ? 'serological_pipette_with_trypsin'
-						  : result.resultLiquid === 'media'   ? 'serological_pipette_with_media'
-						  : result.resultLiquid === 'cells'   ? 'serological_pipette_with_cells'
+			// Build the token using the actual actor from the resolver result,
+			// not just hardcoded serological_pipette.
+			const actor = result.resultActor || 'serological_pipette';
+			const legacyToken = result.resultLiquid === 'pbs'     ? `${actor}_with_pbs`
+						  : result.resultLiquid === 'trypsin' ? `${actor}_with_trypsin`
+						  : result.resultLiquid === 'media'   ? `${actor}_with_media`
+						  : result.resultLiquid === 'cells'   ? `${actor}_with_cells`
 						  : null;
 			if (legacyToken) {
 				gameState.selectedTool = legacyToken;
@@ -372,6 +393,7 @@ function onItemClick(itemId: string): void {
 					triggerStep(activeStep.id);
 					showNotification('Sprayed hood with 70% ethanol.', 'success');
 					gameState.selectedTool = null;
+					gameState.heldLiquid = null;
 					renderHoodScene();
 					renderProtocolPanel();
 					renderScoreDisplay();
@@ -379,6 +401,7 @@ function onItemClick(itemId: string): void {
 				}
 				if (result.event === 'aspirate') {
 					gameState.selectedTool = null;
+					gameState.heldLiquid = null;
 					startAspiration();
 					renderHoodScene();
 					renderProtocolPanel();
@@ -387,6 +410,7 @@ function onItemClick(itemId: string): void {
 				}
 				if (result.event === 'pbs_wash') {
 					gameState.selectedTool = null;
+					gameState.heldLiquid = null;
 					gameState.flaskMediaAge = 'fresh';
 					triggerStep(activeStep.id);
 					showNotification('Flask rinsed with PBS.', 'success');
@@ -397,6 +421,7 @@ function onItemClick(itemId: string): void {
 				}
 				if (result.event === 'pipette_trypsin') {
 					gameState.selectedTool = null;
+					gameState.heldLiquid = null;
 					gameState.trypsinAdded = true;
 					triggerStep(activeStep.id);
 					showNotification('Trypsin added to flask. Incubate 3-5 min at 37C.', 'success');
@@ -407,6 +432,7 @@ function onItemClick(itemId: string): void {
 				}
 				if (result.event === 'pipette_media') {
 					gameState.selectedTool = null;
+					gameState.heldLiquid = null;
 					if (gameState.trypsinIncubated && !gameState.trypsinNeutralized) {
 						gameState.trypsinNeutralized = true;
 					}
@@ -418,6 +444,7 @@ function onItemClick(itemId: string): void {
 				}
 				if (result.event === 'pipette_to_plate') {
 					gameState.selectedTool = null;
+					gameState.heldLiquid = null;
 					gameState.wellPlate.forEach(well => {
 						well.hasCells = true;
 					});
@@ -443,6 +470,7 @@ function onItemClick(itemId: string): void {
 				}
 				if (result.event === 'media_adjust') {
 					gameState.selectedTool = null;
+					gameState.heldLiquid = null;
 					triggerStep(activeStep.id);
 					showNotification('Media adjusted for all wells.', 'success');
 					renderHoodScene();
@@ -855,6 +883,7 @@ function setupHoodEventListeners(): void {
 	if (putDownBtn) {
 		putDownBtn.addEventListener('click', () => {
 			gameState.selectedTool = null;
+			gameState.heldLiquid = null;
 			showNotification('Tool deselected.');
 			renderHoodScene();
 		});
@@ -866,6 +895,7 @@ function setupHoodEventListeners(): void {
 			e.preventDefault();
 			if (gameState.selectedTool) {
 				gameState.selectedTool = null;
+				gameState.heldLiquid = null;
 				showNotification('Tool deselected.');
 				renderHoodScene();
 			}
@@ -875,6 +905,7 @@ function setupHoodEventListeners(): void {
 	document.addEventListener('keydown', (e) => {
 		if (e.key === 'Escape' && gameState.selectedTool) {
 			gameState.selectedTool = null;
+			gameState.heldLiquid = null;
 			showNotification('Tool deselected.');
 			renderHoodScene();
 		}

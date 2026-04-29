@@ -1,4 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" id="sero_pipette" viewBox="0 0 16 142">
+	<defs>
+		<!-- Liquid clipping region: follows inner glass tube only (not cotton plug, not tip) -->
+		<clipPath id="anchor_liquid_clip">
+			<rect x="5.5" y="15" width="5" height="101" rx="0.5"/>
+		</clipPath>
+	</defs>
 
 
 	<!-- BODY: main pipette shape -->
@@ -30,7 +36,11 @@
 	<!-- OVERLAY_ROOT: engine injects dynamic overlays here -->
 	<g id="overlay_root"/>
 
-	<!-- ANCHORS: invisible positioning elements -->
+	<!-- ANCHORS: invisible positioning elements for the engine -->
+	<!-- Liquid fill region bounds (inner glass tube) -->
+	<rect id="anchor_liquid_bounds" x="5.5" y="15" width="5" height="101" fill="none" stroke="none" display="none"/>
+	<!-- Highlight border bounds -->
 	<rect id="anchor_highlight" x="1" y="2" width="15" height="144" fill="none" stroke="none" display="none"/>
+	<!-- Error indicator position -->
 	<rect id="anchor_error" x="9" y="3" width="12" height="12" fill="none" stroke="none" display="none"/>
 </svg>

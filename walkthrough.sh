@@ -47,6 +47,13 @@ echo ""
 echo "Running target-handler audit..."
 node devel/test_target_handlers.mjs
 
+# Step completeness audit (M2): verify every protocol step has proper
+# wiring: requiredItems >= targetItems, scene membership correct,
+# every item is used or visualOnly, etc.
+echo ""
+echo "Running step completeness audit..."
+node devel/test_step_completeness.mjs
+
 echo ""
 echo "Screenshots saved to:"
 echo "  build/walkthrough/      (data-layer pass)"

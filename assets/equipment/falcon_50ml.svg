@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" id="falcon_50ml" viewBox="0 0 60 180">
+	<defs>
+		<!-- Liquid clipping: conical interior only (NOT the cap or neck) -->
+		<clipPath id="anchor_liquid_clip">
+			<path d="M 18 70 L 22 160 Q 30 175 38 175 Q 46 175 50 160 L 54 70 Z"/>
+		</clipPath>
+	</defs>
+
+	<!-- CAP: blue screw cap at top -->
+	<g id="cap">
+		<!-- Cap body (dark blue cylinder) -->
+		<ellipse cx="36" cy="15" rx="18" ry="5" fill="#2c2ca0" stroke="#0b0b28" stroke-width="1"/>
+		<path d="M 18 15 L 16 35 Q 16 40 20 43 L 52 43 Q 56 40 56 35 L 54 15 Z"
+		      fill="#2c2ca0" stroke="#0b0b28" stroke-width="1"/>
+		<!-- Cap ridges -->
+		<line x1="20" y1="24" x2="52" y2="24" stroke="#0d0b50" stroke-width="0.8" opacity="0.7"/>
+		<line x1="19" y1="31" x2="53" y2="31" stroke="#0d0b50" stroke-width="0.8" opacity="0.7"/>
+		<!-- Cap top face -->
+		<ellipse cx="36" cy="15" rx="18" ry="4" fill="#3d2bff" stroke="#0b0b28" stroke-width="0.5"/>
+	</g>
+
+	<!-- NECK: short cylindrical neck -->
+	<g id="neck">
+		<rect x="20" y="43" width="32" height="12" fill="#e8e8e8" stroke="#999" stroke-width="1"/>
+		<!-- Neck grip line -->
+		<line x1="20" y1="51" x2="52" y2="51" stroke="#ccc" stroke-width="0.5"/>
+	</g>
+
+	<!-- BODY: conical tube body -->
+	<g id="body">
+		<!-- Main cone outline -->
+		<path d="M 22 55 L 18 70 L 16 120 Q 16 145 22 160 Q 30 175 38 175 Q 46 175 54 160 Q 60 145 60 120 L 58 70 L 54 55 Z"
+		      fill="#dbe2e3" stroke="#b3b3b3" stroke-width="1.5"/>
+		<!-- Cone inner face (highlight) -->
+		<path d="M 25 60 L 22 70 L 20 120 Q 20 142 25 155 Q 31 168 38 168 Q 45 168 51 155 Q 56 142 56 120 L 54 70 L 51 60 Z"
+		      fill="#f0f0f0" stroke="none"/>
+		<!-- Left side shine -->
+		<ellipse cx="24" cy="110" rx="4" ry="50" fill="#ffffff" opacity="0.3"/>
+	</g>
+
+	<!-- GRADUATION MARKS: measurement ticks on body -->
+	<g id="graduation" stroke="#666" stroke-width="0.6">
+		<!-- Major marks (10 mL increments) -->
+		<line x1="58" y1="72" x2="70" y2="72"/>  <!-- 50 mL -->
+		<line x1="58" y1="90" x2="70" y2="90"/>  <!-- 40 mL -->
+		<line x1="58" y1="108" x2="70" y2="108"/> <!-- 30 mL -->
+		<line x1="58" y1="126" x2="70" y2="126"/> <!-- 20 mL -->
+		<line x1="58" y1="144" x2="70" y2="144"/> <!-- 10 mL -->
+		<!-- Minor marks (2.5 mL) -->
+		<line x1="60" y1="81" x2="67" y2="81" stroke-width="0.4"/>
+		<line x1="60" y1="99" x2="67" y2="99" stroke-width="0.4"/>
+		<line x1="60" y1="117" x2="67" y2="117" stroke-width="0.4"/>
+		<line x1="60" y1="135" x2="67" y2="135" stroke-width="0.4"/>
+	</g>
+
+	<!-- LABEL_FRAME: static label background -->
+	<g id="label_frame">
+		<rect x="22" y="85" width="28" height="35" rx="1" fill="#ffffff" opacity="0.85" stroke="#999" stroke-width="0.8"/>
+	</g>
+
+	<!-- LIQUID_STATIC: base liquid color showing through (70% pre-filled for visual presence) -->
+	<g id="liquid_static" clip-path="url(#anchor_liquid_clip)">
+		<ellipse cx="36" cy="165" rx="18" ry="8" fill="#ff5555" opacity="0.4"/>
+	</g>
+
+	<!-- OVERLAY_ROOT: engine injects dynamic overlays here -->
+	<g id="overlay_root"/>
+
+	<!-- ANCHORS: invisible positioning elements -->
+	<rect id="anchor_liquid_bounds" x="16" y="55" width="44" height="120" fill="none" stroke="none" display="none"/>
+	<rect id="anchor_highlight" x="12" y="10" width="48" height="170" fill="none" stroke="none" display="none"/>
+	<rect id="anchor_label" x="22" y="85" width="28" height="35" fill="none" stroke="none" display="none"/>
+	<rect id="anchor_error" x="52" y="50" width="14" height="14" fill="none" stroke="none" display="none"/>
+</svg>

@@ -34,6 +34,48 @@ function parseAnchorBounds(svgString: string, equipmentId: string, anchorId: str
 
 //============================================
 /**
+ * Create a pipette liquid fill overlay.
+ * For serological pipettes: volumeMl is converted to a level (0-1) based on capacity.
+ * The liquid rectangle is bottom-anchored, clipped to the inner glass tube.
+ * @param equipmentId - equipment identifier (e.g., "sero_pipette")
+ * @param volumeMl - liquid volume in milliliters
+ * @param capacityMl - total capacity in milliliters
+ * @param color - hex color code for the liquid
+ * @param svgString - base SVG to extract anchor bounds from
+ */
+function createPipetteLiquidOverlay(equipmentId: string, volumeMl: number, capacityMl: number, color: string, svgString: string): string {
+	// clamp volume to capacity
+	const clampedVol = Math.max(0, Math.min(volumeMl, capacityMl));
+	if (clampedVol <= 0) {
+		return "";
+	}
+	const level = clampedVol / capacityMl;
+	const prefixedClip = equipmentId + "__anchor_liquid_clip";
+	// get liquid bounds from the base SVG
+	const bounds = parseAnchorBounds(svgString, equipmentId, "anchor_liquid_bounds");
+	if (!bounds) {
+		return "";
+	}
+	// liquid fills from the bottom up
+	const liquidHeight = bounds.height * level;
+	const liquidY = bounds.y + bounds.height - liquidHeight;
+	let svg = '<g id="' + equipmentId + '__liquid">';
+	// clipped liquid rectangle
+	svg += '<rect'
+		+ ' x="' + bounds.x + '"'
+		+ ' y="' + liquidY + '"'
+		+ ' width="' + bounds.width + '"'
+		+ ' height="' + liquidHeight + '"'
+		+ ' fill="' + color + '"'
+		+ ' opacity="0.8"'
+		+ ' clip-path="url(#' + prefixedClip + ')"'
+		+ '/>';
+	svg += '</g>';
+	return svg;
+}
+
+//============================================
+/**
  * Create a liquid fill overlay that clips to the container shape.
  * The liquid rectangle is positioned based on level (0 = empty, 1 = full)
  * within the anchor_liquid_bounds area, clipped by anchor_liquid_clip.

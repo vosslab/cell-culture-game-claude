@@ -78,6 +78,9 @@ function getStaticSvg(assetId: string): string {
 		case 'water_bath': return SVG_WATER_BATH;
 		case 'vortex': return SVG_VORTEX;
 		case 'cell_counter': return SVG_CELL_COUNTER;
+		case 'tip_box': return SVG_TIP_BOX;
+		case 'glove_box': return SVG_GLOVE_BOX;
+		case 'waste_tray': return SVG_WASTE_TRAY;
 		default: return '';
 	}
 }

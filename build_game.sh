@@ -33,6 +33,7 @@ TS_FILES=(
 	"$PARTS_DIR/interaction_resolver.ts"
 	"$PARTS_DIR/svg_overlays.ts"
 	"$PARTS_DIR/svg_assets.ts"
+	"$PARTS_DIR/professor_overlay.ts"
 	"$PARTS_DIR/ui_rendering.ts"
 	"$PARTS_DIR/hood_scene.ts"
 	"$PARTS_DIR/bench_scene.ts"

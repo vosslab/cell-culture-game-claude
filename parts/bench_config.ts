@@ -43,16 +43,20 @@ const BENCH_ZONES: Record<string, ZoneDef> = {
 // Bench holds seven items, all in a single working row. Left-to-right
 // order is workflow order: centrifuge first (after hood), then water
 // bath, cell counter, microscope, vortex, incubator, and plate reader
-// (last, where the readout happens). Items below width 0.85 so the row
-// still fits across the bench.
+// (last, where the readout happens). Scaled to approximate real-world
+// relative sizes. Actual scaling factors are tuned for layout coherence.
 const BENCH_SCENE_ITEMS: SceneItem[] = [
-	{ id: 'centrifuge',   asset: 'centrifuge',   kind: 'equipment', zone: 'mid_bench', priority: 1, widthScale: 0.85, label: 'Centrifuge',   anchorY: 'bottom', alignStop: 'left'   },
-	{ id: 'water_bath',   asset: 'water_bath',   kind: 'equipment', zone: 'mid_bench', priority: 2, widthScale: 0.85, label: '37C Water Bath', shortLabel: 'Water Bath', anchorY: 'bottom', alignStop: 'left'   },
+	{ id: 'centrifuge',   asset: 'centrifuge',   kind: 'equipment', zone: 'mid_bench', priority: 1, widthScale: 0.95, label: 'Centrifuge',   anchorY: 'bottom', alignStop: 'left'   },
+	{ id: 'water_bath',   asset: 'water_bath',   kind: 'equipment', zone: 'mid_bench', priority: 2, widthScale: 0.90, label: '37C Water Bath', shortLabel: 'Water Bath', anchorY: 'bottom', alignStop: 'left'   },
 	{ id: 'cell_counter', asset: 'cell_counter', kind: 'equipment', zone: 'mid_bench', priority: 3, widthScale: 0.85, label: 'Cell Counter', anchorY: 'bottom', alignStop: 'center' },
-	{ id: 'microscope',   asset: 'microscope',   kind: 'equipment', zone: 'mid_bench', priority: 4, widthScale: 0.85, label: 'Microscope',   anchorY: 'bottom', alignStop: 'center' },
-	{ id: 'vortex',       asset: 'vortex',       kind: 'equipment', zone: 'mid_bench', priority: 5, widthScale: 0.85, label: 'Vortex',       anchorY: 'bottom', alignStop: 'right'  },
-	{ id: 'incubator',    asset: 'incubator',    kind: 'equipment', zone: 'mid_bench', priority: 6, widthScale: 0.80, label: 'Incubator',    anchorY: 'bottom', alignStop: 'right'  },
-	{ id: 'plate_reader',  asset: 'plate_reader', kind: 'equipment', zone: 'mid_bench', priority: 7, widthScale: 0.80, label: 'Plate Reader', shortLabel: 'Plate Reader', anchorY: 'bottom', alignStop: 'right'  },
+	{ id: 'microscope',   asset: 'microscope',   kind: 'equipment', zone: 'mid_bench', priority: 4, widthScale: 0.82, label: 'Microscope',   anchorY: 'bottom', alignStop: 'center' },
+	{ id: 'vortex',       asset: 'vortex',       kind: 'equipment', zone: 'mid_bench', priority: 5, widthScale: 0.75, label: 'Vortex',       anchorY: 'bottom', alignStop: 'right'  },
+	{ id: 'incubator',    asset: 'incubator',    kind: 'equipment', zone: 'mid_bench', priority: 6, widthScale: 0.88, label: 'Incubator',    anchorY: 'bottom', alignStop: 'right'  },
+	{ id: 'plate_reader',  asset: 'plate_reader', kind: 'equipment', zone: 'mid_bench', priority: 7, widthScale: 0.86, label: 'Plate Reader', shortLabel: 'Plate Reader', anchorY: 'bottom', alignStop: 'right'  },
+	// Back shelf decoration items (visual only, not protocol targets)
+	{ id: 'tip_box',      asset: 'tip_box',      kind: 'decoration', zone: 'back_shelf', priority: 1, widthScale: 0.80, label: 'Tip Box',      anchorY: 'bottom', alignStop: 'left'   },
+	{ id: 'glove_box',    asset: 'glove_box',    kind: 'decoration', zone: 'back_shelf', priority: 2, widthScale: 0.75, label: 'Glove Box',    anchorY: 'bottom', alignStop: 'center' },
+	{ id: 'waste_tray',   asset: 'waste_tray',   kind: 'decoration', zone: 'back_shelf', priority: 3, widthScale: 0.85, label: 'Waste Tray',   anchorY: 'bottom', alignStop: 'right'  },
 ];
 
 const BENCH_LAYOUT_RULES: SceneLayoutRules = {

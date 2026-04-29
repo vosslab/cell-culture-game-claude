@@ -151,12 +151,14 @@ items:
     role: decoration
     asset: drug_vial_rack
     scene: hood
+    visualOnly: true
 
   conical_15ml_rack:
     label: "15 mL Tubes"
     role: decoration
     asset: conical_15ml_rack
     scene: hood
+    visualOnly: true
 
   dilution_tube_rack:
     label: "1.5 mL Tubes"
@@ -201,12 +203,14 @@ items:
     role: instrument
     asset: microscope
     scene: bench
+    # Used by count_cells as alternate target per M2 audit
 
   vortex:
     label: "Vortex"
     role: instrument
     asset: vortex
     scene: bench
+    visualOnly: true
 
   incubator:
     label: "Incubator"
@@ -219,12 +223,14 @@ items:
     role: instrument
     asset: plate_reader
     scene: bench
+    visualOnly: true
 
   # Virtual targets
   hood_surface:
     label: "Hood work surface"
     role: virtual_target
     scene: virtual
+    visualOnly: true
 
   # Overlay decoration
   professor:

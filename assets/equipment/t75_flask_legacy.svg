@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" id="t75_flask" viewBox="0 0 102 166">
+	<defs>
+		<!-- Liquid clipping region: follows flask interior silhouette -->
+		<clipPath id="anchor_liquid_clip">
+			<path d="M 3 57 L 3 157 Q 3 162 7 164 L 87 164 Q 91 162 91 157 L 91 57 Z"/>
+		</clipPath>
+	</defs>
+
+
+	<!-- BODY: main flask shape (flat rectangular T-75) -->
+	<g id="body">
+		<!-- Main flask body (flat polystyrene rectangle) -->
+		<rect x="2" y="52" width="88" height="112" rx="4" fill="#f0f0f0" stroke="#333333" stroke-width="1.5"/>
+		<!-- Inner face (slightly lighter for depth) -->
+		<rect x="6" y="56" width="80" height="104" rx="3" fill="#f8f8f8" stroke="none"/>
+		<!-- Top face ellipse (3D opening effect) -->
+		<ellipse cx="46" cy="52" rx="44" ry="5" fill="#fafafa" stroke="#333333" stroke-width="1.5"/>
+		<!-- Bottom edge highlight -->
+		<line x1="6" y1="160" x2="86" y2="160" stroke="#dddddd" stroke-width="0.8"/>
+		<!-- Glass shine on left side -->
+		<rect x="7" y="60" width="4" height="90" rx="1" fill="#ffffff" opacity="0.5"/>
+	</g>
+
+	<!-- NECK: angled neck connecting body to cap -->
+	<g id="neck">
+		<!-- Neck walls -->
+		<path d="M 27 17 L 22 52 L 70 52 L 65 17 Z" fill="#f0f0f0" stroke="#333333" stroke-width="1.5"/>
+		<!-- Neck interior (glass tint) -->
+		<path d="M 31 20 L 26 50 L 66 50 L 61 20 Z" fill="#f8f8f8" stroke="none"/>
+		<!-- Thread lines on neck -->
+		<line x1="29" y1="24" x2="63" y2="24" stroke="#999999" stroke-width="0.4"/>
+		<line x1="28" y1="32" x2="64" y2="32" stroke="#999999" stroke-width="0.4"/>
+	</g>
+
+	<!-- CAP: screw cap -->
+	<g id="cap">
+		<!-- Cap body -->
+		<rect x="27" y="5" width="38" height="14" rx="2" fill="#888888" stroke="#333333" stroke-width="1.5"/>
+		<!-- Cap top face -->
+		<ellipse cx="46" cy="5" rx="19" ry="3" fill="#999999" stroke="#333333" stroke-width="1"/>
+		<!-- Cap grip ridges -->
+		<line x1="31" y1="10" x2="61" y2="10" stroke="#666666" stroke-width="0.4"/>
+		<line x1="31" y1="13" x2="61" y2="13" stroke="#666666" stroke-width="0.4"/>
+		<line x1="31" y1="16" x2="61" y2="16" stroke="#666666" stroke-width="0.4"/>
+	</g>
+
+	<!-- GRADUATION: volume marks on flask wall -->
+	<g id="graduation">
+		<!-- Major marks (every 25 mL equivalent) -->
+		<line x1="82" y1="72" x2="92" y2="72" stroke="#666666" stroke-width="0.8"/>
+		<line x1="82" y1="92" x2="92" y2="92" stroke="#666666" stroke-width="0.8"/>
+		<line x1="82" y1="112" x2="92" y2="112" stroke="#666666" stroke-width="0.8"/>
+		<line x1="82" y1="132" x2="92" y2="132" stroke="#666666" stroke-width="0.8"/>
+		<line x1="82" y1="152" x2="92" y2="152" stroke="#666666" stroke-width="0.8"/>
+		<!-- Volume labels -->
+		<text x="94" y="74" font-family="Arial,sans-serif" font-size="5" fill="#666666">75</text>
+		<text x="94" y="94" font-family="Arial,sans-serif" font-size="5" fill="#666666">50</text>
+		<text x="94" y="114" font-family="Arial,sans-serif" font-size="5" fill="#666666">25</text>
+		<!-- Minor marks -->
+		<line x1="84" y1="82" x2="90" y2="82" stroke="#999999" stroke-width="0.4"/>
+		<line x1="84" y1="102" x2="90" y2="102" stroke="#999999" stroke-width="0.4"/>
+		<line x1="84" y1="122" x2="90" y2="122" stroke="#999999" stroke-width="0.4"/>
+		<line x1="84" y1="142" x2="90" y2="142" stroke="#999999" stroke-width="0.4"/>
+	</g>
+
+	<!-- LABEL_FRAME: static label background (text is dynamic) -->
+	<g id="label_frame">
+		<rect x="12" y="97" width="52" height="30" rx="1" fill="#ffffff" opacity="0.85" stroke="#999999" stroke-width="0.8"/>
+	</g>
+
+	<!-- OVERLAY_ROOT: engine injects dynamic overlays here -->
+	<g id="overlay_root"/>
+
+	<!-- ANCHORS: invisible positioning elements for the engine -->
+	<!-- Liquid fill region bounds -->
+	<rect id="anchor_liquid_bounds" x="3" y="57" width="88" height="107" fill="none" stroke="none" display="none"/>
+	<!-- Highlight border bounds (slightly outside body) -->
+	<rect id="anchor_highlight" x="0" y="3" width="96" height="165" fill="none" stroke="none" display="none"/>
+	<!-- Dynamic label position (inside label_frame) -->
+	<rect id="anchor_label" x="12" y="97" width="52" height="30" fill="none" stroke="none" display="none"/>
+	<!-- Error indicator position (top-right corner) -->
+	<rect id="anchor_error" x="77" y="47" width="16" height="16" fill="none" stroke="none" display="none"/>
+</svg>

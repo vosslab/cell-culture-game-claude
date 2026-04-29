@@ -24,6 +24,9 @@ declare const SVG_WATER_BATH: string;
 declare const SVG_VORTEX: string;
 declare const SVG_CELL_COUNTER: string;
 declare const SVG_ANGRY_PROFESSOR: string;
+declare const SVG_TIP_BOX: string;
+declare const SVG_GLOVE_BOX: string;
+declare const SVG_WASTE_TRAY: string;
 
 // Legacy: cell-culture2.svg artwork (fallback, will be removed)
 declare const CELL_CULTURE_PLATE_SVG: string;
@@ -87,6 +90,10 @@ function getHoodBackgroundSvg(): string {
  * Gets the T-75 tissue culture flask SVG (Hybrid C: base + overlays)
  * @param mediaLevel - fill level from 0 to 1
  * @param mediaColor - color of media: 'old' (yellow-orange) or 'fresh' (pink-orange)
+ *
+ * OQ-5 decided: Using t75_flask_v4.svg (user's hand-drawn variant, polished).
+ * Features: horizontal T-flask with angled neck, blue cap, pink media, yellow vent.
+ * SVG anchors and polygon nodes aligned; tight viewBox around geometry only.
  */
 function getFlaskSvg(mediaLevel: number, mediaColor: string): string {
 	// map old color convention to typed ColorRole
@@ -119,10 +126,18 @@ function getMediaBottleSvg(): string {
 }
 
 /**
- * Gets the serological pipette SVG (Hybrid C: base only, static)
+ * Gets the serological pipette SVG with optional liquid fill overlay
+ * @param volumeMl - volume of liquid in milliliters (default 0 = empty)
+ * @param color - hex color code for liquid (default null = no overlay)
  */
-function getSeroPipetteSvg(): string {
-	return SVG_SERO_PIPETTE;
+function getSeroPipetteSvg(volumeMl: number = 0, color: string | null = null): string {
+	if (volumeMl <= 0 || !color) {
+		return SVG_SERO_PIPETTE;
+	}
+	const overlays: string[] = [
+		createPipetteLiquidOverlay("sero_pipette", volumeMl, 10, color, SVG_SERO_PIPETTE),
+	];
+	return composeSvg(SVG_SERO_PIPETTE, "sero_pipette", overlays);
 }
 
 // getPipetteAidSvg removed: function was unused (not in HOOD_ITEMS)
@@ -440,4 +455,36 @@ function getVortexSvg(): string {
  */
 function getCellCounterSvg(): string {
 	return SVG_CELL_COUNTER;
+}
+
+// ============================================
+/**
+ * Gets the angry professor character SVG (coach card)
+ */
+function getAngryProfessorSvg(): string {
+	return SVG_ANGRY_PROFESSOR;
+}
+
+// ============================================
+/**
+ * Gets the tip box SVG (decoration)
+ */
+function getTipBoxSvg(): string {
+	return SVG_TIP_BOX;
+}
+
+// ============================================
+/**
+ * Gets the glove box SVG (decoration)
+ */
+function getGloveBoxSvg(): string {
+	return SVG_GLOVE_BOX;
+}
+
+// ============================================
+/**
+ * Gets the waste tray SVG (decoration)
+ */
+function getWasteTraySvg(): string {
+	return SVG_WASTE_TRAY;
 }

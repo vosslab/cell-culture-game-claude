@@ -189,7 +189,7 @@ steps:
     dayId: day1
     stepIndex: 1
     requiredItems: [centrifuge, conical_15ml_rack]
-    targetItems: [centrifuge, conical_15ml_rack]
+    targetItems: [centrifuge]
     scene: bench
     requiredAction: centrifuge
     errorHints:
@@ -246,8 +246,8 @@ steps:
     partId: part2_count
     dayId: day1
     stepIndex: 3
-    requiredItems: [cell_counter, dilution_tube_rack]
-    targetItems: [cell_counter]
+    requiredItems: [cell_counter, dilution_tube_rack, microscope]
+    targetItems: [cell_counter, microscope]
     scene: bench
     requiredAction: count_cells
     errorHints:
@@ -318,7 +318,7 @@ steps:
     dayId: day2
     stepIndex: 1
     requiredItems: [carboplatin_stock, sterile_water, dilution_tube_rack]
-    targetItems: [multichannel_pipette, drug_vials, well_plate]
+    targetItems: [sterile_water, dilution_tube_rack]
     scene: hood
     requiredAction: dilute_carb_intermediate
     errorHints:
@@ -426,7 +426,7 @@ steps:
     dayId: day2
     stepIndex: 2
     requiredItems: [well_plate, multichannel_pipette, dilution_tube_rack]
-    targetItems: [multichannel_pipette, drug_vials, well_plate]
+    targetItems: [well_plate, multichannel_pipette, dilution_tube_rack]
     scene: hood
     requiredAction: add_carboplatin
     errorHints:
