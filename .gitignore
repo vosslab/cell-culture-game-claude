@@ -1,7 +1,7 @@
 # Build artifacts
 cell_culture_game.html
 cell-culture2-clean.svg
-_temp*.?*
+_*.?*
 OTHER_REPOS/*/
 node_modules/
 package-lock.json
